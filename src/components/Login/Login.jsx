@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [userType, setUserType] = useState("user"); // "user" 또는 "expert"
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -15,17 +16,33 @@ function Login() {
       return;
     }
     setIsSubmitting(true);
+
+    const endpoint =
+      userType === "user"
+        ? "http://localhost:3000/login"
+        : "http://localhost:3000/login/expert";
+
     try {
       const response = await axios.post(
-        "http://localhost:3000/login",
+        endpoint,
         { email, password },
         { withCredentials: true }
       );
-      const { id } = response.data.user;
+
+      console.log("Login Response:", response.data); // 응답 데이터 확인
+      const { id, role } = response.data.user;
       sessionStorage.setItem("userId", id);
-      navigate("/dashboard");
+      sessionStorage.setItem("userRole", role);
+
+      // 사용자 역할에 따라 다른 페이지로 이동
+      if (role === "expert") {
+        navigate("/system-management"); // 관리자 페이지로 이동
+      } else {
+        navigate("/dashboard"); // 일반 사용자 페이지로 이동
+      }
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || "로그인 실패");
+      console.error("Login error:", error.response?.data || error.message);
+      setErrorMessage(error.response?.data?.msg || "로그인 실패");
     } finally {
       setIsSubmitting(false);
     }
@@ -36,6 +53,22 @@ function Login() {
       <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-md">
         <h1 className="text-2xl font-bold mb-6">로그인</h1>
         <div className="space-y-4">
+          {/* 회원 유형 선택 */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-2">
+              회원 유형
+            </label>
+            <select
+              value={userType}
+              onChange={(e) => setUserType(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md"
+            >
+              <option value="user">일반회원</option>
+              <option value="expert">관리자</option>
+            </select>
+          </div>
+
+          {/* 이메일 입력 */}
           <div>
             <label className="block text-gray-700 font-medium">이메일</label>
             <input
@@ -46,6 +79,8 @@ function Login() {
               placeholder="이메일을 입력하세요"
             />
           </div>
+
+          {/* 비밀번호 입력 */}
           <div>
             <label className="block text-gray-700 font-medium">비밀번호</label>
             <input
@@ -56,9 +91,13 @@ function Login() {
               placeholder="비밀번호를 입력하세요"
             />
           </div>
+
+          {/* 오류 메시지 */}
           {errorMessage && (
             <p className="text-red-500 text-center">{errorMessage}</p>
           )}
+
+          {/* 로그인 버튼 */}
           <button
             onClick={handleLogin}
             className={`w-full px-4 py-3 font-bold rounded-md ${

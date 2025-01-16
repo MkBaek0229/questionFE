@@ -3,19 +3,19 @@ import { useNavigate } from "react-router-dom";
 import SignupStep0 from "../../components/Login/SignupStep0";
 import SignupStep1 from "../../components/Login/SignupStep1";
 import SignupStep2 from "../../components/Login/SignupStep2";
-import SignupStep3 from "../../components/Login/SignupStep3";
-import SignupStep3_expert from "../../components/Login/SignupStep3_expert";
+import SignupStep3 from "../../components/Login/SignupStep3"; // 통합된 컴포넌트
+import axios from "axios";
 
 function Signup() {
-  const [step, setStep] = useState(0); // 현재 단계
+  const [step, setStep] = useState(0);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     agreement: false,
-    member_type: "", // "User" 또는 "expert"
+    role: "", // "user" 또는 "expert"
     email: "",
     password: "",
-    emailVerified: false, // 이메일 인증 여부 추가
+    emailVerified: false, // 이메일 인증 여부
     user: {
       institution_name: "",
       institution_address: "",
@@ -40,52 +40,26 @@ function Signup() {
       return;
     }
 
-    // Define the endpoint based on the member type
     const endpoint =
-      formData.member_type === "User"
+      formData.role === "user"
         ? "http://localhost:3000/register"
         : "http://localhost:3000/register/expert";
 
     try {
-      // Prepare the payload
-      const payload =
-        formData.member_type === "User"
-          ? {
-              ...formData.user,
-              email: formData.email,
-              password: formData.password,
-              member_type: formData.member_type,
-            }
-          : {
-              ...formData.expert,
-              email: formData.email,
-              password: formData.password,
-              member_type: formData.member_type,
-            };
+      console.log("Submitting data:", formData);
 
-      console.log("Payload being sent:", payload); // Debugging log
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        ...formData[formData.role], // role에 해당하는 객체(user 또는 expert)만 전송
+      };
 
-      // Make the fetch request
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      console.log("Response received:", data); // Debugging log
-
-      if (response.ok) {
-        alert(data.message || "회원가입 성공");
-        navigate("/");
-      } else {
-        alert(data.message || "회원가입 실패");
-      }
+      const response = await axios.post(endpoint, payload);
+      alert(response.data.message || "회원가입 성공!");
+      navigate("/");
     } catch (error) {
-      console.error("Error during signup:", error.message);
-      alert("회원가입 요청 중 오류가 발생했습니다.");
+      console.error("Error during signup:", error.response || error);
+      alert(error.response?.data?.message || "회원가입 실패");
     }
   };
 
@@ -116,28 +90,19 @@ function Signup() {
           prevStep={prevStep}
         />
       )}
-      {step === 3 && formData.member_type === "User" && (
+      {step === 3 && (
         <SignupStep3
-          formData={formData.user} // 일반 회원 데이터만 전달
-          setFormData={(userData) =>
-            setFormData({ ...formData, user: { ...userData } })
-          }
-          prevStep={prevStep}
-          handleSubmit={handleSubmit}
-        />
-      )}
-      {step === 3 && formData.member_type === "expert" && (
-        <SignupStep3_expert
-          formData={formData.expert} // 전문가 데이터 전달
-          setFormData={(expertData) =>
+          formData={formData[formData.role]} // 선택된 역할(user 또는 expert)에 맞는 데이터 전달
+          setFormData={(data) =>
             setFormData({
               ...formData,
-              expert: { ...expertData },
-              password: expertData.password, // 비밀번호 동기화
+              [formData.role]: data,
+              password: data.password, // 비밀번호 동기화
             })
           }
           prevStep={prevStep}
           handleSubmit={handleSubmit}
+          role={formData.role} // role을 전달하여 조건부 렌더링 가능
         />
       )}
     </div>

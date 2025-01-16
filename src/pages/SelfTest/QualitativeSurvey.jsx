@@ -14,13 +14,8 @@ function QualitativeSurvey() {
   const { userId, systemId } = location.state || {};
 
   useEffect(() => {
-    console.log("Received state in QualitativeSurvey:", location.state);
-
     if (!systemId || !userId) {
-      console.error("필수 데이터(userId 또는 systemId)가 누락되었습니다.", {
-        systemId,
-        userId,
-      });
+      console.error("필수 데이터(userId 또는 systemId)가 누락되었습니다.");
       alert("시스템 또는 사용자 정보가 누락되었습니다.");
       navigate("/dashboard");
       return;
@@ -35,7 +30,8 @@ function QualitativeSurvey() {
             withCredentials: true,
           }
         );
-        const data = response.data;
+
+        const data = response.data || [];
         setQualitativeData(data);
 
         const initialResponses = data.reduce((acc, item) => {
@@ -61,18 +57,14 @@ function QualitativeSurvey() {
 
   const saveResponse = async (questionNumber) => {
     const currentResponse = responses[questionNumber] || {};
-
     if (!systemId || !userId) {
-      console.error("시스템 또는 사용자 정보가 누락되었습니다.", {
-        systemId,
-        userId,
-      });
+      console.error("시스템 또는 사용자 정보가 누락되었습니다.");
       alert("시스템 또는 사용자 정보가 누락되었습니다.");
-      return;
+      return false;
     }
 
     const requestData = {
-      questionNumber: questionNumber || null,
+      questionNumber,
       response: currentResponse.response || null,
       additionalComment: currentResponse.additionalComment || null,
       systemId,
@@ -80,13 +72,11 @@ function QualitativeSurvey() {
     };
 
     if (!requestData.response && !requestData.additionalComment) {
-      console.error("response 또는 additionalComment 중 하나는 필수입니다.");
       alert("응답 또는 추가 의견을 입력해주세요.");
-      return;
+      return false;
     }
 
     try {
-      console.log("Request data:", requestData);
       await axios.post(
         "http://localhost:3000/selftest/qualitative",
         requestData,
@@ -95,12 +85,11 @@ function QualitativeSurvey() {
       console.log(
         `Response for question ${questionNumber} saved successfully.`
       );
+      return true;
     } catch (error) {
       console.error("정성 설문 저장 실패:", error.response?.data || error);
-      alert(
-        error.response?.data?.message ||
-          "정성 설문 저장 중 오류가 발생했습니다. 다시 시도해주세요."
-      );
+      alert("정성 설문 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+      return false;
     }
   };
 
@@ -108,19 +97,17 @@ function QualitativeSurvey() {
     if (loading) return;
 
     setLoading(true);
+    const success = await saveResponse(currentStep);
 
-    // 현재 문항 저장
-    await saveResponse(currentStep);
+    if (!success) {
+      setLoading(false);
+      return;
+    }
 
     if (currentStep < totalSteps) {
-      // 다음 단계로 이동
       setCurrentStep((prev) => prev + 1);
     } else {
-      // 최종 단계 처리
-      console.log("정성 설문조사가 완료되었습니다.");
-
       try {
-        // 마지막 단계에서 결과 저장 API 호출
         const response = await axios.post(
           "http://localhost:3000/assessment/complete",
           { userId, systemId },
@@ -131,10 +118,7 @@ function QualitativeSurvey() {
         navigate("/completion", { state: { userId, systemId } });
       } catch (error) {
         console.error("최종 결과 저장 실패:", error.response?.data || error);
-        alert(
-          error.response?.data?.message ||
-            "결과 저장 중 오류가 발생했습니다. 다시 시도해주세요."
-        );
+        alert("결과 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       }
     }
 
@@ -146,6 +130,12 @@ function QualitativeSurvey() {
   };
 
   const renderCurrentStep = () => {
+    if (qualitativeData.length === 0) {
+      return (
+        <p className="text-center">정성 문항 데이터를 불러오는 중입니다...</p>
+      );
+    }
+
     const currentData = qualitativeData.find(
       (item) => item.question_number === currentStep
     ) || {
