@@ -1,36 +1,46 @@
-import React, { useState } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Login({ setIsExpertLoggedIn }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false); // 요청 중 상태
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    // 입력값 검증
     if (!email || !password) {
       setErrorMessage("이메일과 비밀번호를 입력해 주세요.");
       return;
     }
 
-    setIsSubmitting(true); // 요청 상태 설정
-    setErrorMessage(""); // 이전 오류 메시지 초기화
+    setIsSubmitting(true);
+    setErrorMessage("");
 
     try {
-      const response = await axios.post("http://localhost:3000/login", {
-        email,
-        password,
+      const response = await fetch("http://localhost:3000/login/expert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
       });
 
-      alert(response.data.message); // 로그인 성공 메시지
-      navigate("/dashboard"); // 대시보드 페이지로 이동
+      const data = await response.json();
+
+      if (response.ok && data.resultCode === "S-1") {
+        alert(data.msg); // 로그인 성공 메시지
+        setIsExpertLoggedIn(true); // 로그인 상태 업데이트
+        navigate("/system-management"); // 기본 페이지로 이동
+      } else {
+        setErrorMessage(data.msg || "로그인 실패");
+      }
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || "로그인 실패");
+      console.error("Error:", error);
+      setErrorMessage("로그인 요청 중 오류가 발생했습니다.");
     } finally {
-      setIsSubmitting(false); // 요청 완료 후 상태 복구
+      setIsSubmitting(false);
     }
   };
 

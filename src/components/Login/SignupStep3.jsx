@@ -8,10 +8,6 @@ function SignupStep3({ formData, setFormData, prevStep, handleSubmit }) {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleRoleChange = (e) => {
-    setFormData({ ...formData, member_type: e.target.value }); // member_type 필드 추가
-  };
-
   const handleSignupSubmit = async () => {
     // 모든 필수 입력값 검증
     if (
@@ -19,8 +15,7 @@ function SignupStep3({ formData, setFormData, prevStep, handleSubmit }) {
       !formData.institution_address ||
       !formData.representative_name ||
       !formData.email ||
-      !formData.password ||
-      !formData.member_type
+      !formData.password
     ) {
       setErrorMessage("모든 필드를 입력해 주세요.");
       return;
@@ -87,20 +82,6 @@ function SignupStep3({ formData, setFormData, prevStep, handleSubmit }) {
             className="w-full p-3 border border-gray-300 rounded-md"
             placeholder="비밀번호를 입력해 주세요"
           />
-        </div>
-        <div>
-          <label className="block text-gray-700 font-medium">회원 유형</label>
-          <select
-            name="member_type"
-            value={formData.member_type || ""}
-            onChange={handleRoleChange}
-            className="w-full p-3 border border-gray-300 rounded-md"
-          >
-            <option value="">회원 유형을 선택해 주세요</option>
-            <option value="기관회원">기관회원</option>
-            <option value="전문가">전문가</option>
-            <option value="슈퍼유저">슈퍼유저</option>
-          </select>
         </div>
       </div>
       {errorMessage && (

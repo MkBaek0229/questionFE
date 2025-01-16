@@ -10,7 +10,7 @@ function SelfTestStart() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-gray-100 min-h-screen flex justify-center items-center">
       <div className="container mx-auto max-w-5xl p-6 bg-white rounded-lg shadow-lg">
         {/* Header */}
         <div className="text-center mb-8">

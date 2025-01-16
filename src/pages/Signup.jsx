@@ -1,39 +1,109 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import SignupStep0 from "../components/Login/SignupStep0";
 import SignupStep1 from "../components/Login/SignupStep1";
 import SignupStep2 from "../components/Login/SignupStep2";
 import SignupStep3 from "../components/Login/SignupStep3";
+import SignupStep3_expert from "../components/Login/SignupStep3_expert";
 import axios from "axios";
 
 function Signup() {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 현재 단계
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     agreement: false,
+    member_type: "", // "User" 또는 "expert"
     email: "",
     password: "",
-    institution_name: "",
-    institution_address: "",
-    representative_name: "",
-    phone: "", // 전화번호 추가
-    role: "user", // 기본 역할 추가
+    emailVerified: false, // 이메일 인증 여부 추가
+    user: {
+      institution_name: "",
+      institution_address: "",
+      representative_name: "",
+      phone: "",
+    },
+    expert: {
+      name: "",
+      institution_name: "",
+      ofcps: "", // 직위(직급)
+      phone_number: "",
+      major_carrea: "", // 주요 경력
+    },
   });
 
-  const nextStep = () => setStep(step + 1);
+  const nextStep = () => {
+    if (step === 2 && !formData.emailVerified) {
+      alert("이메일 인증이 필요합니다.");
+      return;
+    }
+    setStep(step + 1);
+  };
+
   const prevStep = () => setStep(step - 1);
 
   const handleSubmit = async () => {
+    if (!formData.emailVerified) {
+      alert("이메일 인증이 필요합니다.");
+      return;
+    }
+
+    // Define the endpoint based on the member type
+    const endpoint =
+      formData.member_type === "User"
+        ? "http://localhost:3000/register"
+        : "http://localhost:3000/register/expert";
+
     try {
-      const response = await axios.post(
-        "http://localhost:3000/register",
-        formData
-      );
-      alert(response.data.message);
-      navigate("/");
+      // Prepare the payload
+      const payload =
+        formData.member_type === "User"
+          ? {
+              ...formData.user,
+              email: formData.email,
+              password: formData.password,
+            }
+          : {
+              ...formData.expert,
+              email: formData.email,
+              password: formData.password,
+            };
+
+      console.log("Payload being sent:", payload); // Debugging log
+
+      // Make the fetch request
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      console.log("Response received:", data); // Debugging log
+
+      if (response.ok) {
+        alert(data.message) || "회원가입 성공";
+        navigate("/");
+      } else {
+        alert(data.message || "회원가입 실패");
+      }
     } catch (error) {
-      alert(error.response?.data?.message || "회원가입 실패");
+      console.error("Error during signup:", error.message);
+      alert("회원가입 요청 중 오류가 발생했습니다.");
     }
   };
+
+  if (step === 0) {
+    return (
+      <SignupStep0
+        formData={formData}
+        setFormData={setFormData}
+        nextStep={nextStep}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
@@ -52,10 +122,26 @@ function Signup() {
           prevStep={prevStep}
         />
       )}
-      {step === 3 && (
+      {step === 3 && formData.member_type === "User" && (
         <SignupStep3
-          formData={formData}
-          setFormData={setFormData}
+          formData={formData.user} // 일반 회원 데이터만 전달
+          setFormData={(userData) =>
+            setFormData({ ...formData, user: { ...userData } })
+          }
+          prevStep={prevStep}
+          handleSubmit={handleSubmit}
+        />
+      )}
+      {step === 3 && formData.member_type === "expert" && (
+        <SignupStep3_expert
+          formData={formData.expert} // 전문가 데이터 전달
+          setFormData={(expertData) =>
+            setFormData({
+              ...formData,
+              expert: { ...expertData },
+              password: expertData.password, // 비밀번호 동기화
+            })
+          }
           prevStep={prevStep}
           handleSubmit={handleSubmit}
         />
