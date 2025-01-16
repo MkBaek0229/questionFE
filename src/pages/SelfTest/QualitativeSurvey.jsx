@@ -1,0 +1,274 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
+
+function QualitativeSurvey() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [responses, setResponses] = useState({});
+  const [qualitativeData, setQualitativeData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const totalSteps = 8;
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { userId, systemId } = location.state || {};
+
+  useEffect(() => {
+    console.log("Received state in QualitativeSurvey:", location.state);
+
+    if (!systemId || !userId) {
+      console.error("필수 데이터(userId 또는 systemId)가 누락되었습니다.", {
+        systemId,
+        userId,
+      });
+      alert("시스템 또는 사용자 정보가 누락되었습니다.");
+      navigate("/dashboard");
+      return;
+    }
+
+    const fetchQualitativeData = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:3000/selftest/qualitative",
+          {
+            params: { systemId },
+            withCredentials: true,
+          }
+        );
+        const data = response.data;
+        setQualitativeData(data);
+
+        const initialResponses = data.reduce((acc, item) => {
+          acc[item.question_number] = {
+            response: item.response || "",
+            additionalComment: item.additional_comment || "",
+          };
+          return acc;
+        }, {});
+        setResponses(initialResponses);
+      } catch (error) {
+        console.error(
+          "정성 문항 데이터를 불러오지 못했습니다:",
+          error.response || error
+        );
+        alert("데이터를 불러오는 중 오류가 발생했습니다.");
+        navigate("/dashboard");
+      }
+    };
+
+    fetchQualitativeData();
+  }, [systemId, userId, navigate]);
+
+  const saveResponse = async (questionNumber) => {
+    const currentResponse = responses[questionNumber] || {};
+
+    if (!systemId || !userId) {
+      console.error("시스템 또는 사용자 정보가 누락되었습니다.", {
+        systemId,
+        userId,
+      });
+      alert("시스템 또는 사용자 정보가 누락되었습니다.");
+      return;
+    }
+
+    const requestData = {
+      questionNumber: questionNumber || null,
+      response: currentResponse.response || null,
+      additionalComment: currentResponse.additionalComment || null,
+      systemId,
+      userId,
+    };
+
+    if (!requestData.response && !requestData.additionalComment) {
+      console.error("response 또는 additionalComment 중 하나는 필수입니다.");
+      alert("응답 또는 추가 의견을 입력해주세요.");
+      return;
+    }
+
+    try {
+      console.log("Request data:", requestData);
+      await axios.post(
+        "http://localhost:3000/selftest/qualitative",
+        requestData,
+        { withCredentials: true }
+      );
+      console.log(
+        `Response for question ${questionNumber} saved successfully.`
+      );
+    } catch (error) {
+      console.error("정성 설문 저장 실패:", error.response?.data || error);
+      alert(
+        error.response?.data?.message ||
+          "정성 설문 저장 중 오류가 발생했습니다. 다시 시도해주세요."
+      );
+    }
+  };
+
+  const handleNextClick = async () => {
+    if (loading) return;
+
+    setLoading(true);
+
+    // 현재 문항 저장
+    await saveResponse(currentStep);
+
+    if (currentStep < totalSteps) {
+      // 다음 단계로 이동
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      // 최종 단계 처리
+      console.log("정성 설문조사가 완료되었습니다.");
+
+      try {
+        // 마지막 단계에서 결과 저장 API 호출
+        const response = await axios.post(
+          "http://localhost:3000/assessment/complete",
+          { userId, systemId },
+          { withCredentials: true }
+        );
+        console.log("최종 결과 저장 성공:", response.data);
+        alert("결과가 성공적으로 저장되었습니다.");
+        navigate("/completion", { state: { userId, systemId } });
+      } catch (error) {
+        console.error("최종 결과 저장 실패:", error.response?.data || error);
+        alert(
+          error.response?.data?.message ||
+            "결과 저장 중 오류가 발생했습니다. 다시 시도해주세요."
+        );
+      }
+    }
+
+    setLoading(false);
+  };
+
+  const handlePreviousClick = () => {
+    if (currentStep > 1) setCurrentStep((prev) => prev - 1);
+  };
+
+  const renderCurrentStep = () => {
+    const currentData = qualitativeData.find(
+      (item) => item.question_number === currentStep
+    ) || {
+      question_number: currentStep,
+      question: "질문이 없습니다.",
+      evaluation_criteria: "",
+      reference_info: "",
+    };
+
+    return (
+      <table className="w-full border-collapse border border-gray-300 mb-6">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border border-gray-300 p-2">항목</th>
+            <th className="border border-gray-300 p-2">내용</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="border border-gray-300 p-2">지표 번호</td>
+            <td className="border border-gray-300 p-2">{currentStep}번</td>
+          </tr>
+          <tr>
+            <td className="border border-gray-300 p-2">지표 정의</td>
+            <td className="border border-gray-300 p-2">
+              {currentData.question}
+            </td>
+          </tr>
+          <tr>
+            <td className="border border-gray-300 p-2">평가기준</td>
+            <td className="border border-gray-300 p-2">
+              {currentData.evaluation_criteria}
+            </td>
+          </tr>
+          <tr>
+            <td className="border border-gray-300 p-2">참고사항</td>
+            <td className="border border-gray-300 p-2">
+              {currentData.reference_info}
+            </td>
+          </tr>
+          <tr>
+            <td className="border border-gray-300 p-2">평가</td>
+            <td className="border border-gray-300 p-2">
+              <div className="flex items-center space-x-4">
+                {["자문필요", "해당없음"].map((option) => (
+                  <label key={option}>
+                    <input
+                      type="radio"
+                      name={`response_${currentStep}`}
+                      value={option}
+                      onChange={(e) =>
+                        setResponses((prev) => ({
+                          ...prev,
+                          [currentStep]: {
+                            ...prev[currentStep],
+                            response: e.target.value,
+                          },
+                        }))
+                      }
+                      checked={responses[currentStep]?.response === option}
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+            </td>
+          </tr>
+          {responses[currentStep]?.response === "자문필요" && (
+            <tr>
+              <td className="border border-gray-300 p-2">자문 내용</td>
+              <td className="border border-gray-300 p-2">
+                <textarea
+                  placeholder="자문 필요 내용을 입력하세요"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={responses[currentStep]?.additionalComment || ""}
+                  onChange={(e) =>
+                    setResponses((prev) => ({
+                      ...prev,
+                      [currentStep]: {
+                        ...prev[currentStep],
+                        additionalComment: e.target.value,
+                      },
+                    }))
+                  }
+                ></textarea>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    );
+  };
+
+  return (
+    <div className="bg-gray-100 min-h-screen flex flex-col items-center">
+      <div className="container mx-auto max-w-5xl bg-white mt-10 p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-bold mb-6">
+          정성 설문조사 ({currentStep}/{totalSteps}번)
+        </h2>
+        {renderCurrentStep()}
+        <div className="flex justify-between mt-6">
+          <button
+            className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
+            onClick={handlePreviousClick}
+            disabled={currentStep === 1}
+          >
+            이전
+          </button>
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
+            onClick={handleNextClick}
+            disabled={loading}
+          >
+            {loading
+              ? "저장 중..."
+              : currentStep === totalSteps
+              ? "완료"
+              : "다음"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default QualitativeSurvey;

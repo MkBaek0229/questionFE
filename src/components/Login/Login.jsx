@@ -1,7 +1,8 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function Login({ setIsExpertLoggedIn }) {
+function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -13,32 +14,18 @@ function Login({ setIsExpertLoggedIn }) {
       setErrorMessage("이메일과 비밀번호를 입력해 주세요.");
       return;
     }
-
     setIsSubmitting(true);
-    setErrorMessage("");
-
     try {
-      const response = await fetch("http://localhost:3000/login/expert", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.resultCode === "S-1") {
-        alert(data.msg); // 로그인 성공 메시지
-        setIsExpertLoggedIn(true); // 로그인 상태 업데이트
-        navigate("/system-management"); // 기본 페이지로 이동
-      } else {
-        setErrorMessage(data.msg || "로그인 실패");
-      }
+      const response = await axios.post(
+        "http://localhost:3000/login",
+        { email, password },
+        { withCredentials: true }
+      );
+      const { id } = response.data.user;
+      sessionStorage.setItem("userId", id);
+      navigate("/dashboard");
     } catch (error) {
-      console.error("Error:", error);
-      setErrorMessage("로그인 요청 중 오류가 발생했습니다.");
+      setErrorMessage(error.response?.data?.message || "로그인 실패");
     } finally {
       setIsSubmitting(false);
     }

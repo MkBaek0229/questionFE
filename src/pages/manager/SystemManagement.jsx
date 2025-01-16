@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 
@@ -9,6 +10,7 @@ const systems = [
 
 function SystemManagement() {
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
   const systemsPerPage = 5; // 페이지당 시스템 개수를 5개로 설정
 
   // 현재 페이지에 표시할 시스템 데이터 계산
@@ -21,6 +23,27 @@ function SystemManagement() {
   for (let i = 1; i <= Math.ceil(systems.length / systemsPerPage); i++) {
     pageNumbers.push(i);
   }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/logout/expert", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.resultCode === "S-1") {
+        alert(data.msg); // 로그아웃 성공 메시지
+        navigate("/"); // MainPage로 리다이렉트
+      } else {
+        alert(data.msg || "로그아웃 실패");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("로그아웃 요청 중 오류가 발생했습니다.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
@@ -112,10 +135,13 @@ function SystemManagement() {
         </div>
       </div>
       {/* 로그아웃 FAB 버튼 */}
-      <button className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col">
+      <button
+        className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col"
+        onClick={handleLogout}
+      >
         <FontAwesomeIcon icon={faSignOutAlt} size="2xl" />
         <p>로그아웃</p>
-      </button>{" "}
+      </button>
     </div>
   );
 }

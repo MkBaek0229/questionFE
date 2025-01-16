@@ -1,13 +1,18 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
-import SelfTestStart from "./pages/SelfTestStart";
-import DiagnosisPage from "./pages/DiagnosisPage";
-import QualitativeSurvey from "./pages/QualitativeSurvey";
+
 import Login from "./components/Login/Login";
-import Signup from "./pages/Signup";
+import Signup from "./pages/Login/Signup";
 import SystemManagement from "./pages/manager/SystemManagement";
 import MainPage from "./pages/mainpage";
 import { useState } from "react";
+import SelfTestStart from "./pages/SelfTest/SelfTestStart";
+import DiagnosisPage from "./pages/SelfTest/DiagnosisPage";
+import QualitativeSurvey from "./pages/SelfTest/QualitativeSurvey";
+import SignupComplete from "./components/Login/SignupComplete";
+import Dashboard from "./pages/SelfTest/Dashboard";
+import CompletionPage from "./pages/SelfTest/CompletionPage";
+import SystemRegistration from "./components/System/SystemRegistration";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,6 +34,12 @@ function App() {
             element={<Login setIsExpertLoggedIn={setIsExpertLoggedIn} />}
           />
           <Route path="/Signup" element={<Signup />} />
+
+          <Route path="/signup-complete" element={<SignupComplete />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/system-register" element={<SystemRegistration />} />
+          <Route path="/completion" element={<CompletionPage />} />
+
           <Route path="/system-management" element={<SystemManagement />} />
         </Routes>
       </Layout>

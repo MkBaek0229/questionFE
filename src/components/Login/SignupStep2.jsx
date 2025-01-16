@@ -1,81 +1,50 @@
 import React, { useState } from "react";
+import axios from "axios";
 
 function SignupStep2({ formData, setFormData, prevStep, nextStep }) {
-  const [email, setEmail] = useState(formData.email || ""); // 이메일 상태
-  const [verificationCode, setVerificationCode] = useState(""); // 인증코드 상태
-  const [verificationMessage, setVerificationMessage] = useState(""); // 메시지
-  const [isVerified, setIsVerified] = useState(false); // 인증 여부
+  const [email, setEmail] = useState(formData.email || "");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
 
-  // 이메일 입력 핸들러
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
     setVerificationMessage("");
     setIsVerified(false);
   };
 
-  // 이메일 인증코드 요청
-  const handleEmailVerification = async () => {
-    if (!email.trim()) {
-      setVerificationMessage("이메일을 입력해 주세요.");
-      return;
-    }
-
+  const handleSendVerificationCode = async () => {
     try {
-      const response = await fetch("http://localhost:3000/email/send-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setVerificationMessage(data.msg); // 서버 응답 메시지
-      } else {
-        setVerificationMessage(data.msg || "인증코드 요청에 실패했습니다.");
-      }
+      const response = await axios.post(
+        "http://localhost:3000/email/send-verification-code",
+        { email }
+      );
+      alert(response.data.message); // 성공 메시지
     } catch (error) {
-      setVerificationMessage("인증코드 요청 중 오류가 발생했습니다.");
+      console.error("인증 코드 전송 실패:", error);
+      setVerificationMessage(
+        error.response?.data?.message || "인증 코드 전송 실패"
+      );
     }
   };
 
-  // 인증코드 입력 핸들러
-  const handleVerificationCodeChange = (e) => {
-    setVerificationCode(e.target.value);
-  };
-
-  // 인증코드 확인
   const handleVerificationCodeCheck = async () => {
-    if (!verificationCode.trim()) {
-      setVerificationMessage("인증코드를 입력해 주세요.");
-      return;
-    }
-
     try {
-      const response = await fetch("http://localhost:3000/email/verify-code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          clientCode: verificationCode,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.resultCode === "S-1") {
+      const response = await axios.post(
+        "http://localhost:3000/email/verify-code",
+        { email, code: verificationCode }
+      );
+      if (response.status === 200) {
+        // 이메일 인증 성공 시 formData 업데이트
+        setFormData((prev) => ({ ...prev, email, emailVerified: true }));
         setIsVerified(true);
-        setVerificationMessage("인증 성공!");
-        setFormData({ ...formData, email, emailVerified: true }); // 인증 상태 저장
-      } else {
-        setVerificationMessage(data.msg || "인증코드 확인에 실패했습니다.");
+        setVerificationMessage("이메일 인증 성공!");
       }
     } catch (error) {
-      setVerificationMessage("인증코드 확인 중 오류가 발생했습니다.");
+      console.error("인증 실패:", error);
+      setVerificationMessage(
+        error.response?.data?.message || "인증 코드가 유효하지 않습니다."
+      );
     }
   };
 
@@ -85,25 +54,27 @@ function SignupStep2({ formData, setFormData, prevStep, nextStep }) {
       <div className="mb-6">
         <label>이메일</label>
         <input
-          type="text"
+          type="email"
           value={email}
           onChange={handleEmailChange}
           className="w-full p-3 border rounded-md"
+          placeholder="이메일을 입력하세요"
         />
         <button
-          onClick={handleEmailVerification}
+          onClick={handleSendVerificationCode}
           className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md"
         >
-          인증코드 요청
+          인증 코드 전송
         </button>
       </div>
       <div className="mb-6">
-        <label>인증코드</label>
+        <label>인증 코드</label>
         <input
           type="text"
           value={verificationCode}
-          onChange={handleVerificationCodeChange}
+          onChange={(e) => setVerificationCode(e.target.value)}
           className="w-full p-3 border rounded-md"
+          placeholder="인증 코드를 입력하세요"
         />
         <button
           onClick={handleVerificationCodeCheck}
@@ -112,7 +83,9 @@ function SignupStep2({ formData, setFormData, prevStep, nextStep }) {
           확인
         </button>
       </div>
-      {verificationMessage && <p>{verificationMessage}</p>}
+      {verificationMessage && (
+        <p className="text-green-600">{verificationMessage}</p>
+      )}
       <div className="flex justify-between mt-4">
         <button onClick={prevStep} className="px-4 py-2 bg-gray-300 rounded-md">
           이전

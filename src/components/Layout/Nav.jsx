@@ -9,7 +9,7 @@ function Nav({ isLoggedIn, isExpertLoggedIn }) {
   };
 
   return (
-    <header className="bg-blue-600 text-white py-4 shadow-md">
+    <header className="bg-blue-600 text-white py-5 shadow-md drop-shadow">
       <div className="container mx-auto flex items-center justify-between">
         <div
           className="text-lg font-bold cursor-pointer"

@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SignupStep0 from "../components/Login/SignupStep0";
-import SignupStep1 from "../components/Login/SignupStep1";
-import SignupStep2 from "../components/Login/SignupStep2";
-import SignupStep3 from "../components/Login/SignupStep3";
-import SignupStep3_expert from "../components/Login/SignupStep3_expert";
-import axios from "axios";
+import SignupStep0 from "../../components/Login/SignupStep0";
+import SignupStep1 from "../../components/Login/SignupStep1";
+import SignupStep2 from "../../components/Login/SignupStep2";
+import SignupStep3 from "../../components/Login/SignupStep3";
+import SignupStep3_expert from "../../components/Login/SignupStep3_expert";
 
 function Signup() {
   const [step, setStep] = useState(0); // 현재 단계
@@ -32,14 +31,7 @@ function Signup() {
     },
   });
 
-  const nextStep = () => {
-    if (step === 2 && !formData.emailVerified) {
-      alert("이메일 인증이 필요합니다.");
-      return;
-    }
-    setStep(step + 1);
-  };
-
+  const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
   const handleSubmit = async () => {
@@ -62,11 +54,13 @@ function Signup() {
               ...formData.user,
               email: formData.email,
               password: formData.password,
+              member_type: formData.member_type,
             }
           : {
               ...formData.expert,
               email: formData.email,
               password: formData.password,
+              member_type: formData.member_type,
             };
 
       console.log("Payload being sent:", payload); // Debugging log
@@ -84,7 +78,7 @@ function Signup() {
       console.log("Response received:", data); // Debugging log
 
       if (response.ok) {
-        alert(data.message) || "회원가입 성공";
+        alert(data.message || "회원가입 성공");
         navigate("/");
       } else {
         alert(data.message || "회원가입 실패");
