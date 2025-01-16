@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 
 const systems = [
   { name: "시스템 A", member: "홍길동", date: "2025-01-01", status: "반영 전" },
@@ -26,7 +28,6 @@ function SystemManagement() {
       <header className="w-full max-w-[1000px] h-[70px] bg-blue-600 flex items-center justify-between px-5 text-white mb-6 shadow-md rounded-lg">
         <h1 className="text-lg font-semibold">전문가회원 대시보드</h1>
       </header>
-
       {/* 컨텐츠 영역 */}
       <div className="bg-white rounded-lg w-full max-w-[1000px] min-h-[600px] h-full p-5 shadow-md">
         <h2 className="text-2xl font-semibold text-gray-700 mb-5">
@@ -110,6 +111,11 @@ function SystemManagement() {
           ))}
         </div>
       </div>
+      {/* 로그아웃 FAB 버튼 */}
+      <button className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col">
+        <FontAwesomeIcon icon={faSignOutAlt} size="2xl" />
+        <p>로그아웃</p>
+      </button>{" "}
     </div>
   );
 }

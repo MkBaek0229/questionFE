@@ -2,9 +2,17 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCheck, faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { useEffect } from "react";
 
-function MainPage() {
+function MainPage({ isExpertLoggedIn }) {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log(isExpertLoggedIn);
+    if (isExpertLoggedIn) {
+      navigate("/system-management");
+    }
+  }, [isExpertLoggedIn, navigate]);
 
   const handleLoginClick = () => {
     navigate("/login");

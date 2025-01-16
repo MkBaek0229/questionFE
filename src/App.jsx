@@ -7,17 +7,20 @@ import Login from "./components/Login/Login";
 import Signup from "./pages/Signup";
 import SystemManagement from "./pages/manager/SystemManagement";
 import MainPage from "./pages/mainpage";
-import Nav from "./components/Layout/Nav";
 import { useState } from "react";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isExpertLoggedIn, setIsExpertLoggedIn] = useState(false); // 로그인 상태 관리
 
   return (
     <BrowserRouter>
       <Layout isExpertLoggedIn={isExpertLoggedIn}>
         <Routes>
-          <Route path="/" element={<MainPage />} />
+          <Route
+            path="/"
+            element={<MainPage isExpertLoggedIn={isExpertLoggedIn} />}
+          />
           <Route path="/SelfTestStart" element={<SelfTestStart />} />
           <Route path="/DiagnosisPage" element={<DiagnosisPage />} />
           <Route path="/qualitative-survey" element={<QualitativeSurvey />} />

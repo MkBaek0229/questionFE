@@ -1,17 +1,27 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-function Nav({ isExpertLoggedIn }) {
+function Nav({ isLoggedIn, isExpertLoggedIn }) {
   const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    navigate("/");
+  };
 
   return (
     <header className="bg-blue-600 text-white py-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
-        <div className="text-lg font-bold">
-          <a href="/">개인정보 컴플라이언스 강화 플랫폼</a>
+        <div
+          className="text-lg font-bold cursor-pointer"
+          onClick={handleLogoClick}
+        >
+          개인정보 컴플라이언스 강화 플랫폼
         </div>
         <nav className="flex space-x-4">
-          {!isExpertLoggedIn && (
+          {!isLoggedIn && (
+            <>{/* 로그인이 아예 되지 않은 유저는 nav에 a가 아예 없음 */}</>
+          )}
+          {isLoggedIn && !isExpertLoggedIn && (
             <>
               <a href="/SelfTestStart" className="hover:underline">
                 자가진단
