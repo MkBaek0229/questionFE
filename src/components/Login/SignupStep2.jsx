@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useRecoilState } from "recoil";
+import { formState } from "../../state/formState";
 
-function SignupStep2({ formData, setFormData, prevStep, nextStep }) {
+function SignupStep2({ prevStep, nextStep }) {
+  const [formData, setFormData] = useRecoilState(formState);
   const [email, setEmail] = useState(formData.email || "");
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationMessage, setVerificationMessage] = useState("");

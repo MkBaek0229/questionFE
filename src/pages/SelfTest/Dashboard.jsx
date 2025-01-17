@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { useSetRecoilState } from "recoil";
+import { authState } from "../../state/authState";
 
 function Dashboard() {
   const [systems, setSystems] = useState([]);
@@ -9,6 +13,7 @@ function Dashboard() {
   const [errorMessage, setErrorMessage] = useState("");
   const [userInfo, setUserInfo] = useState(null); // 유저 정보 상태
   const navigate = useNavigate();
+  const setAuthState = useSetRecoilState(authState);
 
   // 시스템 및 진단 상태 가져오기
   const fetchSystems = async () => {
@@ -66,6 +71,32 @@ function Dashboard() {
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(data.message); // 로그아웃 성공 메시지
+        // Recoil 상태 업데이트
+        setAuthState({
+          isLoggedIn: false,
+          isExpertLoggedIn: false,
+          user: null,
+        });
+        navigate("/"); // MainPage로 리다이렉트
+      } else {
+        alert(data.message || "로그아웃 실패");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("로그아웃 요청 중 오류가 발생했습니다.");
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="py-6 text-black text-center">
@@ -131,6 +162,14 @@ function Dashboard() {
           </div>
         )}
       </div>
+      {/* 로그아웃 FAB 버튼 */}
+      <button
+        className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col"
+        onClick={handleLogout}
+      >
+        <FontAwesomeIcon icon={faSignOutAlt} size="2xl" />
+        <p>로그아웃</p>
+      </button>
     </div>
   );
 }

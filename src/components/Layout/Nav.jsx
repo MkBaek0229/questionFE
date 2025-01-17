@@ -1,9 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { authState } from "../../state/authState";
 
-function Nav({ isLoggedIn, isExpertLoggedIn }) {
+function Nav() {
   const navigate = useNavigate();
-
+  const { isLoggedIn, isExpertLoggedIn, user } = useRecoilValue(authState);
+  console.log(user);
   const handleLogoClick = () => {
     navigate("/");
   };
@@ -26,12 +29,6 @@ function Nav({ isLoggedIn, isExpertLoggedIn }) {
               <a href="/SelfTestStart" className="hover:underline">
                 자가진단
               </a>
-              <a href="/Signup" className="hover:underline">
-                회원가입
-              </a>
-              <a href="/Login" className="hover:underline">
-                로그인
-              </a>
             </>
           )}
           {isExpertLoggedIn && (
@@ -41,6 +38,9 @@ function Nav({ isLoggedIn, isExpertLoggedIn }) {
             >
               피드백
             </button>
+          )}
+          {isLoggedIn && user && (
+            <span className="ml-4">환영합니다, {user.name}님!</span>
           )}
         </nav>
       </div>

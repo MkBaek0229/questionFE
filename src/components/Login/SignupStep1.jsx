@@ -1,6 +1,10 @@
 import React from "react";
+import { useRecoilState } from "recoil";
+import { formState } from "../../state/formState";
 
-function SignupStep1({ formData, setFormData, nextStep }) {
+function SignupStep1({ nextStep }) {
+  const [formData, setFormData] = useRecoilState(formState);
+
   const handleAgreementChange = (e) => {
     setFormData({ ...formData, agreement: e.target.checked });
   };

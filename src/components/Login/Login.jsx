@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useSetRecoilState } from "recoil";
+import { authState } from "../../state/authState";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -9,6 +11,7 @@ function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const setAuthState = useSetRecoilState(authState);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -26,15 +29,20 @@ function Login() {
       const response = await axios.post(
         endpoint,
         { email, password },
-        { withCredentials: true }
+        { withCredentials: true } // ✅ 서버에서 쿠키를 받을 수 있도록 설정
       );
 
       console.log("Login Response:", response.data); // 응답 데이터 확인
-      const { id, role } = response.data.user;
-      sessionStorage.setItem("userId", id);
-      sessionStorage.setItem("userRole", role);
+      const { id, role, ...userData } = response.data.user;
 
-      // 사용자 역할에 따라 다른 페이지로 이동
+      // Recoil 상태 업데이트
+      setAuthState({
+        isLoggedIn: true,
+        isExpertLoggedIn: role === "expert",
+        user: { id, role, ...userData }, // 사용자 정보 저장
+      });
+
+      // role 변수를 사용하여 페이지 리디렉션
       if (role === "expert") {
         navigate("/system-management"); // 관리자 페이지로 이동
       } else {
