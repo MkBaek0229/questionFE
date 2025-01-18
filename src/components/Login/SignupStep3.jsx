@@ -14,12 +14,13 @@ function SignupStep3({ prevStep, handleSubmit }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Updating field: ${name}, Value: ${value}`); // 디버깅 로그 추가
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [formData.role]: {
-        ...prevFormData[formData.role],
-        [name]: value,
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "password" ? value : prev[name], // password 필드 업데이트
+      [prev.member_type]: {
+        ...prev[prev.member_type],
+        [name]: name !== "password" ? value : prev[prev.member_type][name], // 다른 필드 업데이트
       },
     }));
   };
@@ -34,26 +35,26 @@ function SignupStep3({ prevStep, handleSubmit }) {
   };
 
   const validateInputs = () => {
-    const userFields = [
-      "institution_name",
-      "institution_address",
-      "representative_name",
-      "password",
-      "phone",
-    ];
-    const expertFields = [
-      "name",
-      "institution_name",
-      "ofcps",
-      "phone_number",
-      "major_carrea",
-      "password",
-    ];
-
-    const requiredFields = formData.role === "user" ? userFields : expertFields;
+    const requiredFields =
+      formData.member_type === "user"
+        ? [
+            "institution_name",
+            "institution_address",
+            "representative_name",
+            "password",
+            "phone_number",
+          ]
+        : [
+            "name",
+            "institution_name",
+            "ofcps",
+            "phone_number",
+            "major_carrea",
+            "password",
+          ];
 
     for (const field of requiredFields) {
-      if (!formData[formData.role][field]) {
+      if (!formData[formData.member_type][field] && field !== "password") {
         setErrorMessage("모든 필드를 입력해 주세요.");
         return false;
       }
@@ -74,63 +75,42 @@ function SignupStep3({ prevStep, handleSubmit }) {
     }
   };
 
+  const renderFields = () => {
+    const fields =
+      formData.member_type === "user"
+        ? [
+            { label: "기관명", name: "institution_name" },
+            { label: "기관 주소", name: "institution_address" },
+            { label: "대표 사용자", name: "representative_name" },
+            { label: "전화번호", name: "phone_number" },
+          ]
+        : [
+            { label: "성명", name: "name" },
+            { label: "소속", name: "institution_name" },
+            { label: "직위(직급)", name: "ofcps" },
+            { label: "전화번호", name: "phone_number" },
+            { label: "주요 경력", name: "major_carrea" },
+          ];
+
+    return fields.map((field) => (
+      <InputField
+        key={field.name}
+        label={field.label}
+        name={field.name}
+        value={formData[formData.member_type][field.name]}
+        onChange={handleChange}
+      />
+    ));
+  };
+
   return (
     <div className="bg-white p-8 rounded-lg shadow-md w-3/4 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold text-center mb-6">
-        {formData.role === "user" ? "기관회원 가입" : "전문가 회원가입"}
+        {formData.member_type === "user" ? "기관회원 가입" : "전문가 회원가입"}
       </h1>
 
       <div className="space-y-6">
-        {formData.role === "user" ? (
-          <>
-            <InputField
-              label="기관명"
-              name="institution_name"
-              value={formData.user.institution_name}
-              onChange={handleChange}
-            />
-            <InputField
-              label="기관 주소"
-              name="institution_address"
-              value={formData.user.institution_address}
-              onChange={handleChange}
-            />
-            <InputField
-              label="대표 사용자"
-              name="representative_name"
-              value={formData.user.representative_name}
-              onChange={handleChange}
-            />
-          </>
-        ) : (
-          <>
-            <InputField
-              label="성명"
-              name="name"
-              value={formData.expert.name}
-              onChange={handleChange}
-            />
-            <InputField
-              label="소속"
-              name="institution_name"
-              value={formData.expert.institution_name}
-              onChange={handleChange}
-            />
-            <InputField
-              label="직위(직급)"
-              name="ofcps"
-              value={formData.expert.ofcps}
-              onChange={handleChange}
-            />
-            <InputField
-              label="주요 경력"
-              name="major_carrea"
-              value={formData.expert.major_carrea}
-              onChange={handleChange}
-            />
-          </>
-        )}
-
+        {renderFields()}
         <InputField
           label="비밀번호"
           name="password"

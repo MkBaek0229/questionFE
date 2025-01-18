@@ -4,7 +4,7 @@ export const formState = atom({
   key: "formState",
   default: {
     agreement: false,
-    member_type: "", // "User" 또는 "expert"
+    member_type: "", // "user" 또는 "expert"
     email: "",
     password: "",
     emailVerified: false,
@@ -12,14 +12,14 @@ export const formState = atom({
       institution_name: "",
       institution_address: "",
       representative_name: "",
-      phone: "",
+      phone_number: "", // ✅ 반드시 phone_number로 유지
     },
     expert: {
       name: "",
       institution_name: "",
-      ofcps: "", // 직위(직급)
+      ofcps: "",
       phone_number: "",
-      major_carrea: "", // 주요 경력
+      major_carrea: "",
     },
   },
 });

@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserSecret, faUserTie } from "@fortawesome/free-solid-svg-icons";
+import { useRecoilState } from "recoil";
+import { formState } from "../../state/formState";
 
-function SignupStep0({ formData, setFormData, nextStep }) {
+function SignupStep0({ nextStep }) {
   const [error, setError] = useState(""); // 오류 메시지 상태
+  const [formData, setFormData] = useRecoilState(formState);
 
   const handleMemberTypeSelection = (type) => {
     if (!type) {
@@ -11,8 +14,8 @@ function SignupStep0({ formData, setFormData, nextStep }) {
       return;
     }
     setError(""); // 오류 메시지 초기화
-    setFormData({ ...formData, role: type }); // 선택한 역할(role)을 저장
-    console.log("Selected role:", type); // Debugging
+    setFormData({ ...formData, member_type: type }); // 선택한 회원 유형(member_type)을 저장
+    console.log("Selected member type:", type); // Debugging
     nextStep(); // 다음 단계로 이동
   };
 

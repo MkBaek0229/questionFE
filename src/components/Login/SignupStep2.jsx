@@ -54,7 +54,9 @@ function SignupStep2({ prevStep, nextStep }) {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-2xl">
       <h1 className="text-3xl font-bold mb-8">
-        {formData.role === "user" ? "기관회원 회원가입" : "전문가 회원가입"}
+        {formData.member_type === "user"
+          ? "기관회원 회원가입"
+          : "전문가 회원가입"}
       </h1>
       <div className="mb-6">
         <label>이메일</label>

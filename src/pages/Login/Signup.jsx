@@ -21,32 +21,26 @@ function Signup() {
       return;
     }
 
-    // Define the endpoint based on the member type
+    if (!formData.member_type) {
+      alert("회원 유형을 선택해 주세요.");
+      return;
+    }
+
     const endpoint =
-      formData.member_type === "User"
+      formData.member_type === "user"
         ? "http://localhost:3000/register"
         : "http://localhost:3000/register/expert";
 
+    const payload = {
+      ...formData[formData.member_type], // 선택된 회원 유형의 데이터만 포함
+      email: formData.email,
+      password: formData.password,
+      role: formData.member_type, // 백엔드에서 role을 명확하게 전달하기 위해 추가
+    };
+
+    console.log("Payload being sent:", payload);
+
     try {
-      // Prepare the payload
-      const payload =
-        formData.member_type === "User"
-          ? {
-              ...formData.user,
-              email: formData.email,
-              password: formData.password,
-              member_type: formData.member_type,
-            }
-          : {
-              ...formData.expert,
-              email: formData.email,
-              password: formData.password,
-              member_type: formData.member_type,
-            };
-
-      console.log("Payload being sent:", payload); // Debugging log
-
-      // Make the fetch request
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -56,7 +50,7 @@ function Signup() {
       });
 
       const data = await response.json();
-      console.log("Response received:", data); // Debugging log
+      console.log("Response received:", data);
 
       if (response.ok) {
         alert(data.message || "회원가입 성공");
@@ -70,57 +64,24 @@ function Signup() {
     }
   };
 
-  if (step === 0) {
-    return (
-      <SignupStep0
-        formData={formData}
-        setFormData={setFormData}
-        nextStep={nextStep}
-      />
-    );
-  }
+  const renderStep = () => {
+    switch (step) {
+      case 0:
+        return <SignupStep0 nextStep={nextStep} />;
+      case 1:
+        return <SignupStep1 nextStep={nextStep} />;
+      case 2:
+        return <SignupStep2 nextStep={nextStep} prevStep={prevStep} />;
+      case 3:
+        return <SignupStep3 prevStep={prevStep} handleSubmit={handleSubmit} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
-      {step === 1 && (
-        <SignupStep1
-          formData={formData}
-          setFormData={setFormData}
-          nextStep={nextStep}
-        />
-      )}
-      {step === 2 && (
-        <SignupStep2
-          formData={formData}
-          setFormData={setFormData}
-          nextStep={nextStep}
-          prevStep={prevStep}
-        />
-      )}
-      {step === 3 && formData.member_type === "User" && (
-        <SignupStep3
-          formData={formData.user} // 일반 회원 데이터만 전달
-          setFormData={(userData) =>
-            setFormData({ ...formData, user: { ...userData } })
-          }
-          prevStep={prevStep}
-          handleSubmit={handleSubmit}
-        />
-      )}
-      {step === 3 && formData.member_type === "expert" && (
-        <SignupStep3_expert
-          formData={formData.expert} // 전문가 데이터 전달
-          setFormData={(expertData) =>
-            setFormData({
-              ...formData,
-              expert: { ...expertData },
-              password: expertData.password, // 비밀번호 동기화
-            })
-          }
-          prevStep={prevStep}
-          handleSubmit={handleSubmit}
-        />
-      )}
+      {renderStep()}
     </div>
   );
 }
