@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { useSetRecoilState } from "recoil";
+import { authState } from "../../state/authState";
 
 const systems = [
   { name: "시스템 A", member: "홍길동", date: "2025-01-01", status: "반영 전" },
@@ -11,6 +13,8 @@ const systems = [
 function SystemManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+  const setAuthState = useSetRecoilState(authState);
+
   const systemsPerPage = 5; // 페이지당 시스템 개수를 5개로 설정
 
   // 현재 페이지에 표시할 시스템 데이터 계산
@@ -35,6 +39,12 @@ function SystemManagement() {
 
       if (response.ok && data.resultCode === "S-1") {
         alert(data.msg); // 로그아웃 성공 메시지
+        // Recoil 상태 업데이트
+        setAuthState({
+          isLoggedIn: false,
+          isExpertLoggedIn: false,
+          user: null,
+        });
         navigate("/"); // MainPage로 리다이렉트
       } else {
         alert(data.msg || "로그아웃 실패");
