@@ -104,50 +104,90 @@ function SignupStep3({ prevStep, handleSubmit }) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-md w-3/4 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        {formData.member_type === "user" ? "기관회원 가입" : "전문가 회원가입"}
-      </h1>
+    <>
+      {/* 📌 진행 바 UI */}
+      <div className="flex items-center justify-center w-full py-8">
+        <div className="flex items-center w-4/5 max-w-2xl relative justify-between">
+          {/* STEP 1  */}
+          <div className="relative flex flex-col items-center w-1/4">
+            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
+              {" "}
+              ✓
+            </div>
+            <span className="text-blue-600 text-xl font-bold mt-3">
+              약관동의
+            </span>
+          </div>
 
-      <div className="space-y-6">
-        {renderFields()}
-        <InputField
-          label="비밀번호"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-        />
-        <InputField
-          label="비밀번호 확인"
-          type="password"
-          value={passwordConfirm}
-          onChange={handlePasswordConfirmChange}
-        />
-        {passwordError && (
-          <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+          {/* STEP 2 */}
+          <div className="relative flex flex-col items-center w-1/4">
+            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
+              {" "}
+              ✓
+            </div>
+            <span className="text-blue-600 text-xl font-bold mt-3">
+              이메일 인증
+            </span>
+          </div>
+
+          {/* STEP 3 */}
+          <div className="relative flex flex-col items-center w-1/4">
+            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
+              ✓
+            </div>
+            <span className="text-blue-600 text-xl font-bold mt-3">
+              회원 정보 입력
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white p-8 rounded-lg shadow-md w-3/4 max-w-xl mx-auto">
+        <h1 className="text-2xl font-bold text-center mb-6">
+          {formData.member_type === "user"
+            ? "기관회원 가입"
+            : "전문가 회원가입"}
+        </h1>
+
+        <div className="space-y-6">
+          {renderFields()}
+          <InputField
+            label="비밀번호"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+          />
+          <InputField
+            label="비밀번호 확인"
+            type="password"
+            value={passwordConfirm}
+            onChange={handlePasswordConfirmChange}
+          />
+          {passwordError && (
+            <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+          )}
+        </div>
+
+        {errorMessage && (
+          <div className="mt-4 text-red-500 text-center">{errorMessage}</div>
         )}
-      </div>
 
-      {errorMessage && (
-        <div className="mt-4 text-red-500 text-center">{errorMessage}</div>
-      )}
-
-      <div className="flex justify-between mt-8">
-        <button
-          className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md"
-          onClick={prevStep}
-        >
-          이전
-        </button>
-        <button
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          onClick={handleSignupSubmit}
-        >
-          완료
-        </button>
+        <div className="flex justify-between mt-8">
+          <button
+            className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md"
+            onClick={prevStep}
+          >
+            이전
+          </button>
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            onClick={handleSignupSubmit}
+          >
+            완료
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

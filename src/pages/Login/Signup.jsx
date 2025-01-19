@@ -6,11 +6,21 @@ import SignupStep0 from "../../components/Login/SignupStep0";
 import SignupStep1 from "../../components/Login/SignupStep1";
 import SignupStep2 from "../../components/Login/SignupStep2";
 import SignupStep3 from "../../components/Login/SignupStep3";
+import { useResetRecoilState } from "recoil";
+import { useEffect } from "react";
 
 function Signup() {
   const [step, setStep] = useState(0); // 현재 단계
   const navigate = useNavigate();
   const [formData, setFormData] = useRecoilState(formState);
+  const resetFormState = useResetRecoilState(formState);
+
+  useEffect(() => {
+    // 컴포넌트가 언마운트될 때 formState 초기화
+    return () => {
+      resetFormState();
+    };
+  }, [resetFormState]);
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);

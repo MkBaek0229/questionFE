@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
@@ -9,25 +9,64 @@ function SignupStep2({ prevStep, nextStep }) {
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationMessage, setVerificationMessage] = useState("");
   const [isVerified, setIsVerified] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(60);
+  const [requestCount, setRequestCount] = useState(0);
+
+  // ⏳ **쿨다운 타이머 업데이트**
+  useEffect(() => {
+    if (isCooldown) {
+      const timer = setInterval(() => {
+        setCooldownTime((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setIsCooldown(false);
+            setRequestCount(0);
+            return 60;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [isCooldown]);
 
   const handleEmailChange = (e) => {
-    setEmail(e.target.value);
+    setEmail(e.target.value.toLowerCase()); // 자동 소문자 변환
     setVerificationMessage("");
     setIsVerified(false);
+    setErrorMessage("");
   };
 
   const handleSendVerificationCode = async () => {
+    if (isCooldown || requestCount >= 3) {
+      alert("1분 내 요청 횟수를 초과했습니다. 잠시 후 다시 시도하세요.");
+      return;
+    }
+
     try {
       const response = await axios.post(
         "http://localhost:3000/email/send-verification-code",
         { email }
       );
-      alert(response.data.message); // 성공 메시지
+
+      setVerificationMessage(response.data.message);
+      setErrorMessage("");
+      setVerificationSent(true);
+      setRequestCount(requestCount + 1);
+
+      if (requestCount + 1 >= 3) {
+        setIsCooldown(true);
+        setCooldownTime(60); // 타이머 초기화
+      }
     } catch (error) {
-      console.error("인증 코드 전송 실패:", error);
-      setVerificationMessage(
-        error.response?.data?.message || "인증 코드 전송 실패"
-      );
+      if (error.response?.status === 429) {
+        setErrorMessage("너무 많은 요청입니다. 1분 후 다시 시도하세요.");
+      }
+      setErrorMessage(error.response?.data?.message || "인증 코드 전송 실패");
     }
   };
 
@@ -38,13 +77,12 @@ function SignupStep2({ prevStep, nextStep }) {
         { email, code: verificationCode }
       );
       if (response.status === 200) {
-        // 이메일 인증 성공 시 formData 업데이트
         setFormData((prev) => ({ ...prev, email, emailVerified: true }));
         setIsVerified(true);
         setVerificationMessage("이메일 인증 성공!");
+        setErrorMessage("");
       }
     } catch (error) {
-      console.error("인증 실패:", error);
       setVerificationMessage(
         error.response?.data?.message || "인증 코드가 유효하지 않습니다."
       );
@@ -52,60 +90,106 @@ function SignupStep2({ prevStep, nextStep }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-2xl">
-      <h1 className="text-3xl font-bold mb-8">
-        {formData.member_type === "user"
-          ? "기관회원 회원가입"
-          : "전문가 회원가입"}
-      </h1>
-      <div className="mb-6">
-        <label>이메일</label>
-        <input
-          type="email"
-          value={email}
-          onChange={handleEmailChange}
-          className="w-full p-3 border rounded-md"
-          placeholder="이메일을 입력하세요"
-        />
-        <button
-          onClick={handleSendVerificationCode}
-          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md"
-        >
-          인증 코드 전송
-        </button>
+    <>
+      {/* 📌 진행 바 UI */}
+      <div className="flex items-center justify-center w-full py-8">
+        <div className="flex items-center w-4/5 max-w-2xl relative justify-between">
+          {/* STEP 1  */}
+          <div className="relative flex flex-col items-center w-1/4">
+            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
+              ✓
+            </div>
+            <span className="text-blue-600 text-xl font-bold mt-3">
+              약관동의
+            </span>
+          </div>
+
+          {/* STEP 2 */}
+          <div className="relative flex flex-col items-center w-1/4">
+            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
+              ✓
+            </div>
+            <span className="text-blue-600 text-xl font-bold mt-3">
+              이메일 인증
+            </span>
+          </div>
+
+          {/* STEP 3 */}
+          <div className="relative flex flex-col items-center w-1/4">
+            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-gray-600 bg-gray-600 text-gray-400 rounded-full text-3xl z-10">
+              ✓
+            </div>
+            <span className="text-gray-400 text-xl mt-3">회원 정보 입력</span>
+          </div>
+        </div>
       </div>
-      <div className="mb-6">
-        <label>인증 코드</label>
-        <input
-          type="text"
-          value={verificationCode}
-          onChange={(e) => setVerificationCode(e.target.value)}
-          className="w-full p-3 border rounded-md"
-          placeholder="인증 코드를 입력하세요"
-        />
-        <button
-          onClick={handleVerificationCodeCheck}
-          className="mt-2 px-4 py-2 bg-gray-600 text-white rounded-md"
-        >
-          확인
-        </button>
+
+      <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-2xl">
+        <h1 className="text-3xl font-bold mb-8">
+          {formData.member_type === "user"
+            ? "기관회원 회원가입"
+            : "전문가 회원가입"}
+        </h1>
+        <div className="mb-6">
+          <label>이메일</label>
+          <input
+            type="email"
+            value={email}
+            onChange={handleEmailChange}
+            className="w-full p-3 border rounded-md"
+            placeholder="이메일을 입력하세요"
+          />
+          <button
+            onClick={handleSendVerificationCode}
+            className={`mt-2 px-4 py-2 rounded-md ${
+              isCooldown
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+            disabled={isCooldown}
+          >
+            {isCooldown
+              ? `다시 요청 가능 (${cooldownTime}s)`
+              : "인증 코드 전송"}
+          </button>
+        </div>
+        <div className="mb-6">
+          <label>인증 코드</label>
+          <input
+            type="text"
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
+            className="w-full p-3 border rounded-md"
+            placeholder="인증 코드를 입력하세요"
+          />
+          <button
+            onClick={handleVerificationCodeCheck} // ✅ 올바른 핸들러로 변경
+            className="mt-2 px-4 py-2 bg-gray-600 text-white rounded-md"
+          >
+            확인
+          </button>
+        </div>
+        {verificationMessage && (
+          <p className="text-green-600">{verificationMessage}</p>
+        )}
+        {errorMessage && <p className="text-red-600">{errorMessage}</p>}
+        <div className="flex justify-between mt-4">
+          <button
+            onClick={prevStep}
+            className="px-4 py-2 bg-gray-300 rounded-md"
+          >
+            이전
+          </button>
+          <button
+            onClick={nextStep}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md"
+            disabled={!isVerified}
+          >
+            다음
+          </button>
+        </div>
       </div>
-      {verificationMessage && (
-        <p className="text-green-600">{verificationMessage}</p>
-      )}
-      <div className="flex justify-between mt-4">
-        <button onClick={prevStep} className="px-4 py-2 bg-gray-300 rounded-md">
-          이전
-        </button>
-        <button
-          onClick={nextStep}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md"
-          disabled={!isVerified}
-        >
-          다음
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 
