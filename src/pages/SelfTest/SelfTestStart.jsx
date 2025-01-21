@@ -64,27 +64,7 @@ function SelfTestStart() {
     if (!validateForm()) return;
 
     try {
-      // ✅ 기존 데이터 확인
-      const existingDataResponse = await axios.get(
-        "http://localhost:3000/selftest",
-        {
-          params: { systemId, userId },
-          withCredentials: true,
-        }
-      );
-
-      if (existingDataResponse.data) {
-        console.log(
-          "✅ 기존 자가진단 데이터가 존재합니다:",
-          existingDataResponse.data
-        );
-        navigate("/DiagnosisPage", {
-          state: { systemId, userId },
-        });
-        return;
-      }
-
-      // ✅ 기존 데이터가 없으면 새 데이터 저장
+      // ✅ 바로 데이터를 저장 (기존 데이터 덮어쓰기 방지)
       const response = await axios.post(
         "http://localhost:3000/selftest",
         { ...formData, systemId, userId },

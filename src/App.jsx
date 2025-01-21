@@ -26,13 +26,13 @@ function App() {
         const response = await axios.get("http://localhost:3000/user", {
           withCredentials: true,
         });
-        const { id, role, ...userData } = response.data.user;
+        const { id, member_type, ...userData } = response.data.user;
 
         // Recoil 상태 업데이트
         setAuthState({
           isLoggedIn: true,
-          isExpertLoggedIn: role === "expert",
-          user: { id, role, ...userData }, // 사용자 정보 저장
+          isExpertLoggedIn: member_type === "expert",
+          user: { id, member_type, ...userData }, // 사용자 정보 저장
         });
       } catch (error) {
         console.error("Failed to fetch user info:", error);
@@ -44,7 +44,31 @@ function App() {
       }
     };
 
+    const fetchExpertInfo = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/expert", {
+          withCredentials: true,
+        });
+        const { id, member_type, ...userData } = response.data.expert;
+
+        // Recoil 상태 업데이트
+        setAuthState({
+          isLoggedIn: true,
+          isExpertLoggedIn: member_type === "expert",
+          user: { id, member_type, ...userData }, // 전문가 정보 저장
+        });
+      } catch (error) {
+        console.error("Failed to fetch expert info:", error);
+        setAuthState({
+          isLoggedIn: false,
+          isExpertLoggedIn: false,
+          user: null,
+        });
+      }
+    };
+
     fetchUserInfo();
+    fetchExpertInfo();
   }, [setAuthState]);
 
   return (

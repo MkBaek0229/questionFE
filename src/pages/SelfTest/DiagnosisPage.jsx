@@ -57,10 +57,11 @@ function DiagnosisPage() {
 
       return {
         questionNumber: Number(questionNumber),
-        question: questionData ? questionData.question : "질문 없음", // ✅ `question` 필드 추가
+        question: questionData ? questionData.question : "질문 없음",
         response: responses[questionNumber]?.response || "",
         additionalComment: responses[questionNumber]?.additionalComment || "",
         systemId,
+        userId,
       };
     });
 
@@ -70,18 +71,15 @@ function DiagnosisPage() {
         { quantitativeResponses: requestData },
         { withCredentials: true }
       );
-      console.log("All responses saved successfully.");
+      console.log("✅ 정량 평가 데이터 저장 완료.");
       alert("모든 응답이 저장되었습니다.");
       navigate("/qualitative-survey", { state: { systemId, userId } });
     } catch (error) {
       console.error(
-        "Error saving all responses:",
+        "❌ 정량 평가 데이터 저장 실패:",
         error.response?.data || error
       );
-      alert(
-        error.response?.data?.message ||
-          "응답 저장 중 오류가 발생했습니다. 다시 시도해주세요."
-      );
+      alert("응답 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
     }
   };
 

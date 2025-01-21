@@ -64,6 +64,7 @@ function QualitativeSurvey() {
 
   const saveResponse = async (questionNumber) => {
     const currentResponse = responses[questionNumber] || {};
+
     if (!systemId || !userId) {
       console.error("시스템 또는 사용자 정보가 누락되었습니다.");
       alert("시스템 또는 사용자 정보가 누락되었습니다.");
@@ -74,13 +75,13 @@ function QualitativeSurvey() {
       (q) => q.question_number === questionNumber
     ) || {
       indicator: "질문 없음",
-      indicator_definition: "정의 없음", // ✅ 기본값 추가
+      indicator_definition: "정의 없음",
     };
 
     const requestData = {
       questionNumber,
-      indicator: questionData.indicator, // ✅ 기존 question 대신 indicator 사용
-      indicatorDefinition: questionData.indicator_definition, // ✅ 추가된 필드
+      indicator: questionData.indicator,
+      indicatorDefinition: questionData.indicator_definition,
       response: currentResponse.response || "해당없음",
       additionalComment: currentResponse.additionalComment || "",
       systemId,
@@ -93,9 +94,7 @@ function QualitativeSurvey() {
         requestData,
         { withCredentials: true }
       );
-      console.log(
-        `✅ Response for question ${questionNumber} saved successfully.`
-      );
+      console.log(`✅ 정성 평가 ${questionNumber}번 응답 저장 완료.`);
       return true;
     } catch (error) {
       console.error("❌ 정성 설문 저장 실패:", error.response?.data || error);

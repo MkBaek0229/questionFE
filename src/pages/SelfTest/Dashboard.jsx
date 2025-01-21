@@ -49,15 +49,8 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    if (!auth.isLoggedIn) {
-      console.warn(
-        "🚨 로그인되지 않은 상태입니다. 로그인 페이지로 이동합니다."
-      );
-      navigate("/login");
-      return;
-    }
     fetchSystems();
-  }, [auth, navigate]);
+  }, []);
 
   const handleRegisterClick = () => {
     if (!auth.user || !auth.user.id) {
