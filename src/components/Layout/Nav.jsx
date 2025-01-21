@@ -24,13 +24,7 @@ function Nav() {
           {!isLoggedIn && (
             <>{/* 로그인이 아예 되지 않은 유저는 nav에 a가 아예 없음 */}</>
           )}
-          {isLoggedIn && !isExpertLoggedIn && (
-            <>
-              <a href="/SelfTestStart" className="hover:underline">
-                자가진단
-              </a>
-            </>
-          )}
+          {isLoggedIn && !isExpertLoggedIn && <></>}
           {isExpertLoggedIn && (
             <button
               className="hover:underline"

@@ -1,39 +1,47 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
-import { useSetRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { authState } from "../../state/authState";
+import {
+  systemsState,
+  assessmentStatusesState,
+  loadingState,
+  errorMessageState,
+} from "../../state/dashboardState";
 
 function Dashboard() {
-  const [systems, setSystems] = useState([]);
-  const [assessmentStatuses, setAssessmentStatuses] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [userInfo, setUserInfo] = useState(null); // 유저 정보 상태
+  const [systems, setSystems] = useRecoilState(systemsState);
+  const [assessmentStatuses, setAssessmentStatuses] = useRecoilState(
+    assessmentStatusesState
+  );
+  const [loading, setLoading] = useRecoilState(loadingState);
+  const [errorMessage, setErrorMessage] = useRecoilState(errorMessageState);
+  const auth = useRecoilValue(authState);
   const navigate = useNavigate();
   const setAuthState = useSetRecoilState(authState);
 
-  // 시스템 및 진단 상태 가져오기
   const fetchSystems = async () => {
     setErrorMessage("");
+    setLoading(true);
     try {
-      const [systemsResponse, userResponse] = await Promise.all([
+      console.log("⏳ [FETCH] 시스템 정보 요청 중...");
+      const [systemsResponse, statusResponse] = await Promise.all([
         axios.get("http://localhost:3000/systems", { withCredentials: true }),
-        axios.get("http://localhost:3000/user", { withCredentials: true }),
+        axios.get("http://localhost:3000/assessment/status", {
+          withCredentials: true,
+        }),
       ]);
-      setSystems(systemsResponse.data);
-      setUserInfo(userResponse.data);
 
-      // 각 시스템의 진단 상태 가져오기
-      const statusResponse = await axios.get(
-        "http://localhost:3000/assessment/status",
-        { withCredentials: true }
-      );
+      console.log("✅ [FETCH] 시스템 응답:", systemsResponse.data);
+      console.log("✅ [FETCH] 진단 상태 응답:", statusResponse.data);
+
+      setSystems(systemsResponse.data);
       setAssessmentStatuses(statusResponse.data);
     } catch (error) {
-      console.error("데이터 조회 실패:", error);
+      console.error("❌ 데이터 조회 실패:", error);
       setErrorMessage("데이터를 불러오는 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
@@ -41,38 +49,52 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    fetchSystems();
-  }, []);
-
-  const handleRegisterClick = () => {
-    if (!userInfo || !userInfo.id) {
-      alert("사용자 정보가 없습니다. 다시 로그인해주세요.");
+    if (!auth.isLoggedIn) {
+      console.warn(
+        "🚨 로그인되지 않은 상태입니다. 로그인 페이지로 이동합니다."
+      );
+      navigate("/login");
       return;
     }
-    navigate("/system-register", { state: { userId: userInfo.id } });
+    fetchSystems();
+  }, [auth, navigate]);
+
+  const handleRegisterClick = () => {
+    if (!auth.user || !auth.user.id) {
+      alert("🚨 사용자 정보가 없습니다. 다시 로그인해주세요.");
+      return;
+    }
+    navigate("/system-register");
   };
 
   const handleViewResult = (systemId) => {
-    console.log("Navigating to view results for system:", systemId);
-    navigate("/completion", { state: { systemId, userId: userInfo.id } });
+    console.log("📂 결과 보기 요청:", systemId);
+    navigate("/completion", { state: { systemId, userId: auth.user.id } });
   };
 
   const handleEditResult = (systemId) => {
-    console.log("Navigating to edit results for system:", systemId);
+    console.log("✏️ 수정 요청:", systemId);
     navigate("/SelfTestStart", {
-      state: { selectedSystems: [systemId], userInfo },
+      state: { selectedSystems: [systemId], userInfo: auth.user },
     });
   };
 
   const handleStartDiagnosis = (systemId) => {
-    console.log("Navigating to start diagnosis for system:", systemId);
+    if (!systemId) {
+      console.error("🚨 시스템 ID가 없습니다. 진단을 시작할 수 없습니다.");
+      alert("시스템을 선택한 후 진단을 시작해주세요.");
+      return;
+    }
+
+    console.log("✅ 진단 시작 - 시스템 ID:", systemId);
     navigate("/SelfTestStart", {
-      state: { selectedSystems: [systemId], userInfo },
+      state: { selectedSystems: [systemId], userInfo: auth.user },
     });
   };
 
   const handleLogout = async () => {
     try {
+      console.log("🚪 로그아웃 요청 중...");
       const response = await fetch("http://localhost:3000/logout", {
         method: "POST",
         credentials: "include",
@@ -81,22 +103,24 @@ function Dashboard() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message); // 로그아웃 성공 메시지
-        // Recoil 상태 업데이트
+        console.log("✅ 로그아웃 성공:", data.message);
+        alert(data.message);
         setAuthState({
           isLoggedIn: false,
           isExpertLoggedIn: false,
           user: null,
         });
-        navigate("/"); // MainPage로 리다이렉트
+        navigate("/");
       } else {
+        console.error("❌ 로그아웃 실패:", data.message);
         alert(data.message || "로그아웃 실패");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("❌ 로그아웃 요청 오류:", error);
       alert("로그아웃 요청 중 오류가 발생했습니다.");
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="py-6 text-black text-center">
@@ -107,7 +131,12 @@ function Dashboard() {
           <h2 className="text-2xl font-bold">등록된 시스템</h2>
           <button
             onClick={handleRegisterClick}
-            className="px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700"
+            className={`px-4 py-2 font-bold rounded ${
+              auth.user
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-400 text-gray-700 cursor-not-allowed"
+            }`}
+            disabled={!auth.user}
           >
             시스템 등록
           </button>
@@ -162,7 +191,6 @@ function Dashboard() {
           </div>
         )}
       </div>
-      {/* 로그아웃 FAB 버튼 */}
       <button
         className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col"
         onClick={handleLogout}

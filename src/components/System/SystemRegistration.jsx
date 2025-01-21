@@ -1,40 +1,57 @@
-import React, { useState } from "react";
+import React from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useRecoilValue, useRecoilState } from "recoil";
+import { authState } from "../../state/authState";
+import { formState } from "../../state/formState";
 
-function SystemRegistration({ userId }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    min_subjects: "",
-    max_subjects: "",
-    purpose: "",
-    is_private: "포함",
-    is_unique: "미포함",
-    is_resident: "포함",
-    reason: "동의",
-  });
-  const [errorMessage, setErrorMessage] = useState("");
+function SystemRegistration() {
+  const auth = useRecoilValue(authState); // 로그인된 사용자 정보 가져오기
+  const [formData, setFormData] = useRecoilState(formState); // 전역 상태 관리
   const navigate = useNavigate();
 
+  // 폼 데이터 변경 핸들러
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value || "", // 기본값 설정
+    }));
   };
 
+  // 폼 제출 핸들러
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      await axios.post(
+      if (!auth.user || !auth.user.id) {
+        alert("사용자 정보가 없습니다. 다시 로그인해주세요.");
+        return;
+      }
+
+      console.log("🚀 [POST] 요청 데이터:", {
+        ...formData,
+        user_id: auth.user.id,
+      });
+      console.log("📋 [DEBUG] reason 값:", formData.reason);
+
+      const response = await axios.post(
         "http://localhost:3000/systems",
-        { ...formData, user_id: userId },
+        { ...formData, user_id: auth.user.id },
         {
           withCredentials: true,
         }
       );
+
+      console.log("✅ [POST] 응답 데이터:", response.data);
       alert("시스템 등록이 완료되었습니다!");
       navigate("/dashboard"); // 등록 완료 후 대시보드로 이동
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || "시스템 등록 실패");
+      console.error(
+        "❌ [POST] 에러 응답:",
+        error.response?.data || error.message
+      );
+      alert(error.response?.data?.message || "시스템 등록 실패");
     }
   };
 
@@ -50,7 +67,7 @@ function SystemRegistration({ userId }) {
             <input
               type="text"
               name="name"
-              value={formData.name}
+              value={formData.name || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="시스템 이름을 입력하세요"
@@ -64,7 +81,7 @@ function SystemRegistration({ userId }) {
             <input
               type="number"
               name="min_subjects"
-              value={formData.min_subjects}
+              value={formData.min_subjects || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="최소 문항 수를 입력하세요"
@@ -78,7 +95,7 @@ function SystemRegistration({ userId }) {
             <input
               type="number"
               name="max_subjects"
-              value={formData.max_subjects}
+              value={formData.max_subjects || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="최대 문항 수를 입력하세요"
@@ -90,7 +107,7 @@ function SystemRegistration({ userId }) {
             <input
               type="text"
               name="purpose"
-              value={formData.purpose}
+              value={formData.purpose || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="처리 목적을 입력하세요"
@@ -103,7 +120,7 @@ function SystemRegistration({ userId }) {
             </label>
             <select
               name="is_private"
-              value={formData.is_private}
+              value={formData.is_private || "포함"}
               onChange={handleChange}
               className="w-full p-2 border rounded"
             >
@@ -117,7 +134,7 @@ function SystemRegistration({ userId }) {
             </label>
             <select
               name="is_unique"
-              value={formData.is_unique}
+              value={formData.is_unique || "미포함"}
               onChange={handleChange}
               className="w-full p-2 border rounded"
             >
@@ -131,7 +148,7 @@ function SystemRegistration({ userId }) {
             </label>
             <select
               name="is_resident"
-              value={formData.is_resident}
+              value={formData.is_resident || "포함"}
               onChange={handleChange}
               className="w-full p-2 border rounded"
             >
@@ -143,7 +160,7 @@ function SystemRegistration({ userId }) {
             <label className="block text-gray-700 font-medium">수집 근거</label>
             <select
               name="reason"
-              value={formData.reason}
+              value={formData.reason || "동의"}
               onChange={handleChange}
               className="w-full p-2 border rounded"
             >
@@ -152,9 +169,6 @@ function SystemRegistration({ userId }) {
               <option value="기타">기타</option>
             </select>
           </div>
-          {errorMessage && (
-            <p className="text-red-500 text-center">{errorMessage}</p>
-          )}
           <button
             type="submit"
             className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useRecoilState } from "recoil";
+import {
+  qualitativeDataState,
+  qualitativeResponsesState,
+  qualitativeCurrentStepState,
+} from "../../state/selfTestFormState";
 
 function QualitativeSurvey() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [responses, setResponses] = useState({});
-  const [qualitativeData, setQualitativeData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const totalSteps = 8;
+  const [currentStep, setCurrentStep] = useRecoilState(
+    qualitativeCurrentStepState
+  );
+  const [responses, setResponses] = useRecoilState(qualitativeResponsesState);
+  const [qualitativeData, setQualitativeData] =
+    useRecoilState(qualitativeDataState);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,7 +43,7 @@ function QualitativeSurvey() {
 
         const initialResponses = data.reduce((acc, item) => {
           acc[item.question_number] = {
-            response: item.response || "",
+            response: item.response || "해당없음",
             additionalComment: item.additional_comment || "",
           };
           return acc;
@@ -53,7 +60,7 @@ function QualitativeSurvey() {
     };
 
     fetchQualitativeData();
-  }, [systemId, userId, navigate]);
+  }, [systemId, userId, navigate, setQualitativeData, setResponses]);
 
   const saveResponse = async (questionNumber) => {
     const currentResponse = responses[questionNumber] || {};
@@ -63,18 +70,22 @@ function QualitativeSurvey() {
       return false;
     }
 
+    const questionData = qualitativeData.find(
+      (q) => q.question_number === questionNumber
+    ) || {
+      indicator: "질문 없음",
+      indicator_definition: "정의 없음", // ✅ 기본값 추가
+    };
+
     const requestData = {
       questionNumber,
-      response: currentResponse.response || null,
-      additionalComment: currentResponse.additionalComment || null,
+      indicator: questionData.indicator, // ✅ 기존 question 대신 indicator 사용
+      indicatorDefinition: questionData.indicator_definition, // ✅ 추가된 필드
+      response: currentResponse.response || "해당없음",
+      additionalComment: currentResponse.additionalComment || "",
       systemId,
       userId,
     };
-
-    if (!requestData.response && !requestData.additionalComment) {
-      alert("응답 또는 추가 의견을 입력해주세요.");
-      return false;
-    }
 
     try {
       await axios.post(
@@ -83,28 +94,21 @@ function QualitativeSurvey() {
         { withCredentials: true }
       );
       console.log(
-        `Response for question ${questionNumber} saved successfully.`
+        `✅ Response for question ${questionNumber} saved successfully.`
       );
       return true;
     } catch (error) {
-      console.error("정성 설문 저장 실패:", error.response?.data || error);
+      console.error("❌ 정성 설문 저장 실패:", error.response?.data || error);
       alert("정성 설문 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       return false;
     }
   };
 
   const handleNextClick = async () => {
-    if (loading) return;
-
-    setLoading(true);
     const success = await saveResponse(currentStep);
+    if (!success) return;
 
-    if (!success) {
-      setLoading(false);
-      return;
-    }
-
-    if (currentStep < totalSteps) {
+    if (currentStep < 8) {
       setCurrentStep((prev) => prev + 1);
     } else {
       try {
@@ -113,16 +117,14 @@ function QualitativeSurvey() {
           { userId, systemId },
           { withCredentials: true }
         );
-        console.log("최종 결과 저장 성공:", response.data);
+        console.log("✅ 최종 결과 저장 성공:", response.data);
         alert("결과가 성공적으로 저장되었습니다.");
         navigate("/completion", { state: { userId, systemId } });
       } catch (error) {
-        console.error("최종 결과 저장 실패:", error.response?.data || error);
+        console.error("❌ 최종 결과 저장 실패:", error.response?.data || error);
         alert("결과 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       }
     }
-
-    setLoading(false);
   };
 
   const handlePreviousClick = () => {
@@ -130,17 +132,12 @@ function QualitativeSurvey() {
   };
 
   const renderCurrentStep = () => {
-    if (qualitativeData.length === 0) {
-      return (
-        <p className="text-center">정성 문항 데이터를 불러오는 중입니다...</p>
-      );
-    }
-
+    // ✅ 기존 데이터가 없으면 기본값을 설정
     const currentData = qualitativeData.find(
       (item) => item.question_number === currentStep
     ) || {
       question_number: currentStep,
-      question: "질문이 없습니다.",
+      indicator_definition: "질문이 없습니다.", // 기본값 추가
       evaluation_criteria: "",
       reference_info: "",
     };
@@ -161,7 +158,7 @@ function QualitativeSurvey() {
           <tr>
             <td className="border border-gray-300 p-2">지표 정의</td>
             <td className="border border-gray-300 p-2">
-              {currentData.question}
+              {currentData.indicator_definition}
             </td>
           </tr>
           <tr>
@@ -203,27 +200,6 @@ function QualitativeSurvey() {
               </div>
             </td>
           </tr>
-          {responses[currentStep]?.response === "자문필요" && (
-            <tr>
-              <td className="border border-gray-300 p-2">자문 내용</td>
-              <td className="border border-gray-300 p-2">
-                <textarea
-                  placeholder="자문 필요 내용을 입력하세요"
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  value={responses[currentStep]?.additionalComment || ""}
-                  onChange={(e) =>
-                    setResponses((prev) => ({
-                      ...prev,
-                      [currentStep]: {
-                        ...prev[currentStep],
-                        additionalComment: e.target.value,
-                      },
-                    }))
-                  }
-                ></textarea>
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     );
@@ -233,27 +209,21 @@ function QualitativeSurvey() {
     <div className="bg-gray-100 min-h-screen flex flex-col items-center">
       <div className="container mx-auto max-w-5xl bg-white mt-10 p-6 rounded-lg shadow-lg">
         <h2 className="text-xl font-bold mb-6">
-          정성 설문조사 ({currentStep}/{totalSteps}번)
+          정성 설문조사 ({currentStep}/8번)
         </h2>
         {renderCurrentStep()}
         <div className="flex justify-between mt-6">
           <button
-            className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
+            className="px-6 py-2 bg-gray-400 text-white rounded-md shadow"
             onClick={handlePreviousClick}
-            disabled={currentStep === 1}
           >
             이전
           </button>
           <button
-            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
+            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow"
             onClick={handleNextClick}
-            disabled={loading}
           >
-            {loading
-              ? "저장 중..."
-              : currentStep === totalSteps
-              ? "완료"
-              : "다음"}
+            {currentStep === 8 ? "완료" : "다음"}
           </button>
         </div>
       </div>
