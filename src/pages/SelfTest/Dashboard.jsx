@@ -60,8 +60,10 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    fetchSystems();
-  }, []);
+    if (auth.isLoggedIn && auth.user) {
+      fetchSystems();
+    }
+  }, [auth.isLoggedIn, auth.user]); // 🔹 authState 업데이트 후 실행
 
   const handleRegisterClick = () => {
     if (!auth.user || !auth.user.id) {

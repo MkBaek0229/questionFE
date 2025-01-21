@@ -16,60 +16,59 @@ import SignupComplete from "./components/Login/SignupComplete";
 import Dashboard from "./pages/SelfTest/Dashboard";
 import CompletionPage from "./pages/SelfTest/CompletionPage";
 import SystemRegistration from "./components/System/SystemRegistration";
-import SystemDetails from "./pages/manager/SystemDetails";
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
 
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const fetchUserData = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/user", {
+        // 1. 기관회원 데이터 먼저 확인
+        const userResponse = await axios.get("http://localhost:3000/user", {
           withCredentials: true,
         });
-        const { id, member_type, ...userData } = response.data.user;
 
-        // Recoil 상태 업데이트
-        setAuthState({
-          isLoggedIn: true,
-          isExpertLoggedIn: member_type === "expert",
-          user: { id, member_type, ...userData }, // 사용자 정보 저장
-        });
+        if (userResponse.data.user) {
+          const { id, member_type, ...userData } = userResponse.data.user;
+          setAuthState({
+            isLoggedIn: true,
+            isExpertLoggedIn: false,
+            user: { id, member_type, ...userData },
+          });
+          return; // 여기서 끝내고 전문가 체크 X
+        }
       } catch (error) {
-        console.error("Failed to fetch user info:", error);
-        setAuthState({
-          isLoggedIn: false,
-          isExpertLoggedIn: false,
-          user: null,
-        });
+        console.warn("기관회원 정보 없음, 전문가 체크 진행");
       }
-    };
 
-    const fetchExpertInfo = async () => {
+      // 2. 기관회원이 없으면 전문가회원 확인
       try {
-        const response = await axios.get("http://localhost:3000/expert", {
+        const expertResponse = await axios.get("http://localhost:3000/expert", {
           withCredentials: true,
         });
-        const { id, member_type, ...userData } = response.data.expert;
 
-        // Recoil 상태 업데이트
-        setAuthState({
-          isLoggedIn: true,
-          isExpertLoggedIn: member_type === "expert",
-          user: { id, member_type, ...userData }, // 전문가 정보 저장
-        });
+        if (expertResponse.data.expert) {
+          const { id, member_type, ...userData } = expertResponse.data.expert;
+          setAuthState({
+            isLoggedIn: true,
+            isExpertLoggedIn: true,
+            user: { id, member_type, ...userData },
+          });
+          return;
+        }
       } catch (error) {
-        console.error("Failed to fetch expert info:", error);
-        setAuthState({
-          isLoggedIn: false,
-          isExpertLoggedIn: false,
-          user: null,
-        });
+        console.warn("전문가회원 정보 없음, 로그아웃 처리");
       }
+
+      // 3. 두 경우 다 아니면 로그아웃 상태로 설정
+      setAuthState({
+        isLoggedIn: false,
+        isExpertLoggedIn: false,
+        user: null,
+      });
     };
 
-    fetchUserInfo();
-    fetchExpertInfo();
+    fetchUserData();
   }, [setAuthState]);
 
   return (
@@ -100,7 +99,6 @@ function App() {
           <Route path="/system-register" element={<SystemRegistration />} />
           <Route path="/completion" element={<CompletionPage />} />
           <Route path="/system-management" element={<SystemManagement />} />
-          <Route path="/system-details/:systemId" element={<SystemDetails />} />
         </Routes>
       </Layout>
     </BrowserRouter>
