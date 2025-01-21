@@ -16,6 +16,7 @@ import SignupComplete from "./components/Login/SignupComplete";
 import Dashboard from "./pages/SelfTest/Dashboard";
 import CompletionPage from "./pages/SelfTest/CompletionPage";
 import SystemRegistration from "./components/System/SystemRegistration";
+import SystemDetails from "./pages/manager/SystemDetails";
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
@@ -99,6 +100,7 @@ function App() {
           <Route path="/system-register" element={<SystemRegistration />} />
           <Route path="/completion" element={<CompletionPage />} />
           <Route path="/system-management" element={<SystemManagement />} />
+          <Route path="/system-details/:systemId" element={<SystemDetails />} />
         </Routes>
       </Layout>
     </BrowserRouter>

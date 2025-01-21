@@ -13,6 +13,7 @@ function DiagnosisPage() {
   const location = useLocation();
   const { userId, systemId } = location.state || {};
 
+  console.log(userId, systemId);
   const [quantitativeData, setQuantitativeData] = useRecoilState(
     quantitativeDataState
   );

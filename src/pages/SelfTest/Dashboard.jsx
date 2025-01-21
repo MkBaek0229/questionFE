@@ -28,17 +28,28 @@ function Dashboard() {
     setLoading(true);
     try {
       console.log("⏳ [FETCH] 시스템 정보 요청 중...");
-      const [systemsResponse, statusResponse] = await Promise.all([
-        axios.get("http://localhost:3000/systems", { withCredentials: true }),
-        axios.get("http://localhost:3000/assessment/status", {
-          withCredentials: true,
-        }),
-      ]);
+
+      // ✅ 기존 API 호출 (등록된 시스템 & 진단 상태 조회)
+      const [systemsResponse, statusResponse, systemsResultsResponse] =
+        await Promise.all([
+          axios.get("http://localhost:3000/systems", { withCredentials: true }),
+          axios.get("http://localhost:3000/assessment/status", {
+            withCredentials: true,
+          }),
+          axios.get(
+            `http://localhost:3000/systems-results?userId=${auth.user.id}`,
+            { withCredentials: true }
+          ), // ✅ 추가된 API
+        ]);
 
       console.log("✅ [FETCH] 시스템 응답:", systemsResponse.data);
       console.log("✅ [FETCH] 진단 상태 응답:", statusResponse.data);
+      console.log(
+        "✅ [FETCH] 기관회원 시스템 결과:",
+        systemsResultsResponse.data
+      );
 
-      setSystems(systemsResponse.data);
+      setSystems(systemsResultsResponse.data); // ✅ 기존 `systems` 상태를 `systems-results` 데이터로 변경
       setAssessmentStatuses(statusResponse.data);
     } catch (error) {
       console.error("❌ 데이터 조회 실패:", error);
@@ -60,9 +71,9 @@ function Dashboard() {
     navigate("/system-register");
   };
 
-  const handleViewResult = (systemId) => {
-    console.log("📂 결과 보기 요청:", systemId);
-    navigate("/completion", { state: { systemId, userId: auth.user.id } });
+  const handleViewResult = (system) => {
+    console.log("📂 결과 보기 요청:", system.system_id);
+    navigate("/completion", { state: { system } });
   };
 
   const handleEditResult = (systemId) => {
@@ -158,7 +169,7 @@ function Dashboard() {
                   {isCompleted ? (
                     <div className="flex flex-col space-y-2">
                       <button
-                        onClick={() => handleViewResult(system.system_id)}
+                        onClick={() => handleViewResult(system)}
                         className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                       >
                         결과 보기

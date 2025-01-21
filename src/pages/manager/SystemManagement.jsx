@@ -1,21 +1,51 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
-import { useSetRecoilState } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 
-const systems = [
-  { name: "시스템 A", member: "홍길동", date: "2025-01-01", status: "반영 전" },
-  // ... 추가 시스템 데이터
-];
-
 function SystemManagement() {
+  const [systems, setSystems] = useState([]); // 배정된 시스템 목록 저장
   const [currentPage, setCurrentPage] = useState(1);
+  const auth = useRecoilValue(authState); // 로그인된 전문가 정보 가져오기
   const navigate = useNavigate();
   const setAuthState = useSetRecoilState(authState);
 
-  const systemsPerPage = 5; // 페이지당 시스템 개수를 5개로 설정
+  const systemsPerPage = 5; // 페이지당 시스템 개수 설정
+
+  // "피드백 보기" 버튼 클릭 시 이동
+  const handleViewResult = (systemId) => {
+    navigate(`/system-details/${systemId}`);
+  };
+  const handleWriteFeedback = (systemId) => {
+    navigate(`/system-details/${systemId}`);
+  };
+
+  // ✅ 배정된 시스템 목록 가져오기 (GET /assigned-systems)
+  useEffect(() => {
+    const fetchAssignedSystems = async () => {
+      if (!auth.user || !auth.user.id) return;
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/assigned-systems?expertId=${auth.user.id}`,
+          { credentials: "include" }
+        );
+
+        const data = await response.json();
+        if (response.ok) {
+          setSystems(data);
+        } else {
+          console.error("시스템 조회 실패:", data.message);
+        }
+      } catch (error) {
+        console.error("API 요청 실패:", error);
+      }
+    };
+
+    fetchAssignedSystems();
+  }, [auth.user]);
 
   // 현재 페이지에 표시할 시스템 데이터 계산
   const indexOfLastSystem = currentPage * systemsPerPage;
@@ -39,13 +69,12 @@ function SystemManagement() {
 
       if (response.ok && data.resultCode === "S-1") {
         alert(data.msg); // 로그아웃 성공 메시지
-        // Recoil 상태 업데이트
         setAuthState({
           isLoggedIn: false,
           isExpertLoggedIn: false,
           user: null,
         });
-        navigate("/"); // MainPage로 리다이렉트
+        navigate("/"); // 메인 페이지로 이동
       } else {
         alert(data.msg || "로그아웃 실패");
       }
@@ -61,6 +90,7 @@ function SystemManagement() {
       <header className="w-full max-w-[1000px] h-[70px] bg-blue-600 flex items-center justify-between px-5 text-white mb-6 shadow-md rounded-lg">
         <h1 className="text-lg font-semibold">전문가회원 대시보드</h1>
       </header>
+
       {/* 컨텐츠 영역 */}
       <div className="bg-white rounded-lg w-full max-w-[1000px] min-h-[600px] h-full p-5 shadow-md">
         <h2 className="text-2xl font-semibold text-gray-700 mb-5">
@@ -103,22 +133,42 @@ function SystemManagement() {
           <tbody>
             {currentSystems.map((system, index) => (
               <tr key={index} className="hover:bg-gray-50">
-                <td className="p-3 border text-gray-700">{system.member}</td>
-                <td className="p-3 border text-gray-700">{system.name}</td>
-                <td className="p-3 border text-gray-700">{system.date}</td>
+                <td className="p-3 border text-gray-700">
+                  {system.institution_name}
+                </td>
+                <td className="p-3 border text-gray-700">
+                  {system.system_name}
+                </td>
+                <td className="p-3 border text-gray-700">
+                  {system.completed_at
+                    ? system.completed_at.split("T")[0]
+                    : "진단 미완료"}
+                </td>
                 <td className="p-3 border">
-                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-sm">
-                    {system.status}
+                  <span
+                    className={`px-2 py-1 rounded-lg text-sm ${
+                      system.feedback_status === "전문가 자문이 반영되었습니다"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {system.feedback_status || "반영 전"}
                   </span>
                 </td>
                 <td className="p-3 border text-center">
-                  <button className="px-3 py-1  bg-gray-300 text-gray-700 rounded-lg hover:bg-blue-600 mr-2">
+                  <button
+                    onClick={() => handleViewResult(system.system_id)}
+                    className="px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-blue-600 mr-2"
+                  >
                     피드백 보기
                   </button>
                   <button className="px-2 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 mr-2">
                     시스템 정보
                   </button>
-                  <button className="px-3 py-1 bg-blue-500  text-white rounded-lg hover:bg-gray-400">
+                  <button
+                    onClick={() => handleWriteFeedback(system.system_id)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  >
                     피드백 작성
                   </button>
                 </td>
@@ -144,6 +194,7 @@ function SystemManagement() {
           ))}
         </div>
       </div>
+
       {/* 로그아웃 FAB 버튼 */}
       <button
         className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col"
