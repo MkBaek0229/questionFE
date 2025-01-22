@@ -78,13 +78,15 @@ function QualitativeSurvey() {
       additionalComment: currentResponse.additionalComment || "",
       systemId,
       userId,
+      indicator: "some_indicator_value", // indicator 필드 추가
     };
 
     if (
       !requestData.questionNumber ||
       !requestData.response ||
       !requestData.systemId ||
-      !requestData.userId
+      !requestData.userId ||
+      !requestData.indicator // indicator 필드 확인
     ) {
       console.error("Invalid requestData:", requestData);
       alert("필수 데이터가 누락되었습니다. 모든 문항을 확인해주세요.");
@@ -107,7 +109,6 @@ function QualitativeSurvey() {
       return false;
     }
   };
-
   const handleNextClick = async () => {
     const success = await saveResponse(currentStep);
 
@@ -137,12 +138,6 @@ function QualitativeSurvey() {
   };
 
   const renderCurrentStep = () => {
-    if (qualitativeData.length === 0) {
-      return (
-        <p className="text-center">정성 문항 데이터를 불러오는 중입니다...</p>
-      );
-    }
-
     const currentData = qualitativeData.find(
       (item) => item.question_number === currentStep
     ) || {

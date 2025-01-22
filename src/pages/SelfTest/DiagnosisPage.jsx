@@ -65,17 +65,26 @@ function DiagnosisPage() {
         item.questionNumber &&
         item.response &&
         item.systemId &&
+        item.userId &&
         typeof item.questionNumber === "number"
     );
   };
 
   const saveAllResponses = async () => {
-    const requestData = Object.keys(responses).map((questionNumber) => ({
-      questionNumber: Number(questionNumber),
-      response: responses[questionNumber]?.response || "",
-      additionalComment: responses[questionNumber]?.additionalComment || "",
-      systemId,
-    }));
+    const requestData = Object.keys(responses).map((questionNumber) => {
+      const questionData = quantitativeData.find(
+        (item) => item.question_number === Number(questionNumber)
+      );
+
+      return {
+        questionNumber: Number(questionNumber),
+        question: questionData?.question || "", // question 필드 추가
+        response: responses[questionNumber]?.response || "",
+        additionalComment: responses[questionNumber]?.additionalComment || "",
+        systemId,
+        userId,
+      };
+    });
 
     if (!validateResponses(requestData)) {
       console.error("Invalid requestData:", requestData);

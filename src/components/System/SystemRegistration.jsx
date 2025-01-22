@@ -15,7 +15,10 @@ function SystemRegistration() {
     const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value || "", // 기본값 설정
+      system: {
+        ...prevState.system,
+        [name]: value || "", // 기본값 설정
+      },
     }));
   };
 
@@ -29,15 +32,18 @@ function SystemRegistration() {
         return;
       }
 
+      // reason 필드가 빈 문자열인 경우 기본값 설정
+      const reason = formData.system.reason || "동의";
+
       console.log("🚀 [POST] 요청 데이터:", {
-        ...formData,
+        ...formData.system,
+        reason,
         user_id: auth.user.id,
       });
-      console.log("📋 [DEBUG] reason 값:", formData.reason);
 
       const response = await axios.post(
         "http://localhost:3000/systems",
-        { ...formData, user_id: auth.user.id },
+        { ...formData.system, reason, user_id: auth.user.id },
         {
           withCredentials: true,
         }
@@ -67,7 +73,7 @@ function SystemRegistration() {
             <input
               type="text"
               name="name"
-              value={formData.name || ""}
+              value={formData.system.name || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="시스템 이름을 입력하세요"
@@ -81,7 +87,7 @@ function SystemRegistration() {
             <input
               type="number"
               name="min_subjects"
-              value={formData.min_subjects || ""}
+              value={formData.system.min_subjects || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="최소 문항 수를 입력하세요"
@@ -95,7 +101,7 @@ function SystemRegistration() {
             <input
               type="number"
               name="max_subjects"
-              value={formData.max_subjects || ""}
+              value={formData.system.max_subjects || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="최대 문항 수를 입력하세요"
@@ -107,7 +113,7 @@ function SystemRegistration() {
             <input
               type="text"
               name="purpose"
-              value={formData.purpose || ""}
+              value={formData.system.purpose || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
               placeholder="처리 목적을 입력하세요"
@@ -120,8 +126,15 @@ function SystemRegistration() {
             </label>
             <select
               name="is_private"
-              value={formData.is_private || "포함"}
-              onChange={handleChange}
+              value={formData.system.is_private ? "포함" : "미포함"}
+              onChange={(e) =>
+                handleChange({
+                  target: {
+                    name: "is_private",
+                    value: e.target.value === "포함",
+                  },
+                })
+              }
               className="w-full p-2 border rounded"
             >
               <option value="포함">포함</option>
@@ -134,8 +147,15 @@ function SystemRegistration() {
             </label>
             <select
               name="is_unique"
-              value={formData.is_unique || "미포함"}
-              onChange={handleChange}
+              value={formData.system.is_unique ? "포함" : "미포함"}
+              onChange={(e) =>
+                handleChange({
+                  target: {
+                    name: "is_unique",
+                    value: e.target.value === "포함",
+                  },
+                })
+              }
               className="w-full p-2 border rounded"
             >
               <option value="포함">포함</option>
@@ -148,8 +168,15 @@ function SystemRegistration() {
             </label>
             <select
               name="is_resident"
-              value={formData.is_resident || "포함"}
-              onChange={handleChange}
+              value={formData.system.is_resident ? "포함" : "미포함"}
+              onChange={(e) =>
+                handleChange({
+                  target: {
+                    name: "is_resident",
+                    value: e.target.value === "포함",
+                  },
+                })
+              }
               className="w-full p-2 border rounded"
             >
               <option value="포함">포함</option>
@@ -160,7 +187,7 @@ function SystemRegistration() {
             <label className="block text-gray-700 font-medium">수집 근거</label>
             <select
               name="reason"
-              value={formData.reason || "동의"}
+              value={formData.system.reason || "동의"}
               onChange={handleChange}
               className="w-full p-2 border rounded"
             >

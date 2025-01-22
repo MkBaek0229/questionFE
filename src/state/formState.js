@@ -21,5 +21,16 @@ export const formState = atom({
       phone_number: "",
       major_carrea: "",
     },
+    system: {
+      // 시스템 등록 폼 데이터 추가
+      name: "",
+      min_subjects: "",
+      max_subjects: "",
+      purpose: "",
+      is_private: false,
+      is_unique: false,
+      is_resident: false,
+      reason: "동의", // 기본값 설정
+    },
   },
 });
