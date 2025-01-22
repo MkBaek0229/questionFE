@@ -2,16 +2,22 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
-import { authState } from "../../state/authState";
+import {
+  authState,
+  expertAuthState,
+  superUserAuthState,
+} from "../../state/authState";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("user"); // "user" 또는 "expert"
+  const [userType, setUserType] = useState("user"); // "user", "expert", "superuser"
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const setAuthState = useSetRecoilState(authState);
+  const setExpertAuthState = useSetRecoilState(expertAuthState);
+  const setSuperUserAuthState = useSetRecoilState(superUserAuthState);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -23,31 +29,46 @@ function Login() {
     const endpoint =
       userType === "user"
         ? "http://localhost:3000/login"
-        : "http://localhost:3000/login/expert";
+        : userType === "expert"
+        ? "http://localhost:3000/login/expert"
+        : "http://localhost:3000/login/superuser";
 
     try {
-      console.log("🚀 [LOGIN] 요청 전송:", endpoint, { email, password }); // ✅ 디버깅 로그 추가
+      console.log("🚀 [LOGIN] 요청 전송:", endpoint, { email, password });
       const response = await axios.post(
         endpoint,
         { email, password },
         { withCredentials: true }
       );
+      console.log("✅ [LOGIN] 응답 데이터:", response.data);
 
-      console.log("✅ [LOGIN] 응답 데이터:", response.data); // ✅ 디버깅 로그 추가
-      const { id, member_type, ...userData } = response.data.data; // ✅ 수정
+      const { id, member_type, ...userData } = response.data.data;
 
-      // Recoil 상태 업데이트
-      setAuthState({
-        isLoggedIn: true,
-        isExpertLoggedIn: member_type === "expert",
-        user: { id, member_type, ...userData },
-      });
-
-      // 전문가 로그인 여부 확인 후 리디렉션
-      navigate(member_type === "expert" ? "/system-management" : "/dashboard");
+      // 사용자 유형별로 상태 업데이트
+      if (member_type === "superuser") {
+        setSuperUserAuthState({
+          isLoggedIn: true,
+          user: { id, member_type, ...userData },
+        });
+        navigate("/superuserpage");
+      } else if (member_type === "expert") {
+        setExpertAuthState({
+          isLoggedIn: true,
+          user: { id, member_type, ...userData },
+        });
+        navigate("/system-management");
+      } else {
+        setAuthState({
+          isLoggedIn: true,
+          user: { id, member_type, ...userData },
+        });
+        navigate("/dashboard");
+      }
     } catch (error) {
       console.error("❌ [LOGIN] 오류:", error.response?.data || error.message);
-      setErrorMessage(error.response?.data?.msg || "로그인 실패");
+      setErrorMessage(
+        error.response?.data?.msg || "로그인 요청 중 문제가 발생했습니다."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -70,6 +91,7 @@ function Login() {
             >
               <option value="user">일반회원</option>
               <option value="expert">관리자</option>
+              <option value="superuser">슈퍼유저</option>
             </select>
           </div>
 

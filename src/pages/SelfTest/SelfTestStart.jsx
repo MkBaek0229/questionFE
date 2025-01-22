@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { authState } from "../../state/authState";
-import { selfTestFormState } from "../../state/selftestFormState";
+import { selfTestFormState } from "../../state/selfTestState";
 
 function SelfTestStart() {
   const navigate = useNavigate();

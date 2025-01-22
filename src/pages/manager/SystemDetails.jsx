@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { authState } from "../../state/authState";
+import { expertAuthState } from "../../state/authState";
 
 function SystemDetails() {
   const { systemId } = useParams();
   const navigate = useNavigate();
-  const auth = useRecoilValue(authState); // 로그인한 전문가 정보
+  const expertAuth = useRecoilValue(expertAuthState); // 로그인한 전문가 정보
   const [systemResult, setSystemResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,6 +14,7 @@ function SystemDetails() {
   const [isEditing, setIsEditing] = useState(false); // 피드백 수정 모드 여부
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false); // 피드백 제출 여부
 
+  console.log(expertAuth);
   // ✅ 특정 시스템의 자가진단 결과 가져오기 (GET /system-result)
   useEffect(() => {
     const fetchSystemResult = async () => {
@@ -54,7 +55,7 @@ function SystemDetails() {
         credentials: "include",
         body: JSON.stringify({
           assessmentId: systemResult.assessment_id,
-          expertId: auth.user.id,
+          expertId: expertAuth.user.id,
           feedbackContent,
         }),
       });
@@ -87,7 +88,7 @@ function SystemDetails() {
         credentials: "include",
         body: JSON.stringify({
           assessmentId: systemResult.assessment_id,
-          expertId: auth.user.id,
+          expertId: expertAuth.user.id,
           feedbackContent,
         }),
       });

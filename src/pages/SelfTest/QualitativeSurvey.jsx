@@ -6,7 +6,7 @@ import {
   qualitativeDataState,
   qualitativeResponsesState,
   qualitativeCurrentStepState,
-} from "../../state/selfTestFormState";
+} from "../../state/selfTestState";
 
 function QualitativeSurvey() {
   const [currentStep, setCurrentStep] = useRecoilState(
@@ -49,6 +49,8 @@ function QualitativeSurvey() {
           return acc;
         }, {});
         setResponses(initialResponses);
+
+        console.log("Initialized Responses:", initialResponses);
       } catch (error) {
         console.error(
           "정성 문항 데이터를 불러오지 못했습니다:",
@@ -64,29 +66,30 @@ function QualitativeSurvey() {
 
   const saveResponse = async (questionNumber) => {
     const currentResponse = responses[questionNumber] || {};
-
     if (!systemId || !userId) {
       console.error("시스템 또는 사용자 정보가 누락되었습니다.");
       alert("시스템 또는 사용자 정보가 누락되었습니다.");
       return false;
     }
 
-    const questionData = qualitativeData.find(
-      (q) => q.question_number === questionNumber
-    ) || {
-      indicator: "질문 없음",
-      indicator_definition: "정의 없음",
-    };
-
     const requestData = {
       questionNumber,
-      indicator: questionData.indicator,
-      indicatorDefinition: questionData.indicator_definition,
       response: currentResponse.response || "해당없음",
       additionalComment: currentResponse.additionalComment || "",
       systemId,
       userId,
     };
+
+    if (
+      !requestData.questionNumber ||
+      !requestData.response ||
+      !requestData.systemId ||
+      !requestData.userId
+    ) {
+      console.error("Invalid requestData:", requestData);
+      alert("필수 데이터가 누락되었습니다. 모든 문항을 확인해주세요.");
+      return false;
+    }
 
     try {
       await axios.post(
@@ -94,10 +97,12 @@ function QualitativeSurvey() {
         requestData,
         { withCredentials: true }
       );
-      console.log(`✅ 정성 평가 ${questionNumber}번 응답 저장 완료.`);
+      console.log(
+        `Response for question ${questionNumber} saved successfully.`
+      );
       return true;
     } catch (error) {
-      console.error("❌ 정성 설문 저장 실패:", error.response?.data || error);
+      console.error("정성 설문 저장 실패:", error.response?.data || error);
       alert("정성 설문 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       return false;
     }
@@ -105,6 +110,7 @@ function QualitativeSurvey() {
 
   const handleNextClick = async () => {
     const success = await saveResponse(currentStep);
+
     if (!success) return;
 
     if (currentStep < 8) {
@@ -116,11 +122,11 @@ function QualitativeSurvey() {
           { userId, systemId },
           { withCredentials: true }
         );
-        console.log("✅ 최종 결과 저장 성공:", response.data);
+        console.log("최종 결과 저장 성공:", response.data);
         alert("결과가 성공적으로 저장되었습니다.");
         navigate("/completion", { state: { userId, systemId } });
       } catch (error) {
-        console.error("❌ 최종 결과 저장 실패:", error.response?.data || error);
+        console.error("최종 결과 저장 실패:", error.response?.data || error);
         alert("결과 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       }
     }
@@ -131,12 +137,17 @@ function QualitativeSurvey() {
   };
 
   const renderCurrentStep = () => {
-    // ✅ 기존 데이터가 없으면 기본값을 설정
+    if (qualitativeData.length === 0) {
+      return (
+        <p className="text-center">정성 문항 데이터를 불러오는 중입니다...</p>
+      );
+    }
+
     const currentData = qualitativeData.find(
       (item) => item.question_number === currentStep
     ) || {
       question_number: currentStep,
-      indicator_definition: "질문이 없습니다.", // 기본값 추가
+      question: "질문이 없습니다.",
       evaluation_criteria: "",
       reference_info: "",
     };
@@ -157,7 +168,7 @@ function QualitativeSurvey() {
           <tr>
             <td className="border border-gray-300 p-2">지표 정의</td>
             <td className="border border-gray-300 p-2">
-              {currentData.indicator_definition}
+              {currentData.question}
             </td>
           </tr>
           <tr>
@@ -199,6 +210,27 @@ function QualitativeSurvey() {
               </div>
             </td>
           </tr>
+          {responses[currentStep]?.response === "자문필요" && (
+            <tr>
+              <td className="border border-gray-300 p-2">자문 내용</td>
+              <td className="border border-gray-300 p-2">
+                <textarea
+                  placeholder="자문 필요 내용을 입력하세요"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  value={responses[currentStep]?.additionalComment || ""}
+                  onChange={(e) =>
+                    setResponses((prev) => ({
+                      ...prev,
+                      [currentStep]: {
+                        ...prev[currentStep],
+                        additionalComment: e.target.value,
+                      },
+                    }))
+                  }
+                ></textarea>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     );
@@ -213,14 +245,15 @@ function QualitativeSurvey() {
         {renderCurrentStep()}
         <div className="flex justify-between mt-6">
           <button
-            className="px-6 py-2 bg-gray-400 text-white rounded-md shadow"
             onClick={handlePreviousClick}
+            disabled={currentStep === 1}
+            className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
           >
             이전
           </button>
           <button
-            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow"
             onClick={handleNextClick}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
           >
             {currentStep === 8 ? "완료" : "다음"}
           </button>

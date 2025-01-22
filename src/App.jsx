@@ -3,7 +3,7 @@ import Layout from "./components/Layout/Layout";
 import { useRecoilState } from "recoil";
 import { useEffect } from "react";
 import axios from "axios";
-import { authState } from "./state/authState";
+import { authState, expertAuthState } from "./state/authState";
 
 import Login from "./components/Login/Login";
 import Signup from "./pages/Login/Signup";
@@ -16,9 +16,11 @@ import SignupComplete from "./components/Login/SignupComplete";
 import Dashboard from "./pages/SelfTest/Dashboard";
 import CompletionPage from "./pages/SelfTest/CompletionPage";
 import SystemRegistration from "./components/System/SystemRegistration";
+import SystemDetails from "./pages/manager/SystemDetails"; // SystemDetails 컴포넌트 추가
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
+  const [expertAuth, setExpertAuthState] = useRecoilState(expertAuthState);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -32,7 +34,6 @@ function App() {
           const { id, member_type, ...userData } = userResponse.data.user;
           setAuthState({
             isLoggedIn: true,
-            isExpertLoggedIn: false,
             user: { id, member_type, ...userData },
           });
           return; // 여기서 끝내고 전문가 체크 X
@@ -49,9 +50,8 @@ function App() {
 
         if (expertResponse.data.expert) {
           const { id, member_type, ...userData } = expertResponse.data.expert;
-          setAuthState({
+          setExpertAuthState({
             isLoggedIn: true,
-            isExpertLoggedIn: true,
             user: { id, member_type, ...userData },
           });
           return;
@@ -63,29 +63,32 @@ function App() {
       // 3. 두 경우 다 아니면 로그아웃 상태로 설정
       setAuthState({
         isLoggedIn: false,
-        isExpertLoggedIn: false,
+        user: null,
+      });
+      setExpertAuthState({
+        isLoggedIn: false,
         user: null,
       });
     };
 
     fetchUserData();
-  }, [setAuthState]);
+  }, [setAuthState, setExpertAuthState]);
 
   return (
     <BrowserRouter>
-      <Layout isExpertLoggedIn={auth.isExpertLoggedIn}>
+      <Layout isExpertLoggedIn={expertAuth.isLoggedIn}>
         <Routes>
           <Route
             path="/"
             element={
               auth.isLoggedIn ? (
-                auth.isExpertLoggedIn ? (
+                expertAuth.isLoggedIn ? (
                   <Navigate to="/system-management" replace />
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )
               ) : (
-                <MainPage isExpertLoggedIn={auth.isExpertLoggedIn} />
+                <MainPage isExpertLoggedIn={expertAuth.isLoggedIn} />
               )
             }
           />
@@ -99,6 +102,11 @@ function App() {
           <Route path="/system-register" element={<SystemRegistration />} />
           <Route path="/completion" element={<CompletionPage />} />
           <Route path="/system-management" element={<SystemManagement />} />
+          <Route
+            path="/system-details/:systemId"
+            element={<SystemDetails />}
+          />{" "}
+          {/* 추가된 라우트 */}
         </Routes>
       </Layout>
     </BrowserRouter>
