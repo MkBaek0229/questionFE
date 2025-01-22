@@ -182,6 +182,14 @@ function SystemManagement() {
                     >
                       피드백 보기
                     </button>
+                    <button
+                      onClick={() =>
+                        navigate(`/system-info/${system.system_id}`)
+                      }
+                      className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    >
+                      시스템 보기
+                    </button>
                   </td>
                 </tr>
               ))
