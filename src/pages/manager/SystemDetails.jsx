@@ -6,16 +6,17 @@ import { expertAuthState } from "../../state/authState";
 function SystemDetails() {
   const { systemId } = useParams();
   const navigate = useNavigate();
-  const expertAuth = useRecoilValue(expertAuthState); // 로그인한 전문가 정보
+  const expertAuth = useRecoilValue(expertAuthState);
   const [systemResult, setSystemResult] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [feedbackContent, setFeedbackContent] = useState(""); // 피드백 입력값
-  const [isEditing, setIsEditing] = useState(false); // 피드백 수정 모드 여부
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false); // 피드백 제출 여부
+  const [feedbackContent, setFeedbackContent] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
 
-  console.log(expertAuth);
-  // ✅ 특정 시스템의 자가진단 결과 가져오기 (GET /system-result)
+  console.log("✅ 전문가 정보:", expertAuth);
+
+  // ✅ 시스템 자가진단 결과 가져오기 (GET /system-result)
   useEffect(() => {
     const fetchSystemResult = async () => {
       try {
@@ -23,11 +24,10 @@ function SystemDetails() {
           `http://localhost:3000/system-result?systemId=${systemId}`,
           { credentials: "include" }
         );
-
         const data = await response.json();
+
         if (response.ok) {
           setSystemResult(data);
-          setFeedbackContent(data.feedback_content || ""); // 기존 피드백 있으면 채우기
         } else {
           setError(data.message);
         }
@@ -39,9 +39,35 @@ function SystemDetails() {
     };
 
     fetchSystemResult();
-  }, [systemId, feedbackSubmitted]);
+  }, [systemId]);
 
-  // ✅ 피드백 제출 (POST /add-feedback)
+  // ✅ 전문가가 작성한 피드백 가져오기 (GET /feedback?expertId=X&systemId=Y)
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      if (!expertAuth.user || !expertAuth.user.id) return;
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/feedback?expertId=${expertAuth.user.id}&systemId=${systemId}`,
+          { credentials: "include" }
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setFeedbackContent(data.feedback_content || "");
+        } else {
+          console.warn("피드백 없음 또는 조회 불가:", data.message);
+        }
+      } catch (error) {
+        console.error("피드백 조회 오류:", error);
+      }
+    };
+
+    fetchFeedback();
+  }, [systemId, expertAuth.user]);
+
+  // ✅ 피드백 저장 (POST /add-feedback)
   const handleSubmitFeedback = async () => {
     if (!feedbackContent.trim()) {
       alert("피드백 내용을 입력하세요.");
@@ -64,7 +90,7 @@ function SystemDetails() {
 
       if (response.ok) {
         alert("피드백이 성공적으로 저장되었습니다.");
-        setFeedbackSubmitted(!feedbackSubmitted); // 상태 변경으로 리렌더링 유도
+        setFeedbackSubmitted(!feedbackSubmitted);
       } else {
         alert(`피드백 저장 실패: ${data.message}`);
       }
@@ -98,7 +124,7 @@ function SystemDetails() {
       if (response.ok) {
         alert("피드백이 성공적으로 수정되었습니다.");
         setFeedbackSubmitted(!feedbackSubmitted);
-        setIsEditing(false); // 수정 모드 종료
+        setIsEditing(false);
       } else {
         alert(`피드백 수정 실패: ${data.message}`);
       }
@@ -149,7 +175,7 @@ function SystemDetails() {
           </tbody>
         </table>
 
-        {/* ✅ 피드백 입력 폼 */}
+        {/* ✅ 피드백 입력/수정 폼 */}
         <div className="mt-5">
           <h3 className="text-xl font-semibold text-gray-700 mb-3">
             피드백 작성
@@ -162,7 +188,7 @@ function SystemDetails() {
             onChange={(e) => setFeedbackContent(e.target.value)}
           ></textarea>
 
-          {systemResult.feedback_content ? (
+          {feedbackContent ? (
             isEditing ? (
               <button
                 onClick={handleUpdateFeedback}
@@ -187,6 +213,7 @@ function SystemDetails() {
             </button>
           )}
         </div>
+
         <div className="mt-5 flex justify-between">
           <button
             onClick={() => navigate(-1)}

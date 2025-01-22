@@ -17,6 +17,7 @@ import Dashboard from "./pages/SelfTest/Dashboard";
 import CompletionPage from "./pages/SelfTest/CompletionPage";
 import SystemRegistration from "./components/System/SystemRegistration";
 import SystemDetails from "./pages/manager/SystemDetails"; // SystemDetails 컴포넌트 추가
+import SuperUserPage from "./pages/superuser/SuperuserPage";
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
@@ -106,6 +107,7 @@ function App() {
             path="/system-details/:systemId"
             element={<SystemDetails />}
           />{" "}
+          <Route path="/superuserpage" element={<SuperUserPage />} />
           {/* 추가된 라우트 */}
         </Routes>
       </Layout>
