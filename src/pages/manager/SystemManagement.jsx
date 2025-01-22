@@ -180,7 +180,7 @@ function SystemManagement() {
                       }
                       className="px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-blue-600 mr-2"
                     >
-                      피드백 보기
+                      자가진단 결과 보기
                     </button>
                     <button
                       onClick={() =>

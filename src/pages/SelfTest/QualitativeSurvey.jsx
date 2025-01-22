@@ -235,7 +235,7 @@ function QualitativeSurvey() {
     <div className="bg-gray-100 min-h-screen flex flex-col items-center">
       <div className="container mx-auto max-w-5xl bg-white mt-10 p-6 rounded-lg shadow-lg">
         <h2 className="text-xl font-bold mb-6">
-          정성 설문조사 ({currentStep}/8번)
+          정성 자가진단 ({currentStep}/8번)
         </h2>
         {renderCurrentStep()}
         <div className="flex justify-between mt-6">
