@@ -49,13 +49,6 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    if (!auth.isLoggedIn) {
-      console.warn(
-        "🚨 로그인되지 않은 상태입니다. 로그인 페이지로 이동합니다."
-      );
-      navigate("/login");
-      return;
-    }
     fetchSystems();
   }, [auth, navigate]);
 
@@ -69,7 +62,9 @@ function Dashboard() {
 
   const handleViewResult = (systemId) => {
     console.log("📂 결과 보기 요청:", systemId);
-    navigate("/completion", { state: { systemId, userId: auth.user.id } });
+    navigate("/completion", {
+      state: { systemId, userId: auth.user.id, userType: "기관회원" },
+    });
   };
 
   const handleEditResult = (systemId) => {

@@ -1,27 +1,58 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { useRecoilValue } from "recoil";
+import { authState } from "../../state/authState";
 
 function CompletionPage() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [resultData, setResultData] = useState(null); // 결과 데이터 상태
   const [loading, setLoading] = useState(true); // 로딩 상태
   const [error, setError] = useState(null); // 에러 상태
+  const [finalUserId, setFinalUserId] = useState(null); // 최종 userId 상태
 
   // `systemId`와 `userId`를 location state에서 가져오기
-  const { userId, systemId } = location.state || {};
-  console.log("Received state in CompletionPage:", { userId, systemId });
+  console.log(location.state);
+  const { userId, systemId, userType } = location.state || {};
+
+  console.log("Received state in CompletionPage:", {
+    userId,
+    systemId,
+    userType,
+  });
+
+  // 사용자 유형 확인
+  const isExpert = userType === "전문가";
+  const isInstitution = userType === "기관회원";
+
+  // ✅ 전문가 회원일 경우, systemId를 기반으로 기관회원 userId 조회
+  const fetchSystemOwner = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/system-owner", {
+        params: { systemId },
+        withCredentials: true,
+      });
+      setFinalUserId(response.data.userId); // 기관회원의 userId 설정
+    } catch (error) {
+      console.error("Error fetching system owner:", error);
+      setError("시스템 정보를 불러오는 중 오류가 발생했습니다.");
+    }
+  };
 
   // 최신 데이터를 가져오는 함수
-  const fetchResultData = async () => {
-    console.log("Sending GET request with:", { userId, systemId });
+  const fetchResultData = async (userIdToFetch) => {
+    console.log("Sending GET request with:", {
+      userId: userIdToFetch,
+      systemId,
+    });
 
     try {
       const response = await axios.get(
         "http://localhost:3000/assessment/result",
         {
-          params: { userId, systemId },
+          params: { userId: userIdToFetch, systemId },
           withCredentials: true,
         }
       );
@@ -71,15 +102,30 @@ function CompletionPage() {
   };
 
   useEffect(() => {
-    if (!userId || !systemId) {
-      console.error("Missing userId or systemId:", { userId, systemId });
-      setError("시스템 또는 사용자 정보가 누락되었습니다.");
+    if (!systemId) {
+      console.error("Missing systemId:", { systemId });
+      setError("시스템 정보가 누락되었습니다.");
       setLoading(false);
       return;
     }
 
-    fetchResultData();
-  }, [userId, systemId]);
+    const fetchOwnerAndSetUserId = async () => {
+      if (isExpert) {
+        console.log("🔹 전문가 회원으로 접근 - 기관회원의 userId 조회 시작");
+        await fetchSystemOwner();
+      } else {
+        setFinalUserId(userId);
+      }
+    };
+
+    fetchOwnerAndSetUserId();
+  }, [userId, systemId, isExpert]);
+
+  useEffect(() => {
+    if (finalUserId && systemId) {
+      fetchResultData(finalUserId);
+    }
+  }, [finalUserId, systemId]);
 
   if (loading) {
     return (
@@ -95,7 +141,15 @@ function CompletionPage() {
         <p className="text-lg font-bold">오류 발생</p>
         <p className="text-gray-700">{error}</p>
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => {
+            if (isInstitution) {
+              navigate("/dashboard");
+            } else if (isExpert) {
+              navigate("/system-management");
+            } else {
+              navigate("/");
+            }
+          }}
           className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
         >
           대시보드로 이동
@@ -112,14 +166,7 @@ function CompletionPage() {
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           자가진단 결과
         </h2>
-        <div className="text-lg text-gray-700 mb-6">
-          <span className="font-semibold">시스템 ID:</span>{" "}
-          <span className="font-bold">{systemId}</span>
-        </div>
-        <div className="text-lg text-gray-700 mb-6">
-          <span className="font-semibold">사용자 ID:</span>{" "}
-          <span className="font-bold">{userId}</span>
-        </div>
+
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="p-4 bg-blue-100 rounded-md text-center">
             <h3 className="text-lg font-bold text-blue-600">점수</h3>
@@ -138,19 +185,15 @@ function CompletionPage() {
         </div>
         <div className="flex justify-center gap-4">
           <button
-            onClick={fetchResultData}
-            className="px-6 py-2 bg-yellow-500 text-white rounded-md shadow hover:bg-yellow-600"
-          >
-            결과 갱신하기
-          </button>
-          <button
-            onClick={handlePostCompletion}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
-          >
-            결과 저장하기
-          </button>
-          <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              if (isInstitution) {
+                navigate("/dashboard");
+              } else if (isExpert) {
+                navigate("/system-management");
+              } else {
+                navigate("/");
+              }
+            }}
             className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
           >
             대시보드로 이동

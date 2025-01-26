@@ -137,12 +137,6 @@ function QualitativeSurvey() {
   };
 
   const renderCurrentStep = () => {
-    if (qualitativeData.length === 0) {
-      return (
-        <p className="text-center">정성 문항 데이터를 불러오는 중입니다...</p>
-      );
-    }
-
     const currentData = qualitativeData.find(
       (item) => item.question_number === currentStep
     ) || {

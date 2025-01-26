@@ -41,16 +41,6 @@ function Nav() {
             </button>
           )}
 
-          {/* 슈퍼유저 로그인 상태 */}
-          {isSuperUserLoggedIn && (
-            <button
-              className="hover:underline"
-              onClick={() => navigate("/superuser-page")}
-            >
-              슈퍼유저 페이지
-            </button>
-          )}
-
           {/* 로그인된 사용자 이름 표시 */}
           {(isLoggedIn || isSuperUserLoggedIn) && (user || superUser) && (
             <span className="ml-4">

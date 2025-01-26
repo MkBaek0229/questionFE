@@ -89,7 +89,7 @@ function SignupStep3({ prevStep, handleSubmit }) {
             { label: "소속", name: "institution_name" },
             { label: "직위(직급)", name: "ofcps" },
             { label: "전화번호", name: "phone_number" },
-            { label: "주요 경력", name: "major_carrea" },
+            { label: "주요 경력", name: "major_carrea", type: "textarea" },
           ];
 
     return fields.map((field) => (
@@ -99,6 +99,7 @@ function SignupStep3({ prevStep, handleSubmit }) {
         name={field.name}
         value={formData[formData.member_type][field.name]}
         onChange={handleChange}
+        type={field.type}
       />
     ));
   };
@@ -194,13 +195,22 @@ function SignupStep3({ prevStep, handleSubmit }) {
 const InputField = ({ label, name, type = "text", value, onChange }) => (
   <div>
     <label className="block text-sm font-medium">{label}</label>
-    <input
-      type={type}
-      name={name}
-      value={value || ""}
-      onChange={onChange}
-      className="w-full p-2 border border-gray-300 rounded-md"
-    />
+    {type === "textarea" ? (
+      <textarea
+        name={name}
+        value={value || ""}
+        onChange={onChange}
+        className="w-full p-2 border border-gray-300 rounded-md"
+      />
+    ) : (
+      <input
+        type={type}
+        name={name}
+        value={value || ""}
+        onChange={onChange}
+        className="w-full p-2 border border-gray-300 rounded-md"
+      />
+    )}
   </div>
 );
 

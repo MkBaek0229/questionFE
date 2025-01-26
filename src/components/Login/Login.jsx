@@ -89,7 +89,7 @@ function Login() {
               onChange={(e) => setUserType(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md"
             >
-              <option value="user">일반회원</option>
+              <option value="user">기관회원</option>
               <option value="expert">관리자</option>
               <option value="superuser">슈퍼유저</option>
             </select>
