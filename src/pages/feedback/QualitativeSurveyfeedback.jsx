@@ -6,204 +6,147 @@ function QualitativeSurveyFeedback() {
   const [qualitativeData, setQualitativeData] = useState([]);
   const [feedbacks, setFeedbacks] = useState({});
   const [currentStep, setCurrentStep] = useState(1);
-  const [files, setFiles] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
   const { systemId } = location.state || {};
 
   useEffect(() => {
+    if (!systemId) {
+      console.error("System ID가 누락되었습니다.");
+      alert("시스템 정보가 없습니다. 대시보드로 이동합니다.");
+      navigate("/dashboard");
+      return;
+    }
+
     const fetchQualitativeData = async () => {
       try {
-        const response = await axios.get(
+        const ownerResponse = await axios.get(
+          "http://localhost:3000/system-owner",
+          { params: { systemId }, withCredentials: true }
+        );
+        if (!ownerResponse.data.userId) {
+          console.error("❌ 기관회원 ID 조회 실패:", ownerResponse.data);
+          alert("기관회원 정보를 가져올 수 없습니다.");
+          return;
+        }
+
+        const userId = ownerResponse.data.userId;
+        console.log("✅ 기관회원 ID 조회 성공:", userId);
+
+        const questionResponse = await axios.get(
           "http://localhost:3000/selftest/qualitative",
           { params: { systemId }, withCredentials: true }
         );
-        setQualitativeData(response.data || []);
+        const questions = questionResponse.data || [];
 
-        const initialFeedbacks = (response.data || []).reduce((acc, item) => {
+        const responseResponse = await axios.get(
+          "http://localhost:3000/selftest/qualitative/responses",
+          { params: { systemId, userId }, withCredentials: true }
+        );
+        const responses = responseResponse.data || [];
+
+        const responseMap = responses.reduce((acc, item) => {
+          acc[item.question_number] = item;
+          return acc;
+        }, {});
+
+        const mergedData = questions.map((question) => ({
+          ...question,
+          response:
+            responseMap[question.question_number]?.response || "응답 없음",
+          feedback:
+            responseMap[question.question_number]?.feedback || "피드백 없음",
+          additional_comment:
+            responseMap[question.question_number]?.additional_comment || "",
+        }));
+
+        setQualitativeData(mergedData);
+        console.log("✅ 병합된 정성 데이터:", mergedData);
+
+        const initialResponses = mergedData.reduce((acc, item) => {
           acc[item.question_number] = {
-            feedback: item.feedback || "",
+            response: item.response,
+            feedback: item.feedback,
             additionalComment: item.additional_comment || "",
-            response: item.response || "",
-            file: item.file_path || "",
           };
           return acc;
         }, {});
-        setFeedbacks(initialFeedbacks);
+        setFeedbacks(initialResponses);
       } catch (error) {
         console.error("Error fetching qualitative data:", error);
         alert("데이터를 불러오는 중 오류가 발생했습니다.");
       }
     };
-
     fetchQualitativeData();
-  }, [systemId]);
+  }, [systemId, navigate]);
 
-  const handleFeedbackChange = (field, questionNumber, value) => {
-    setFeedbacks((prev) => ({
-      ...prev,
-      [questionNumber]: {
-        ...prev[questionNumber],
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleNextClick = async () => {
+  const handleNextClick = () => {
     if (currentStep < qualitativeData.length) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      try {
-        // 상태 업데이트 요청
-        const response = await axios.post(
-          "http://localhost:3000/selftest/qualitative/update-status",
-          { systemId },
-          { withCredentials: true }
-        );
-        console.log("Feedback status updated:", response.data.msg);
-        alert("피드백 상태가 성공적으로 업데이트되었습니다.");
-        navigate("/system-management");
-      } catch (error) {
-        console.error(
-          "Error updating feedback status:",
-          error.response?.data || error.message
-        );
-        alert("피드백 상태 업데이트 중 오류가 발생했습니다.");
-      }
+      alert("피드백이 완료되었습니다.");
+      navigate("/system-management");
     }
   };
 
   const handlePreviousClick = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-    }
+    if (currentStep > 1) setCurrentStep((prev) => prev - 1);
   };
 
   const renderCurrentStep = () => {
-    if (qualitativeData.length === 0) {
-      return <p>데이터를 불러오는 중입니다...</p>;
-    }
-
-    const currentData = qualitativeData.find(
-      (item) => item.question_number === currentStep
-    ) || {
-      question_number: currentStep,
-      indicator: "질문 없음",
-      indicator_definition: "",
-      evaluation_criteria: "",
-      reference_info: "",
-    };
-
+    const currentData =
+      qualitativeData.find((item) => item.question_number === currentStep) ||
+      {};
     return (
       <table className="w-full border-collapse border border-gray-300 mb-6">
         <tbody>
           <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200 w-1/5">
-              지표 번호
-            </td>
-            <td className="border border-gray-300 p-2 w-4/5">{currentStep}</td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">지표</td>
-            <td className="border border-gray-300 p-2">
-              {currentData.indicator || "N/A"}
+            <td className="bg-gray-200 p-2 border">지표 번호</td>
+            <td className="p-2 border">
+              {currentData.question_number || "N/A"}
             </td>
           </tr>
           <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">
-              지표 정의
-            </td>
-            <td className="border border-gray-300 p-2 h-24">
-              {currentData.indicator_definition || "N/A"}
-            </td>
+            <td className="bg-gray-200 p-2 border">지표</td>
+            <td className="p-2 border">{currentData.indicator || "N/A"}</td>
           </tr>
           <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">
-              평가기준 (착안사항)
-            </td>
-            <td className="border border-gray-300 p-2 h-24">
+            <td className="bg-gray-200 p-2 border">평가기준</td>
+            <td className="p-2 border">
               {currentData.evaluation_criteria || "N/A"}
             </td>
           </tr>
           <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">참고사항</td>
-            <td className="border border-gray-300 p-2 h-20">
-              {currentData.reference_info || "N/A"}
+            <td className="bg-gray-200 p-2 border">기관회원 응답</td>
+            <td className="p-2 border">
+              {currentData.response || "응답 없음"}
             </td>
           </tr>
+          {currentData.response === "자문 필요" && (
+            <tr>
+              <td className="bg-gray-200 p-2 border">자문 내용</td>
+              <td className="p-2 border">
+                {currentData.additional_comment || "자문 내용 없음"}
+              </td>
+            </tr>
+          )}
           <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">
-              파일첨부(선택)
-            </td>
-            <td className="border border-gray-300 p-2">
-              <div className="flex items-center">
-                <input
-                  type="file"
-                  className="w-full p-2 border rounded-md"
-                  disabled
-                />
-                <p className="text-sm text-gray-500 mt-2">
-                  파일 첨부는 비활성화되었습니다.
-                </p>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">평가</td>
-            <td className="border border-gray-300 p-2">
-              <div className="flex items-center space-x-4">
-                <label>
-                  <input
-                    type="radio"
-                    name={`response-${currentStep}`}
-                    value="자문 필요"
-                    checked={feedbacks[currentStep]?.response === "자문 필요"}
-                    readOnly
-                    disabled
-                    className="mr-2"
-                  />
-                  자문 필요
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name={`response-${currentStep}`}
-                    value="해당 없음"
-                    checked={feedbacks[currentStep]?.response === "해당 없음"}
-                    readOnly
-                    disabled
-                    className="mr-2"
-                  />
-                  해당 없음
-                </label>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">
-              자문 내용
-            </td>
-            <td className="border border-gray-300 p-2">
+            <td className="bg-gray-200 p-2 border">피드백</td>
+            <td className="p-2 border">
               <textarea
-                placeholder="자문 내용을 입력하세요"
-                value={feedbacks[currentStep]?.additionalComment || ""}
-                readOnly
-                disabled
-                className="w-full p-2 border rounded-md"
-              ></textarea>
-            </td>
-          </tr>
-          <tr>
-            <td className="border border-gray-300 p-2 bg-gray-200">피드백</td>
-            <td className="border border-gray-300 p-2">
-              <textarea
-                placeholder="피드백을 입력하세요"
-                value={feedbacks[currentStep]?.feedback || ""}
+                value={feedbacks[currentStep]?.feedback || "피드백 없음"}
                 onChange={(e) =>
-                  handleFeedbackChange("feedback", currentStep, e.target.value)
+                  setFeedbacks((prev) => ({
+                    ...prev,
+                    [currentStep]: {
+                      ...prev[currentStep],
+                      feedback: e.target.value,
+                    },
+                  }))
                 }
-                className="w-full p-2 border rounded-md"
-              ></textarea>
+                className="w-full p-2 border border-gray-300 rounded-md"
+                placeholder="피드백을 입력하세요"
+              />
             </td>
           </tr>
         </tbody>
@@ -212,25 +155,27 @@ function QualitativeSurveyFeedback() {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">
-        정성 피드백 작성 ({currentStep}/{qualitativeData.length})
-      </h2>
-      {renderCurrentStep()}
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={handlePreviousClick}
-          disabled={currentStep === 1}
-          className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
-        >
-          이전
-        </button>
-        <button
-          onClick={handleNextClick}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
-        >
-          {currentStep === qualitativeData.length ? "저장 후 완료" : "다음"}
-        </button>
+    <div className="bg-gray-100 min-h-screen flex flex-col items-center">
+      <div className="container mx-auto max-w-5xl bg-white mt-10 p-6 rounded-lg shadow-lg">
+        <h2 className="text-xl font-bold mb-6">
+          정성 피드백 작성 ({currentStep}/{qualitativeData.length})
+        </h2>
+        {renderCurrentStep()}
+        <div className="flex justify-between mt-6">
+          <button
+            onClick={handlePreviousClick}
+            disabled={currentStep === 1}
+            className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
+          >
+            이전
+          </button>
+          <button
+            onClick={handleNextClick}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
+          >
+            {currentStep === qualitativeData.length ? "완료" : "다음"}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -30,17 +30,61 @@ function DiagnosisFeedbackPage() {
 
     const fetchQuantitativeData = async () => {
       try {
-        const response = await axios.get(
+        // 1️⃣ 기관회원 userId 조회
+        const ownerResponse = await axios.get(
+          "http://localhost:3000/system-owner",
+          { params: { systemId }, withCredentials: true }
+        );
+
+        if (!ownerResponse.data.userId) {
+          console.error("❌ 기관회원 ID 조회 실패:", ownerResponse.data);
+          alert("기관회원 정보를 가져올 수 없습니다.");
+          return;
+        }
+
+        const userId = ownerResponse.data.userId;
+        console.log("✅ 기관회원 ID 조회 성공:", userId);
+
+        // 2️⃣ 정량 질문 조회
+        const questionResponse = await axios.get(
           "http://localhost:3000/selftest/quantitative",
           { params: { systemId }, withCredentials: true }
         );
-        const data = response.data || [];
-        setQuantitativeData(data);
+        const questions = questionResponse.data || [];
 
-        const initialResponses = data.reduce((acc, item) => {
+        // 3️⃣ 정량 응답 조회 (userId 추가)
+        const responseResponse = await axios.get(
+          "http://localhost:3000/selftest/quantitative/responses",
+          { params: { systemId, userId }, withCredentials: true }
+        );
+        const responses = responseResponse.data || [];
+
+        // 4️⃣ 응답 데이터를 질문 데이터와 병합 (🚨 추가적인 `additional_comment` 반영)
+        const responseMap = responses.reduce((acc, item) => {
+          acc[item.question_number] = item;
+          return acc;
+        }, {});
+
+        const mergedData = questions.map((question) => ({
+          ...question,
+          response:
+            responseMap[question.question_number]?.response || "응답 없음",
+          feedback:
+            responseMap[question.question_number]?.feedback || "피드백 없음",
+          additional_comment:
+            responseMap[question.question_number]?.additional_comment || "",
+          file_path: responseMap[question.question_number]?.file_path || "",
+        }));
+
+        setQuantitativeData(mergedData);
+        console.log("✅ 병합된 정량 데이터:", mergedData);
+
+        // 5️⃣ responses 상태도 업데이트 (UI 반영용)
+        const initialResponses = mergedData.reduce((acc, item) => {
           acc[item.question_number] = {
-            response: item.response || "",
-            feedback: item.feedback || "피드백 없음",
+            response: item.response,
+            feedback: item.feedback,
+            additionalComment: item.additional_comment || "", // ✅ 추가
           };
           return acc;
         }, {});
@@ -60,6 +104,11 @@ function DiagnosisFeedbackPage() {
       [questionNumber]: {
         ...prev[questionNumber],
         feedback: value,
+        // ✅ "자문 필요" 선택 시 기존의 `additional_comment` 유지
+        additionalComment:
+          responses[questionNumber]?.response === "자문 필요"
+            ? responses[questionNumber]?.additionalComment || ""
+            : "",
       },
     }));
   };
@@ -114,12 +163,14 @@ function DiagnosisFeedbackPage() {
       (item) => item.question_number === currentStep
     ) || {
       question_number: currentStep,
-      unit: "",
-      evaluation_method: "",
-      score: "",
+      unit: "N/A",
+      evaluation_method: "N/A",
+      score: "N/A",
       question: "질문 없음",
-      legal_basis: "",
-      criteria_and_references: "",
+      legal_basis: "N/A",
+      criteria_and_references: "N/A",
+      file_upload: "",
+      response: "",
       feedback: "피드백 없음",
     };
 
@@ -130,15 +181,11 @@ function DiagnosisFeedbackPage() {
             <td className="bg-gray-200 p-2 border">지표 번호</td>
             <td className="p-2 border">{currentData.question_number}</td>
             <td className="bg-gray-200 p-2 border">단위</td>
-            <td className="p-2 border">{currentData.unit || "N/A"}</td>
+            <td className="p-2 border">{currentData.unit}</td>
           </tr>
           <tr>
-            <td className="bg-gray-200 p-2 border">평가방법</td>
-            <td className="p-2 border">
-              {currentData.evaluation_method || "N/A"}
-            </td>
             <td className="bg-gray-200 p-2 border">배점</td>
-            <td className="p-2 border">{currentData.score || "N/A"}</td>
+            <td className="p-2 border">{currentData.score}</td>
           </tr>
           <tr>
             <td className="bg-gray-200 p-2 border">지표</td>
@@ -149,15 +196,56 @@ function DiagnosisFeedbackPage() {
           <tr>
             <td className="bg-gray-200 p-2 border">근거법령</td>
             <td colSpan="3" className="p-2 border">
-              {currentData.legal_basis || "N/A"}
+              {currentData.legal_basis}
             </td>
           </tr>
           <tr>
-            <td className="bg-gray-200 p-2 border">평가기준 (착안 사항)</td>
+            <td className="bg-gray-200 p-2 border">평가기준</td>
             <td colSpan="3" className="p-2 border">
-              {currentData.criteria_and_references || "N/A"}
+              {currentData.evaluation_criteria}
             </td>
           </tr>
+
+          <tr>
+            <td className="bg-gray-200 p-2 border">파일 첨부</td>
+            <td colSpan="3" className="p-2 border">
+              {currentData.file_upload ? (
+                <a
+                  href={currentData.file_upload}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  첨부 파일 보기
+                </a>
+              ) : (
+                "파일 없음"
+              )}
+            </td>
+          </tr>
+          <tr>
+            <td className="bg-gray-200 p-2 border">기관회원 응답</td>
+            <td colSpan="3" className="p-2 border">
+              <input
+                type="text"
+                value={currentData.response || "응답 없음"}
+                readOnly
+                className="w-full p-2 border border-gray-300 bg-gray-100"
+              />
+            </td>
+          </tr>
+          {/* 🚨 "자문 필요"일 경우 추가적인 자문 내용 표시 */}
+          {currentData.response === "자문 필요" && (
+            <tr>
+              <td className="bg-gray-200 p-2 border">자문 내용</td>
+              <td colSpan="3" className="p-2 border">
+                <textarea
+                  value={currentData.additional_comment || "자문 내용 없음"}
+                  readOnly
+                  className="w-full p-2 border border-gray-300 bg-gray-100"
+                />
+              </td>
+            </tr>
+          )}
           <tr>
             <td className="bg-gray-200 p-2 border">피드백</td>
             <td colSpan="3" className="p-2 border">
