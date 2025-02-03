@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useRecoilState } from "recoil";
-import { systemsState, managersState } from "../../state/superUserState";
+import { managersState } from "../../state/superUserState";
+import { systemsState } from "../../state/system";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -97,8 +98,8 @@ function SuperUserPage() {
             </option>
             {systems.map((system) => (
               <option
-                key={`system-${system.system_id}`}
-                value={system.system_id}
+                key={`system-${system.systems_id}`}
+                value={system.systems_id}
               >
                 {system.system_name} ({system.institution_name})
               </option>

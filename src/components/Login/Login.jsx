@@ -90,7 +90,7 @@ function Login() {
               className="w-full p-3 border border-gray-300 rounded-md"
             >
               <option value="user">기관회원</option>
-              <option value="expert">관리자</option>
+              <option value="expert">전문가</option>
               <option value="superuser">슈퍼유저</option>
             </select>
           </div>

@@ -11,18 +11,16 @@ import {
 function DiagnosisPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userId, systemId, isReevaluation } = location.state || {};
+  const { userId, systemId } = location.state || {};
 
   const [quantitativeData, setQuantitativeData] = useRecoilState(
     quantitativeDataState
   );
   const [responses, setResponses] = useRecoilState(responsesState);
   const [currentStep, setCurrentStep] = useRecoilState(currentStepState);
-  const [hasFeedback, setHasFeedback] = useState(false);
 
   useEffect(() => {
     if (!userId || !systemId) {
-      console.error("❌ Missing userId or systemId:", { userId, systemId });
       alert("시스템 또는 사용자 정보가 누락되었습니다. 대시보드로 이동합니다.");
       navigate("/dashboard");
       return;
@@ -35,14 +33,10 @@ function DiagnosisPage() {
           { params: { systemId }, withCredentials: true }
         );
 
-        const data = response.data;
+        const data = response.data || [];
         setQuantitativeData(data);
 
-        const hasExistingFeedback = data.some(
-          (item) => item.feedback && item.feedback.trim() !== ""
-        );
-        setHasFeedback(hasExistingFeedback);
-
+        // 초기 응답 상태 설정
         const initialResponses = data.reduce((acc, item) => {
           acc[item.question_number] = {
             response: item.response || "",
@@ -52,10 +46,8 @@ function DiagnosisPage() {
           return acc;
         }, {});
         setResponses(initialResponses);
-
-        console.log("✅ Initialized Responses:", data);
       } catch (error) {
-        console.error("❌ Error fetching quantitative data:", error);
+        console.error("❌ 정량 데이터를 불러오는 중 오류 발생:", error);
         alert("정량 데이터를 불러오는 데 실패했습니다. 다시 시도해주세요.");
       }
     };
@@ -72,25 +64,28 @@ function DiagnosisPage() {
 
     try {
       const formattedResponses = Object.entries(responses).map(
-        ([question_number, responseData]) => ({
-          systemId,
-          userId,
-          questionId: Number(question_number),
-          response: ["이행", "미이행", "해당없음", "자문 필요"].includes(
-            responseData.response.trim()
-          )
-            ? responseData.response.trim()
-            : "이행",
-          additionalComment:
-            responseData.response === "자문 필요" &&
-            responseData.additionalComment
-              ? responseData.additionalComment.trim()
-              : "",
-          filePath: responseData.filePath || null,
-        })
+        ([question_number, responseData]) => {
+          const normalizedResponse = responseData.response.trim();
+          return {
+            systemId,
+            userId,
+            questionId: Number(question_number),
+            response: ["이행", "미이행", "해당없음", "자문필요"].includes(
+              normalizedResponse
+            )
+              ? normalizedResponse
+              : "이행",
+            additionalComment:
+              normalizedResponse === "자문필요"
+                ? responseData.additionalComment?.trim() || "추가 의견 없음" // ✅ NULL 값 방지
+                : "",
+            filePath: responseData.filePath || null,
+          };
+        }
       );
 
-      console.log("📤 Sending quantitative responses:", formattedResponses);
+      // ✅ 백엔드로 보내기 전에 데이터 확인
+      console.log("📡 [DEBUG] 저장할 데이터:", formattedResponses);
 
       await axios.post(
         "http://localhost:3000/selftest/quantitative",
@@ -100,7 +95,7 @@ function DiagnosisPage() {
 
       alert("✅ 정량 평가 응답이 저장되었습니다.");
 
-      // ✅ 정량 평가 완료 후 정성 평가 페이지로 이동
+      // 정량 평가 완료 후 정성 평가 페이지로 이동
       navigate("/qualitative-survey", { state: { systemId, userId } });
     } catch (error) {
       console.error("❌ 정량 평가 저장 실패:", error);
@@ -112,7 +107,7 @@ function DiagnosisPage() {
     if (currentStep < 43) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      await saveAllResponses();
+      await saveAllResponses(); // ✅ 마지막 질문일 때 저장 실행
     }
   };
 
@@ -120,7 +115,36 @@ function DiagnosisPage() {
     if (currentStep > 1) setCurrentStep((prev) => prev - 1);
   };
 
+  const handleResponseChange = (questionNumber, value) => {
+    setResponses((prev) => ({
+      ...prev,
+      [questionNumber]: {
+        ...prev[questionNumber],
+        response: value,
+        additionalComment:
+          value === "자문필요"
+            ? prev[questionNumber]?.additionalComment ||
+              "추가 의견을 입력하세요"
+            : "", // ✅ "자문필요" 선택 시 추가 의견 유지
+      },
+    }));
+  };
+
+  const handleAdditionalCommentChange = (questionNumber, value) => {
+    setResponses((prev) => ({
+      ...prev,
+      [questionNumber]: {
+        ...prev[questionNumber],
+        additionalComment: value,
+      },
+    }));
+  };
+
   const renderCurrentStep = () => {
+    if (!quantitativeData || quantitativeData.length === 0) {
+      return <p className="text-center text-gray-500">로딩 중...</p>;
+    }
+
     const currentData = quantitativeData.find(
       (item) => item.question_number === currentStep
     ) || {
@@ -131,7 +155,6 @@ function DiagnosisPage() {
       score: "N/A",
       filePath: null,
       additional_comment: "",
-      feedback: "",
     };
 
     return (
@@ -150,32 +173,9 @@ function DiagnosisPage() {
             </td>
           </tr>
           <tr>
-            <td className="bg-gray-200 p-2 border">근거법령</td>
-            <td colSpan="3" className="p-2 border">
-              {currentData.legal_basis}
-            </td>
-          </tr>
-          <tr>
             <td className="bg-gray-200 p-2 border">평가기준</td>
             <td colSpan="3" className="p-2 border">
               {currentData.evaluation_criteria}
-            </td>
-          </tr>
-          <tr>
-            <td className="bg-gray-200 p-2 border">파일 첨부</td>
-            <td colSpan="3" className="p-2 border">
-              {currentData.filePath ? (
-                <a
-                  href={currentData.filePath}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500"
-                >
-                  첨부 파일 보기
-                </a>
-              ) : (
-                <input type="file" className="w-full p-1 border rounded" />
-              )}
             </td>
           </tr>
           <tr>
@@ -184,28 +184,19 @@ function DiagnosisPage() {
               <select
                 value={responses[currentStep]?.response || ""}
                 onChange={(e) =>
-                  setResponses((prev) => ({
-                    ...prev,
-                    [currentStep]: {
-                      ...prev[currentStep],
-                      response: e.target.value,
-                      additionalComment:
-                        e.target.value === "자문 필요"
-                          ? responses[currentStep]?.additionalComment || ""
-                          : "",
-                    },
-                  }))
+                  handleResponseChange(currentStep, e.target.value)
                 }
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="이행">이행</option>
                 <option value="미이행">미이행</option>
                 <option value="해당없음">해당없음</option>
-                <option value="자문 필요">자문 필요</option>
+                <option value="자문필요">자문필요</option>
               </select>
             </td>
           </tr>
-          {responses[currentStep]?.response === "자문 필요" && (
+
+          {responses[currentStep]?.response === "자문필요" && (
             <tr>
               <td className="bg-gray-200 p-2 border">자문 필요 사항</td>
               <td colSpan="3" className="p-2 border">
@@ -214,13 +205,7 @@ function DiagnosisPage() {
                   placeholder="추가 의견을 입력하세요"
                   value={responses[currentStep]?.additionalComment || ""}
                   onChange={(e) =>
-                    setResponses((prev) => ({
-                      ...prev,
-                      [currentStep]: {
-                        ...prev[currentStep],
-                        additionalComment: e.target.value,
-                      },
-                    }))
+                    handleAdditionalCommentChange(currentStep, e.target.value)
                   }
                 ></textarea>
               </td>

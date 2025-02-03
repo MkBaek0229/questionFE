@@ -38,7 +38,7 @@ function SystemDetails() {
     };
 
     fetchSystemResult();
-  }, [systemId, feedbackSubmitted]);
+  }, [systemId, feedbackSubmitted]); // ✅ feedbackSubmitted 변경 시 재렌더링
 
   // ✅ 피드백 제출 (POST /add-feedback)
   const handleSubmitFeedback = async () => {
@@ -62,13 +62,13 @@ function SystemDetails() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("피드백이 성공적으로 저장되었습니다.");
-        setFeedbackSubmitted(!feedbackSubmitted); // 상태 변경으로 리렌더링 유도
+        alert("✅ 피드백이 성공적으로 저장되었습니다.");
+        setFeedbackSubmitted(!feedbackSubmitted); // 상태 변경 → 리렌더링 유도
       } else {
-        alert(`피드백 저장 실패: ${data.message}`);
+        alert(`❌ 피드백 저장 실패: ${data.message}`);
       }
     } catch (error) {
-      console.error("피드백 저장 오류:", error);
+      console.error("❌ 피드백 저장 오류:", error);
       alert("피드백 저장 중 오류가 발생했습니다.");
     }
   };
@@ -95,14 +95,14 @@ function SystemDetails() {
       const data = await response.json();
 
       if (response.ok) {
-        alert("피드백이 성공적으로 수정되었습니다.");
-        setFeedbackSubmitted(!feedbackSubmitted);
+        alert("✅ 피드백이 성공적으로 수정되었습니다.");
+        setFeedbackSubmitted(!feedbackSubmitted); // 상태 변경 → 리렌더링 유도
         setIsEditing(false); // 수정 모드 종료
       } else {
-        alert(`피드백 수정 실패: ${data.message}`);
+        alert(`❌ 피드백 수정 실패: ${data.message}`);
       }
     } catch (error) {
-      console.error("피드백 수정 오류:", error);
+      console.error("❌ 피드백 수정 오류:", error);
       alert("피드백 수정 중 오류가 발생했습니다.");
     }
   };
@@ -161,6 +161,7 @@ function SystemDetails() {
             onChange={(e) => setFeedbackContent(e.target.value)}
           ></textarea>
 
+          {/* ✅ 기존 피드백이 있는 경우 */}
           {systemResult.feedback_content ? (
             isEditing ? (
               <button

@@ -12,6 +12,7 @@ function SystemManagement() {
   const [systems, setSystems] = useRecoilState(systemsState);
   const navigate = useNavigate();
 
+  // ✅ 전문가가 배정된 시스템 불러오기
   useEffect(() => {
     const fetchAssignedSystems = async () => {
       if (!expert.user || !expert.user.id) return;
@@ -23,11 +24,7 @@ function SystemManagement() {
         );
         console.log("✅ 매칭된 시스템 데이터:", response.data);
 
-        const uniqueSystems = response.data.data.filter(
-          (value, index, self) =>
-            index === self.findIndex((t) => t.system_id === value.system_id)
-        );
-        setSystems(uniqueSystems || []);
+        setSystems(response.data.data || []);
       } catch (error) {
         console.error("❌ 매칭된 시스템 가져오기 실패:", error);
       }
@@ -38,6 +35,7 @@ function SystemManagement() {
     }
   }, [expert, setSystems]);
 
+  // ✅ 로그아웃 핸들러
   const handleLogout = async () => {
     try {
       const response = await axios.post(
@@ -58,23 +56,72 @@ function SystemManagement() {
     }
   };
 
+  // ✅ 평가 결과 보기
   const handleViewResults = (system) => {
     navigate("/completion", {
       state: {
-        systemId: system.system_id,
-        userId: expert.user?.id,
-        userType: "전문가", // 전문가로 접근했음을 표시
+        systemId: system.systems_id,
+        expertId: expert.user?.id,
+        userType: "전문가",
       },
     });
   };
 
-  const handleProvideFeedback = (system) => {
-    navigate("/DiagnosisfeedbackPage", {
+  // ✅ 피드백 작성 후 상태 업데이트
+  const handleProvideFeedback = async (system) => {
+    console.log("🟢 [handleProvideFeedback] 시스템 ID:", system.systems_id);
+
+    await navigate("/DiagnosisfeedbackPage", {
       state: {
-        userId: expert.user?.id,
-        systemId: system.system_id,
+        expertId: expert.user?.id,
+        systemId: system.systems_id,
       },
     });
+
+    // ✅ UI 상태 즉시 변경 (반영 후로 가정)
+    setSystems((prevSystems) =>
+      prevSystems.map((s) =>
+        s.systems_id === system.systems_id
+          ? { ...s, feedback_status: "전문가 자문이 반영되었습니다" }
+          : s
+      )
+    );
+
+    console.log("🟢 [handleProvideFeedback] UI 상태 변경 완료");
+
+    // ✅ 백엔드 업데이트 요청
+    try {
+      const updateResponse = await axios.post(
+        "http://localhost:3000/selftest/qualitative/update-status",
+        { systemId: system.systems_id },
+        { withCredentials: true }
+      );
+
+      console.log(
+        "✅ [handleProvideFeedback] 백엔드 업데이트 응답:",
+        updateResponse.data
+      );
+
+      // ✅ 상태 갱신 후 데이터 다시 불러오기
+      setTimeout(async () => {
+        const response = await axios.get(
+          `http://localhost:3000/assigned-systems?expertId=${expert.user.id}`,
+          { withCredentials: true }
+        );
+
+        console.log(
+          "✅ [handleProvideFeedback] 시스템 데이터 갱신됨:",
+          response.data
+        );
+
+        setSystems(response.data.data);
+      }, 1000);
+    } catch (error) {
+      console.error(
+        "❌ [handleProvideFeedback] 시스템 데이터 갱신 실패:",
+        error
+      );
+    }
   };
 
   return (
@@ -102,17 +149,17 @@ function SystemManagement() {
             <tbody>
               {systems.length > 0 ? (
                 systems.map((system) => (
-                  <tr key={system.system_id} className="hover:bg-gray-50">
+                  <tr key={system.systems_id} className="hover:bg-gray-50">
                     <td className="p-3 border">{system.system_name}</td>
                     <td className="p-3 border">{system.institution_name}</td>
                     <td className="p-3 border text-center">
                       {system.feedback_status ===
                       "전문가 자문이 반영되었습니다" ? (
-                        <span className="text-green-600">
-                          {system.feedback_status}
+                        <span className="text-green-600 font-bold">
+                          반영 후
                         </span>
                       ) : (
-                        <span className="text-red-600">반영 전</span>
+                        <span className="text-red-600 font-bold">반영 전</span>
                       )}
                     </td>
                     <td className="p-3 border text-center">

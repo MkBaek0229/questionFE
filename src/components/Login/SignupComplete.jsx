@@ -15,7 +15,7 @@ function SignupComplete() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 ">
       <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-center">회원 가입 완료</h1>
         <h2 className="text-lg font-semibold mb-4 text-center">

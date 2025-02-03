@@ -1,3 +1,4 @@
+import Footer from "./Footer";
 import Nav from "./Nav";
 
 function Layout({ children, isExpertLoggedIn }) {
@@ -8,6 +9,7 @@ function Layout({ children, isExpertLoggedIn }) {
         isExpertLoggedIn={isExpertLoggedIn}
       />
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

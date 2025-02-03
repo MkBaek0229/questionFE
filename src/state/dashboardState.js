@@ -1,11 +1,5 @@
 import { atom } from "recoil";
 
-// 시스템 목록 상태
-export const systemsState = atom({
-  key: "systemsState",
-  default: [], // 초기값은 빈 배열
-});
-
 // 각 시스템의 진단 상태
 export const assessmentStatusesState = atom({
   key: "assessmentStatusesState",

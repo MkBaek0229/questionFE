@@ -1,3 +1,4 @@
+// Dashboard.js
 import React, { useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -6,11 +7,11 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 import {
-  systemsState,
   assessmentStatusesState,
   loadingState,
   errorMessageState,
 } from "../../state/dashboardState";
+import { systemsState } from "../../state/system";
 
 function Dashboard() {
   const [systems, setSystems] = useRecoilState(systemsState);
@@ -81,6 +82,12 @@ function Dashboard() {
     });
   };
 
+  // ★ 새로운 진단보기 핸들러
+  const handleViewDiagnosis = (systemId) => {
+    console.log("🔎 진단보기 요청:", systemId);
+    navigate("/diagnosis-view", { state: { systemId, userId: auth.user.id } });
+  };
+
   const handleLogout = async () => {
     try {
       console.log("🚪 로그아웃 요청 중...");
@@ -142,10 +149,10 @@ function Dashboard() {
         ) : (
           <div className="grid grid-cols-4 gap-4">
             {systems.map((system) => {
-              const isCompleted = assessmentStatuses[system.system_id];
+              const isCompleted = assessmentStatuses[system.systems_id];
               return (
                 <div
-                  key={system.system_id}
+                  key={system.systems_id}
                   className="p-4 bg-white shadow-lg rounded-md border"
                 >
                   <h3 className="font-bold text-lg mb-2">
@@ -154,21 +161,28 @@ function Dashboard() {
                   {isCompleted ? (
                     <div className="flex flex-col space-y-2">
                       <button
-                        onClick={() => handleViewResult(system.system_id)}
+                        onClick={() => handleViewResult(system.systems_id)}
                         className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                       >
                         결과 보기
                       </button>
                       <button
-                        onClick={() => handleEditResult(system.system_id)}
+                        onClick={() => handleEditResult(system.systems_id)}
                         className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                       >
                         수정하기
                       </button>
+                      {/* ★ 진단보기 버튼 추가 */}
+                      <button
+                        onClick={() => handleViewDiagnosis(system.systems_id)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+                      >
+                        진단보기
+                      </button>
                     </div>
                   ) : (
                     <button
-                      onClick={() => handleStartDiagnosis(system.system_id)}
+                      onClick={() => handleStartDiagnosis(system.systems_id)}
                       className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
                     >
                       진단하기

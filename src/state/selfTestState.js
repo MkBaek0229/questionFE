@@ -1,3 +1,4 @@
+// selfTestState.js
 import { atom } from "recoil";
 
 // 자가진단 폼 상태
@@ -15,18 +16,19 @@ export const selfTestFormState = atom({
   },
 });
 
+// 정량 문항 데이터 상태
 export const quantitativeDataState = atom({
   key: "quantitativeDataState",
   default: [], // 초기값은 빈 배열
 });
 
-// 사용자 응답 상태
+// 사용자 응답 상태 (정량)
 export const responsesState = atom({
   key: "responsesState",
   default: {}, // 초기값은 빈 객체
 });
 
-// 현재 진행 단계 상태
+// 현재 진행 단계 상태 (정량)
 export const currentStepState = atom({
   key: "currentStepState",
   default: 1, // 초기값은 1단계
@@ -38,13 +40,13 @@ export const qualitativeDataState = atom({
   default: [], // 초기값은 빈 배열
 });
 
-// 사용자 응답 상태
+// 사용자 응답 상태 (정성)
 export const qualitativeResponsesState = atom({
   key: "qualitativeResponsesState",
   default: {}, // 초기값은 빈 객체
 });
 
-// 현재 진행 단계 상태
+// 현재 진행 단계 상태 (정성)
 export const qualitativeCurrentStepState = atom({
   key: "qualitativeCurrentStepState",
   default: 1, // 초기값은 첫 번째 단계
