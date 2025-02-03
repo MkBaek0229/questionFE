@@ -150,8 +150,8 @@ function DiagnosisFeedbackPage() {
 
       console.log("✅ [SUCCESS] Feedback saved:", feedbackData);
 
-      // sessionStorage.setItem("systemId", systemId);
-      // sessionStorage.setItem("expertId", expertId);
+      sessionStorage.setItem("systemId", systemId);
+      sessionStorage.setItem("expertId", expertId);
 
       alert("모든 피드백이 저장되었습니다.");
 

@@ -10,6 +10,8 @@ import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 function SystemManagement() {
   const expert = useRecoilValue(expertAuthState);
   const [systems, setSystems] = useRecoilState(systemsState);
+
+  console.log(expert, systems);
   const navigate = useNavigate();
 
   // ✅ 전문가가 배정된 시스템 불러오기

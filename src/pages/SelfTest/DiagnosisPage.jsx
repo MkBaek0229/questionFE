@@ -25,7 +25,7 @@ function DiagnosisPage() {
       navigate("/dashboard");
       return;
     }
-
+    setCurrentStep(1);
     const fetchQuantitativeData = async () => {
       try {
         const response = await axios.get(

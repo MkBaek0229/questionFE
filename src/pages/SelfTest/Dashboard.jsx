@@ -11,6 +11,8 @@ import {
   loadingState,
   errorMessageState,
 } from "../../state/dashboardState";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+
 import { systemsState } from "../../state/system";
 
 function Dashboard() {
@@ -37,7 +39,11 @@ function Dashboard() {
       ]);
 
       console.log("✅ [FETCH] 시스템 응답:", systemsResponse.data);
-      console.log("✅ [FETCH] 진단 상태 응답:", statusResponse.data);
+
+      // 🔹 데이터 확인
+      if (systemsResponse.data.length > 0) {
+        console.log("🔍 시스템 데이터 샘플:", systemsResponse.data[0]); // ✅ user_id 포함 여부 확인
+      }
 
       setSystems(systemsResponse.data);
       setAssessmentStatuses(statusResponse.data);
@@ -52,6 +58,50 @@ function Dashboard() {
   useEffect(() => {
     fetchSystems();
   }, [auth, navigate]);
+
+  const handleDeleteSystem = async (systemId, userId) => {
+    console.log("🗑️ 삭제 요청 systemId:", systemId, "userId:", userId);
+    console.log("🔍 현재 로그인한 사용자 ID:", auth.user?.id);
+
+    if (!userId) {
+      console.error("🚨 [ERROR] system.user_id가 undefined입니다!");
+      alert("🚨 시스템 정보를 불러오는 중 문제가 발생했습니다.");
+      return;
+    }
+
+    if (auth.user?.id !== userId) {
+      alert("🚨 해당 시스템을 삭제할 권한이 없습니다.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      "⚠️ 정말 이 시스템을 삭제하시겠습니까?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `http://localhost:3000/system/${systemId}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      console.log("✅ 시스템 삭제 응답:", response.data);
+      alert("✅ 시스템이 삭제되었습니다.");
+
+      setSystems((prevSystems) =>
+        prevSystems.filter((system) => system.systems_id !== systemId)
+      );
+    } catch (error) {
+      console.error("❌ 시스템 삭제 실패:", error);
+      alert(
+        `🚨 시스템 삭제 중 오류 발생: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
+  };
 
   const handleRegisterClick = () => {
     if (!auth.user || !auth.user.id) {
@@ -137,63 +187,109 @@ function Dashboard() {
             시스템 등록
           </button>
         </div>
+
         {errorMessage && (
           <div className="mb-4 p-4 bg-red-100 text-red-700 border border-red-300 rounded">
             {errorMessage}
           </div>
         )}
+
         {loading ? (
           <p className="text-center">로딩 중...</p>
         ) : systems.length === 0 ? (
           <p className="text-center">등록된 시스템이 없습니다.</p>
         ) : (
-          <div className="grid grid-cols-4 gap-4">
-            {systems.map((system) => {
-              const isCompleted = assessmentStatuses[system.systems_id];
-              return (
-                <div
-                  key={system.systems_id}
-                  className="p-4 bg-white shadow-lg rounded-md border"
-                >
-                  <h3 className="font-bold text-lg mb-2">
-                    {system.system_name}
-                  </h3>
-                  {isCompleted ? (
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={() => handleViewResult(system.systems_id)}
-                        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        결과 보기
-                      </button>
-                      <button
-                        onClick={() => handleEditResult(system.systems_id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                      >
-                        수정하기
-                      </button>
-                      {/* ★ 진단보기 버튼 추가 */}
-                      <button
-                        onClick={() => handleViewDiagnosis(system.systems_id)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                      >
-                        진단보기
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleStartDiagnosis(system.systems_id)}
-                      className="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+          <div className="overflow-x-auto">
+            <table className="table-auto w-full border border-gray-300 rounded-lg shadow-md">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="px-4 py-2 text-left">시스템 이름</th>
+                  <th className="px-4 py-2 text-left">진단 상태</th>
+                  <th className="px-4 py-2 text-left">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {systems.map((system) => {
+                  const isCompleted = assessmentStatuses[system.systems_id];
+                  return (
+                    <tr
+                      key={system.systems_id}
+                      className="border-b border-gray-300"
                     >
-                      진단하기
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+                      <td className="px-4 py-2">{system.system_name}</td>
+                      <td className="px-4 py-2">
+                        {isCompleted ? (
+                          <span className="text-green-600 font-semibold">
+                            완료
+                          </span>
+                        ) : (
+                          <span className="text-yellow-600 font-semibold">
+                            미완료
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className="flex space-x-2">
+                          {isCompleted ? (
+                            <>
+                              <button
+                                onClick={() =>
+                                  handleViewResult(system.systems_id)
+                                }
+                                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                              >
+                                결과 보기
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleEditResult(system.systems_id)
+                                }
+                                className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                              >
+                                수정하기
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleViewDiagnosis(system.systems_id)
+                                }
+                                className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm"
+                              >
+                                진단보기
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                handleStartDiagnosis(system.systems_id)
+                              }
+                              className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                            >
+                              진단하기
+                            </button>
+                          )}
+                          <button
+                            onClick={() =>
+                              handleDeleteSystem(
+                                system.systems_id,
+                                system.user_id
+                              )
+                            } // ✅ user_id 넘기기
+                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 flex items-center text-sm"
+                          >
+                            <FontAwesomeIcon icon={faTrash} className="mr-1" />
+                            삭제
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+
       <button
         className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex items-center justify-center flex-col"
         onClick={handleLogout}

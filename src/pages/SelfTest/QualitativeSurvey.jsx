@@ -27,7 +27,7 @@ function QualitativeSurvey() {
       navigate("/dashboard");
       return;
     }
-
+    setCurrentStep(1);
     const fetchQualitativeData = async () => {
       try {
         const response = await axios.get(
@@ -43,7 +43,7 @@ function QualitativeSurvey() {
         // ✅ 기존 응답 데이터 설정 (file_upload → file_path 필드 확인)
         const initialResponses = data.reduce((acc, item) => {
           acc[item.question_number] = {
-            response: item.response || "해당 없음",
+            response: item.response || "해당없음",
             additionalComment: item.additional_comment || "",
             filePath: item.file_path || null, // 필드명이 `file_path`인지 확인 필요
           };
@@ -103,7 +103,7 @@ function QualitativeSurvey() {
     }
 
     try {
-      // ✅ 모든 응답을 한 번에 서버로 전송하도록 변경
+      // ✅ 응답 데이터 포맷 정리
       const formattedResponses = Object.entries(responses).map(
         ([question_number, responseData]) => ({
           systemId,
@@ -123,15 +123,19 @@ function QualitativeSurvey() {
         })
       );
 
-      console.log("📤 Sending qualitative responses:", formattedResponses);
+      console.log(
+        "📤 [DEBUG] Sending qualitative responses:",
+        formattedResponses
+      );
 
-      await axios.post(
+      // ✅ 서버에 데이터 전송
+      const response = await axios.post(
         "http://localhost:3000/selftest/qualitative",
         { responses: formattedResponses },
         { withCredentials: true }
       );
 
-      console.log("✅ 정성 응답 저장 완료");
+      console.log("✅ [DEBUG] 정성 응답 저장 완료:", response.data);
 
       // ✅ 점수 계산 및 등급 산정 API 호출
       await axios.post(
@@ -140,10 +144,10 @@ function QualitativeSurvey() {
         { withCredentials: true }
       );
 
-      console.log("✅ 점수 및 등급 산정 완료");
+      console.log("✅ [DEBUG] 점수 및 등급 산정 완료");
       navigate("/completion", { state: { userId, systemId } });
     } catch (error) {
-      console.error("❌ 정성 평가 저장 실패:", error);
+      console.error("❌ [ERROR] 정성 평가 저장 실패:", error);
       alert("정성 평가 저장 중 오류가 발생했습니다.");
     }
   };
@@ -228,7 +232,7 @@ function QualitativeSurvey() {
             <td className="border border-gray-300 p-2 bg-gray-200">평가</td>
             <td className="border border-gray-300 p-2">
               <select
-                value={responses[currentStep]?.response || "해당 없음"}
+                value={responses[currentStep]?.response || "해당없음"}
                 onChange={(e) =>
                   setResponses((prev) => ({
                     ...prev,
@@ -240,13 +244,13 @@ function QualitativeSurvey() {
                 }
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
-                <option value="자문 필요">자문 필요</option>
-                <option value="해당 없음">해당 없음</option>
+                <option value="자문필요">자문필요</option>
+                <option value="해당없음">해당없음</option>
               </select>
             </td>
           </tr>
           {/* 🔹 "자문 필요" 선택 시 추가 입력 필드 표시 */}
-          {responses[currentStep]?.response === "자문 필요" && (
+          {responses[currentStep]?.response === "자문필요" && (
             <tr>
               <td className="border border-gray-300 p-2 bg-gray-200">
                 자문 필요 사항

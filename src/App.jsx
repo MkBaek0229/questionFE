@@ -19,6 +19,7 @@ import SystemRegistration from "./components/System/SystemRegistration";
 import SuperUserPage from "./pages/superuser/SuperUserPage";
 import DiagnosisfeedbackPage from "./pages/feedback/DiagnosisfeedbackPage";
 import QualitativeSurveyfeedback from "./pages/feedback/QualitativeSurveyfeedback";
+import DiagnosisView from "./pages/SelfTest/DiagnosisView";
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
@@ -113,6 +114,7 @@ function App() {
             path="/QualitativeSurveyfeedback"
             element={<QualitativeSurveyfeedback />}
           />
+          <Route path="/diagnosis-view" element={<DiagnosisView />} />
         </Routes>
       </Layout>
     </BrowserRouter>

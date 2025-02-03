@@ -11,10 +11,9 @@ import { qualitativeFeedbackState } from "../../state/feedback";
 function QualitativeSurveyFeedback() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { systemId, expertId } = location.state || {};
-  // const storedSystemId = sessionStorage.getItem("systemId");
-  // const systemId = location.state?.systemId || storedSystemId;
-  // const expertId = sessionStorage.getItem("expertId");
+  const storedSystemId = sessionStorage.getItem("systemId");
+  const systemId = location.state?.systemId || storedSystemId;
+  const expertId = sessionStorage.getItem("expertId");
 
   const [qualitativeData, setQualitativeData] =
     useRecoilState(qualitativeDataState);
@@ -31,7 +30,7 @@ function QualitativeSurveyFeedback() {
       return;
     }
 
-    // sessionStorage.setItem("systemId", systemId);
+    sessionStorage.setItem("systemId", systemId);
 
     const fetchQualitativeData = async () => {
       try {
@@ -154,8 +153,8 @@ function QualitativeSurveyFeedback() {
       );
 
       console.log("✅ [SUCCESS] Feedback saved:", feedbackData);
-      //sessionStorage.setItem("systemId", systemId);
-      //sessionStorage.setItem("expertId", expertId);
+      sessionStorage.setItem("systemId", systemId);
+      sessionStorage.setItem("expertId", expertId);
 
       alert("모든 피드백이 저장되었습니다.");
       navigate("/");

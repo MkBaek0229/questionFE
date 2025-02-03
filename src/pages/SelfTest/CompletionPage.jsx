@@ -1,31 +1,57 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { useRecoilValue } from "recoil";
-import { authState } from "../../state/authState";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { systemsState } from "../../state/system"; // ✅ 시스템 상태 가져오기
 
 function CompletionPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [resultData, setResultData] = useState(null); // 결과 데이터 상태
-  const [loading, setLoading] = useState(true); // 로딩 상태
-  const [error, setError] = useState(null); // 에러 상태
-  const [finalUserId, setFinalUserId] = useState(null); // 최종 userId 상태
+  const [resultData, setResultData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [finalUserId, setFinalUserId] = useState(null);
 
-  // `systemId`와 `userId`를 location state에서 가져오기
-  console.log(location.state);
   const { userId, systemId, userType } = location.state || {};
-
-  console.log("Received state in CompletionPage:", {
-    userId,
-    systemId,
-    userType,
-  });
-
-  // 사용자 유형 확인
   const isExpert = userType === "전문가";
   const isInstitution = userType === "기관회원";
+
+  // ✅ 시스템 상태 가져오기
+  const [systems, setSystems] = useRecoilState(systemsState);
+  console.log("🟢 Recoil 상태 (systemsState) 확인:", systems);
+
+  // ✅ 현재 선택된 시스템 찾기
+  let currentSystem = systems.find(
+    (sys) => Number(sys.systems_id) === Number(systemId)
+  );
+
+  console.log("🟢 현재 선택된 시스템:", currentSystem);
+
+  // ✅ 만약 currentSystem이 없거나 feedback_status가 없으면, 백엔드에서 다시 가져옴
+  useEffect(() => {
+    if (!currentSystem || !currentSystem.feedback_status) {
+      console.log("⚠️ 시스템 데이터가 최신이 아님. 백엔드에서 다시 가져옴.");
+      fetchAssignedSystems();
+    }
+  }, [currentSystem]);
+
+  const fetchAssignedSystems = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3000/assigned-systems?expertId=${userId}`,
+        { withCredentials: true }
+      );
+      console.log("✅ 최신 시스템 데이터:", response.data.data);
+      setSystems(response.data.data);
+    } catch (error) {
+      console.error("❌ 시스템 데이터 가져오기 실패:", error);
+    }
+  };
+
+  // ✅ 피드백 상태 가져오기
+  const feedbackStatus =
+    currentSystem?.feedback_status || "전문가 자문 반영 전";
 
   // ✅ 전문가 회원일 경우, systemId를 기반으로 기관회원 userId 조회
   const fetchSystemOwner = async () => {
@@ -34,19 +60,16 @@ function CompletionPage() {
         params: { systemId },
         withCredentials: true,
       });
-      setFinalUserId(response.data.userId); // 기관회원의 userId 설정
+      setFinalUserId(response.data.userId);
     } catch (error) {
-      console.error("Error fetching system owner:", error);
+      console.error("❌ 시스템 소유자 정보 가져오기 실패:", error);
       setError("시스템 정보를 불러오는 중 오류가 발생했습니다.");
     }
   };
 
-  // 최신 데이터를 가져오는 함수
+  // ✅ 최신 결과 데이터 가져오기
   const fetchResultData = async (userIdToFetch) => {
-    console.log("Sending GET request with:", {
-      userId: userIdToFetch,
-      systemId,
-    });
+    if (!userIdToFetch || !systemId) return;
 
     try {
       const response = await axios.get(
@@ -57,13 +80,16 @@ function CompletionPage() {
         }
       );
 
-      // 최신 데이터를 정렬하여 가장 최근 항목 선택
       const sortedData = response.data.sort(
         (a, b) => new Date(b.completed_at) - new Date(a.completed_at)
       );
-      setResultData(sortedData[0]); // 최신 데이터만 설정
+
+      setResultData(sortedData[0]);
     } catch (error) {
-      console.error("Error fetching results:", error.response?.data || error);
+      console.error(
+        "❌ 결과 데이터 가져오기 실패:",
+        error.response?.data || error
+      );
       setError(
         error.response?.data?.message ||
           "결과 데이터를 가져오는 중 오류가 발생했습니다."
@@ -73,37 +99,9 @@ function CompletionPage() {
     }
   };
 
-  // 결과 저장 요청
-  const handlePostCompletion = async () => {
-    if (!userId || !systemId) {
-      setError("시스템 또는 사용자 정보가 누락되었습니다.");
-      return;
-    }
-
-    try {
-      // 상태 업데이트 요청
-      const response = await axios.post(
-        "http://localhost:3000/selftest/qualitative/update-status",
-        { systemId },
-        { withCredentials: true }
-      );
-      console.log("Feedback status updated:", response.data.msg);
-
-      // ✅ 최신 상태 데이터 가져오기
-      await fetchResultData(); // 상태 갱신 후 결과 데이터를 가져옴
-      alert("피드백 상태가 성공적으로 업데이트되었습니다.");
-    } catch (error) {
-      console.error("Error updating feedback status:", error);
-      setError(
-        error.response?.data?.message ||
-          "피드백 상태 업데이트 중 오류가 발생했습니다."
-      );
-    }
-  };
-
+  // ✅ 전문가 회원일 경우 기관회원 userId 조회
   useEffect(() => {
     if (!systemId) {
-      console.error("Missing systemId:", { systemId });
       setError("시스템 정보가 누락되었습니다.");
       setLoading(false);
       return;
@@ -111,7 +109,6 @@ function CompletionPage() {
 
     const fetchOwnerAndSetUserId = async () => {
       if (isExpert) {
-        console.log("🔹 전문가 회원으로 접근 - 기관회원의 userId 조회 시작");
         await fetchSystemOwner();
       } else {
         setFinalUserId(userId);
@@ -121,6 +118,7 @@ function CompletionPage() {
     fetchOwnerAndSetUserId();
   }, [userId, systemId, isExpert]);
 
+  // ✅ `finalUserId` 변경 시 데이터 다시 로드
   useEffect(() => {
     if (finalUserId && systemId) {
       fetchResultData(finalUserId);
@@ -158,7 +156,7 @@ function CompletionPage() {
     );
   }
 
-  const { score, grade, feedback_status } = resultData || {};
+  const { score, grade } = resultData || {};
 
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col items-center">
@@ -179,9 +177,7 @@ function CompletionPage() {
         </div>
         <div className="p-4 bg-gray-100 rounded-md mb-6">
           <h3 className="text-lg font-bold text-gray-600">피드백 상태</h3>
-          <p className="text-gray-700">
-            {feedback_status ?? "결과 데이터가 없습니다."}
-          </p>
+          <p className="text-gray-700">{feedbackStatus}</p>
         </div>
         <div className="flex justify-center gap-4">
           <button
