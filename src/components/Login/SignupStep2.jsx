@@ -50,7 +50,7 @@ function SignupStep2({ prevStep, nextStep }) {
     try {
       const response = await axios.post(
         "http://localhost:3000/email/send-verification-code",
-        { email }
+        { email, member_type: formData.member_type }
       );
 
       setVerificationMessage(response.data.message);
