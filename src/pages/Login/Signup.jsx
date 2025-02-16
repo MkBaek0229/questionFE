@@ -25,6 +25,19 @@ function Signup() {
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 
+  const getCsrfToken = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/csrf-token", {
+        credentials: "include", // ✅ 쿠키 포함 필수
+      });
+      const data = await response.json();
+      return data.csrfToken;
+    } catch (error) {
+      console.error("❌ CSRF 토큰 가져오기 실패:", error);
+      return null;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.emailVerified) {
       alert("이메일 인증이 필요합니다.");
@@ -33,6 +46,13 @@ function Signup() {
 
     if (!formData.member_type) {
       alert("회원 유형을 선택해 주세요.");
+      return;
+    }
+
+    // ✅ CSRF 토큰 가져오기
+    const csrfToken = await getCsrfToken();
+    if (!csrfToken) {
+      alert("CSRF 토큰을 가져올 수 없습니다.");
       return;
     }
 
@@ -48,14 +68,16 @@ function Signup() {
       role: formData.member_type, // 백엔드에서 role을 명확하게 전달하기 위해 추가
     };
 
-    console.log("Payload being sent:", payload);
+    console.log("📩 회원가입 요청 데이터:", payload);
 
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken, // ✅ CSRF 토큰 추가
         },
+        credentials: "include", // ✅ 쿠키 포함 필수
         body: JSON.stringify(payload),
       });
 

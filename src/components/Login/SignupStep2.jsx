@@ -213,6 +213,25 @@ function SignupStep2({ prevStep, nextStep }) {
           <p className="text-green-600">{verificationMessage}</p>
         )}
         {errorMessage && <p className="text-red-600">{errorMessage}</p>}
+        <div className="flex justify-between mt-6">
+          <button
+            onClick={prevStep}
+            className="px-4 py-2 bg-gray-600 text-white rounded-md"
+          >
+            이전
+          </button>
+          <button
+            onClick={nextStep}
+            className={`px-4 py-2 rounded-md ${
+              !isVerified
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+            disabled={!isVerified}
+          >
+            다음
+          </button>
+        </div>
       </div>
     </>
   );

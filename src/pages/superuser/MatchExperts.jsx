@@ -47,9 +47,12 @@ function SuperUserPage() {
 
     const fetchManagers = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/all-expert", {
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          "http://localhost:3000/superuser/experts",
+          {
+            withCredentials: true,
+          }
+        );
         console.log("📋 [FETCH MANAGERS] 관리자 데이터:", response.data);
         setManagers(response.data.data || []);
       } catch (error) {
@@ -132,7 +135,7 @@ function SuperUserPage() {
           <label className="block text-lg font-medium mb-2">관리자 선택</label>
           <select
             value={selectedManager || ""}
-            onChange={(e) => setSelectedManager(e.target.value)}
+            onChange={(e) => setSelectedManager(Number(e.target.value))} // 👈 숫자로 변환
             className="w-full p-3 border border-gray-300 rounded-lg"
           >
             <option value="" disabled>
