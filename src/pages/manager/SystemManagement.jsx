@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+
 import { useRecoilState, useRecoilValue } from "recoil";
 import { expertAuthState } from "../../state/authState";
 import { systemsState } from "../../state/system";
@@ -6,13 +7,32 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
-
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
 function SystemManagement() {
   const expert = useRecoilValue(expertAuthState);
   const [systems, setSystems] = useRecoilState(systemsState);
+  const [csrfToken, setCsrfToken] = useState("");
   const navigate = useNavigate();
   console.log(systems);
   // ✅ 전문가가 배정된 시스템 불러오기
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
+
   useEffect(() => {
     const fetchAssignedSystems = async () => {
       if (!expert.user || !expert.user.id) return;
@@ -41,7 +61,7 @@ function SystemManagement() {
       const response = await axios.post(
         "http://localhost:3000/logout/expert",
         {},
-        { withCredentials: true }
+        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
       if (response.status === 200) {
@@ -94,7 +114,7 @@ function SystemManagement() {
       const updateResponse = await axios.post(
         "http://localhost:3000/selftest/qualitative/update-status",
         { systemId: system.systems_id },
-        { withCredentials: true }
+        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
       console.log(

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useRecoilState, useResetRecoilState } from "recoil";
@@ -7,6 +7,18 @@ import {
   qualitativeResponsesState,
   qualitativeCurrentStepState,
 } from "../../state/selfTestState";
+
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
 
 function QualitativeSurvey() {
   const navigate = useNavigate();
@@ -25,7 +37,14 @@ function QualitativeSurvey() {
   );
   const resetCurrentStep = useResetRecoilState(qualitativeCurrentStepState);
   const resetQualitativeData = useResetRecoilState(qualitativeDataState);
-
+  const [csrfToken, setCsrfToken] = useState("");
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
   // ✅ 시스템 변경 시 상태 초기화
   useEffect(() => {
     if (!systemId || !userId) {
@@ -131,7 +150,7 @@ function QualitativeSurvey() {
       const response = await axios.post(
         "http://localhost:3000/user/selftest/qualitative",
         { responses: formattedResponses },
-        { withCredentials: true }
+        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
       console.log("✅ [SUCCESS] 정성 평가 저장 응답:", response.data);
@@ -139,7 +158,7 @@ function QualitativeSurvey() {
       const assessmentResponse = await axios.post(
         "http://localhost:3000/assessment/complete",
         { userId, systemId },
-        { withCredentials: true }
+        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
       console.log("✅ [SUCCESS] 평가 완료 응답:", assessmentResponse.data);

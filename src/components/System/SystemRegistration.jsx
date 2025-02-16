@@ -1,13 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 import { formState } from "../../state/formState";
-
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
 function SystemRegistration() {
   const auth = useRecoilValue(authState); // 로그인된 사용자 정보 가져오기
   const [formData, setFormData] = useRecoilState(formState); // 전역 상태 관리
+  const [csrfToken, setCsrfToken] = useState("");
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
+
   const navigate = useNavigate();
 
   // 폼 데이터 변경 핸들러
@@ -40,6 +59,7 @@ function SystemRegistration() {
         { ...formData, user_id: auth.user.id },
         {
           withCredentials: true,
+          headers: { "X-CSRF-Token": csrfToken },
         }
       );
 

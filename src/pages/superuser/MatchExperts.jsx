@@ -1,16 +1,36 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRecoilState } from "recoil";
 import { systemsState } from "../../state/system";
 import { managersState } from "../../state/superUserState";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
 function SuperUserPage() {
   const [systems, setSystems] = useRecoilState(systemsState); // 시스템 데이터
   const [managers, setManagers] = useRecoilState(managersState); // 관리자 데이터
   const [selectedSystem, setSelectedSystem] = React.useState(null); // 선택된 시스템
   const [selectedManager, setSelectedManager] = React.useState(null); // 선택된 관리자
+  const [csrfToken, setCsrfToken] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
 
   useEffect(() => {
     const fetchSystems = async () => {
@@ -64,7 +84,7 @@ function SuperUserPage() {
       const response = await axios.post(
         "http://localhost:3000/match-experts",
         requestData,
-        { withCredentials: true }
+        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
       console.log("✅ [ASSIGN MANAGER] 매칭 성공:", response.data);
       alert("관리자가 시스템에 성공적으로 매칭되었습니다.");

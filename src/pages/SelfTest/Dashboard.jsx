@@ -14,7 +14,17 @@ import {
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 import { systemsState } from "../../state/system";
-
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
 function Dashboard() {
   const [systems, setSystems] = useRecoilState(systemsState);
   const [assessmentStatuses, setAssessmentStatuses] = useRecoilState(
@@ -80,9 +90,16 @@ function Dashboard() {
     if (!confirmDelete) return;
 
     try {
+      console.log("🚀 [삭제] CSRF 토큰 가져오는 중...");
+      const csrfToken = await getCsrfToken(); // 🔥 CSRF 토큰 가져오기
+
+      if (!csrfToken) {
+        alert("CSRF 토큰을 가져오는 데 실패했습니다.");
+        return;
+      }
       const response = await axios.delete(
         `http://localhost:3000/system/${systemId}`, // ✅ URL 확인
-        { withCredentials: true }
+        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
       console.log("✅ 시스템 삭제 응답:", response.data);
@@ -139,9 +156,17 @@ function Dashboard() {
   const handleLogout = async () => {
     try {
       console.log("🚪 로그아웃 요청 중...");
+      console.log("🚀 [로그아웃] CSRF 토큰 가져오는 중...");
+      const csrfToken = await getCsrfToken(); // 🔥 CSRF 토큰 가져오기
+
+      if (!csrfToken) {
+        alert("CSRF 토큰을 가져오는 데 실패했습니다.");
+        return;
+      }
       const response = await fetch("http://localhost:3000/logout", {
         method: "POST",
         credentials: "include",
+        headers: { "X-CSRF-Token": csrfToken },
       });
 
       const data = await response.json();

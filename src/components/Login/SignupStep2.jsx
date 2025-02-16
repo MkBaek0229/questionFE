@@ -3,6 +3,19 @@ import axios from "axios";
 import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
 
+// ✅ CSRF 토큰 가져오는 함수
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함 (중요)
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
+
 function SignupStep2({ prevStep, nextStep }) {
   const [formData, setFormData] = useRecoilState(formState);
   const [email, setEmail] = useState(formData.email || "");
@@ -41,6 +54,7 @@ function SignupStep2({ prevStep, nextStep }) {
     setErrorMessage("");
   };
 
+  // ✅ 이메일 인증 코드 요청 (CSRF 보호 추가)
   const handleSendVerificationCode = async () => {
     if (isCooldown || requestCount >= 3) {
       alert("1분 내 요청 횟수를 초과했습니다. 잠시 후 다시 시도하세요.");
@@ -48,9 +62,21 @@ function SignupStep2({ prevStep, nextStep }) {
     }
 
     try {
+      console.log("🚀 [이메일 인증] CSRF 토큰 가져오는 중...");
+      const csrfToken = await getCsrfToken(); // 🔥 CSRF 토큰 가져오기
+
+      if (!csrfToken) {
+        setErrorMessage("CSRF 토큰을 가져오는 데 실패했습니다.");
+        return;
+      }
+
       const response = await axios.post(
         "http://localhost:3000/email/send-verification-code",
-        { email, member_type: formData.member_type }
+        { email },
+        {
+          withCredentials: true,
+          headers: { "X-CSRF-Token": csrfToken }, // ✅ CSRF 토큰 추가
+        }
       );
 
       setVerificationMessage(response.data.message);
@@ -70,12 +96,26 @@ function SignupStep2({ prevStep, nextStep }) {
     }
   };
 
+  // ✅ 인증 코드 확인 (CSRF 보호 추가)
   const handleVerificationCodeCheck = async () => {
     try {
+      console.log("🚀 [인증 코드 확인] CSRF 토큰 가져오는 중...");
+      const csrfToken = await getCsrfToken(); // 🔥 CSRF 토큰 가져오기
+
+      if (!csrfToken) {
+        setErrorMessage("CSRF 토큰을 가져오는 데 실패했습니다.");
+        return;
+      }
+
       const response = await axios.post(
         "http://localhost:3000/email/verify-code",
-        { email, code: verificationCode }
+        { email, code: verificationCode },
+        {
+          withCredentials: true,
+          headers: { "X-CSRF-Token": csrfToken }, // ✅ CSRF 토큰 추가
+        }
       );
+
       if (response.status === 200) {
         setFormData((prev) => ({ ...prev, email, emailVerified: true }));
         setIsVerified(true);
@@ -94,7 +134,7 @@ function SignupStep2({ prevStep, nextStep }) {
       {/* 📌 진행 바 UI */}
       <div className="flex items-center justify-center w-full py-8">
         <div className="flex items-center w-4/5 max-w-2xl relative justify-between">
-          {/* STEP 1  */}
+          {/* STEP 1 */}
           <div className="relative flex flex-col items-center w-1/4">
             <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
               ✓
@@ -163,7 +203,7 @@ function SignupStep2({ prevStep, nextStep }) {
             placeholder="인증 코드를 입력하세요"
           />
           <button
-            onClick={handleVerificationCodeCheck} // ✅ 올바른 핸들러로 변경
+            onClick={handleVerificationCodeCheck}
             className="mt-2 px-4 py-2 bg-gray-600 text-white rounded-md"
           >
             확인
@@ -173,21 +213,6 @@ function SignupStep2({ prevStep, nextStep }) {
           <p className="text-green-600">{verificationMessage}</p>
         )}
         {errorMessage && <p className="text-red-600">{errorMessage}</p>}
-        <div className="flex justify-between mt-4">
-          <button
-            onClick={prevStep}
-            className="px-4 py-2 bg-gray-300 rounded-md"
-          >
-            이전
-          </button>
-          <button
-            onClick={nextStep}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            disabled={!isVerified}
-          >
-            다음
-          </button>
-        </div>
       </div>
     </>
   );

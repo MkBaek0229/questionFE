@@ -12,8 +12,18 @@ import {
   faSave,
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
-
-import TiptapEditor from "../../components/Super/TiptapEditor"; // ✅ 커스텀 Quill impo
+import TiptapEditor from "../../components/Super/TiptapEditor";
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
 function SuperManageQuestions() {
   const [quantitativeQuestions, setQuantitativeQuestions] = useRecoilState(
     quantitativeQuestionsState
@@ -35,6 +45,14 @@ function SuperManageQuestions() {
   const [selectedQuestion, setSelectedQuestion] = useState(null); // 수정할 문항 저장
   const [editedData, setEditedData] = useState({}); // 수정 데이터 저장
   const quillRef = useRef(null); // ✅ Quill ref 추가
+  const [csrfToken, setCsrfToken] = useState("");
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
   // ✅ 문항 목록 API 요청
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -97,6 +115,7 @@ function SuperManageQuestions() {
 
       const response = await axios.post(endpoint, questionData, {
         withCredentials: true,
+        headers: { "X-CSRF-Token": csrfToken },
       });
 
       alert("✅ 문항이 추가되었습니다!");
@@ -142,7 +161,10 @@ function SuperManageQuestions() {
         : `http://localhost:3000/super/selftest/qualitative/put/${id}`;
 
     try {
-      await axios.put(endpoint, editedData, { withCredentials: true });
+      await axios.put(endpoint, editedData, {
+        withCredentials: true,
+        headers: { "X-CSRF-Token": csrfToken },
+      });
 
       alert("✅ 문항이 수정되었습니다!");
       setSelectedQuestion(null); // 폼 닫기
@@ -171,7 +193,10 @@ function SuperManageQuestions() {
           ? `http://localhost:3000/super/selftest/quantitative/del/${id}`
           : `http://localhost:3000/super/selftest/qualitative/del/${id}`;
 
-      await axios.delete(endpoint, { withCredentials: true });
+      await axios.delete(endpoint, {
+        withCredentials: true,
+        headers: { "X-CSRF-Token": csrfToken },
+      });
 
       alert("✅ 문항이 삭제되었습니다!");
       if (type === "quantitative") {
