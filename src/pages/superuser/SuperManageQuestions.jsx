@@ -103,7 +103,11 @@ function SuperManageQuestions() {
               question: newQuestion.question,
               evaluation_criteria: newQuestion.evaluation_criteria,
               legal_basis: newQuestion.legal_basis,
-              score: newQuestion.score,
+              score_fulfilled: Number(newQuestion.score_fulfilled) || 0,
+              score_unfulfilled: Number(newQuestion.score_unfulfilled) || 0,
+              score_consult: Number(newQuestion.score_consult) || 0,
+              score_not_applicable:
+                Number(newQuestion.score_not_applicable) || 0,
             }
           : {
               question_number: newQuestion.question_number,
@@ -111,7 +115,12 @@ function SuperManageQuestions() {
               indicator_definition: newQuestion.indicator_definition,
               evaluation_criteria: newQuestion.evaluation_criteria,
               reference_info: newQuestion.reference_info,
+              score_consult: Number(newQuestion.score_consult) || 0,
+              score_not_applicable:
+                Number(newQuestion.score_not_applicable) || 0,
             };
+
+      console.log("📤 전송할 데이터:", questionData); // 디버깅 로그 추가
 
       const response = await axios.post(endpoint, questionData, {
         withCredentials: true,
@@ -125,6 +134,7 @@ function SuperManageQuestions() {
         setQualitativeQuestions([...qualitativeQuestions, response.data]);
       }
 
+      // 입력 필드 초기화
       setNewQuestion({
         type: "quantitative",
         question_number: "",
@@ -134,13 +144,17 @@ function SuperManageQuestions() {
         evaluation_criteria: "",
         reference_info: "",
         legal_basis: "",
-        score: "",
+        score_fulfilled: "",
+        score_unfulfilled: "",
+        score_consult: "",
+        score_not_applicable: "",
       });
     } catch (error) {
-      console.error("❌ 문항 추가 실패:", error);
+      console.error("❌ 문항 추가 실패:", error.response?.data || error);
       alert("문항 추가 중 오류가 발생했습니다.");
     }
   };
+
   // ✅ 수정 버튼 클릭 시 문항 정보 불러오기
   const handleEditStart = (question, type) => {
     console.log("📝 수정할 문항 데이터:", question); // 🔥 디버깅
@@ -284,12 +298,48 @@ function SuperManageQuestions() {
               />
               <input
                 type="number"
-                placeholder="배점"
-                value={newQuestion.score}
+                placeholder="이행 점수"
+                value={newQuestion.score_fulfilled || ""}
                 onChange={(e) =>
                   setNewQuestion({
                     ...newQuestion,
-                    score: e.target.value,
+                    score_fulfilled: e.target.value,
+                  })
+                }
+                className="w-full p-2 mb-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="미이행 점수"
+                value={newQuestion.score_unfulfilled || ""}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    score_unfulfilled: e.target.value,
+                  })
+                }
+                className="w-full p-2 mb-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="자문 필요 점수"
+                value={newQuestion.score_consult || ""}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    score_consult: e.target.value,
+                  })
+                }
+                className="w-full p-2 mb-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="해당 없음 점수"
+                value={newQuestion.score_not_applicable || ""}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    score_not_applicable: e.target.value,
                   })
                 }
                 className="w-full p-2 mb-2 border rounded"
@@ -351,6 +401,30 @@ function SuperManageQuestions() {
                   setNewQuestion({
                     ...newQuestion,
                     reference_info: e.target.value,
+                  })
+                }
+                className="w-full p-2 mb-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="자문 필요 점수"
+                value={newQuestion.score_consult || ""}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    score_consult: e.target.value,
+                  })
+                }
+                className="w-full p-2 mb-2 border rounded"
+              />
+              <input
+                type="number"
+                placeholder="해당 없음 점수"
+                value={newQuestion.score_not_applicable || ""}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    score_not_applicable: e.target.value,
                   })
                 }
                 className="w-full p-2 mb-2 border rounded"
@@ -417,10 +491,49 @@ function SuperManageQuestions() {
                 />
                 <input
                   type="number"
-                  placeholder="배점"
-                  value={editedData.score}
+                  placeholder="이행 점수"
+                  value={newQuestion.score_fulfilled || ""}
                   onChange={(e) =>
-                    setEditedData({ ...editedData, score: e.target.value })
+                    setNewQuestion({
+                      ...newQuestion,
+                      score_fulfilled: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="미이행 점수"
+                  value={newQuestion.score_unfulfilled || ""}
+                  onChange={(e) =>
+                    setNewQuestion({
+                      ...newQuestion,
+                      score_unfulfilled: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="자문 필요 점수"
+                  value={newQuestion.score_consult || ""}
+                  onChange={(e) =>
+                    setNewQuestion({
+                      ...newQuestion,
+                      score_consult: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="해당 없음 점수"
+                  value={newQuestion.score_not_applicable || ""}
+                  onChange={(e) =>
+                    setNewQuestion({
+                      ...newQuestion,
+                      score_not_applicable: e.target.value,
+                    })
                   }
                   className="w-full p-2 mb-2 border rounded"
                 />
@@ -468,6 +581,30 @@ function SuperManageQuestions() {
                     setEditedData({
                       ...editedData,
                       reference_info: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="자문 필요 점수"
+                  value={newQuestion.score_consult || ""}
+                  onChange={(e) =>
+                    setNewQuestion({
+                      ...newQuestion,
+                      score_consult: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 mb-2 border rounded"
+                />
+                <input
+                  type="number"
+                  placeholder="해당 없음 점수"
+                  value={newQuestion.score_not_applicable || ""}
+                  onChange={(e) =>
+                    setNewQuestion({
+                      ...newQuestion,
+                      score_not_applicable: e.target.value,
                     })
                   }
                   className="w-full p-2 mb-2 border rounded"
