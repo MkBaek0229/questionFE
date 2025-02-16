@@ -199,10 +199,6 @@ function DiagnosisPage() {
                   {quantitativeData[currentStep - 1]?.question_number ||
                     currentStep}
                 </td>
-                <td className="bg-gray-200 p-2 border">배점</td>
-                <td className="p-2 border">
-                  {quantitativeData[currentStep - 1]?.score || "N/A"}
-                </td>
               </tr>
               <tr>
                 <td className="bg-gray-200 p-2 border">지표</td>
