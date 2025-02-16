@@ -29,6 +29,9 @@ import ViewSystems from "./pages/superuser/ViewSystems";
 import SystemDetail from "./pages/superuser/SystemDetail";
 import SuperManageQuestions from "./pages/superuser/SuperManageQuestions";
 import SuperManageUsers from "./pages/superuser/SuperManageUsers";
+import FindAccountSelectPage from "./components/Login/FindAccountSelectPage";
+import FindAccountPage from "./components/Login/FindAccountPage";
+import ResetPasswordPage from "./components/Login/ResetPasswordPage";
 function App() {
   const [auth, setAuthState] = useRecoilState(
     authState || { isLoggedIn: false, user: null }
@@ -143,6 +146,12 @@ function App() {
           <Route path="/DiagnosisPage" element={<DiagnosisPage />} />
           <Route path="/qualitative-survey" element={<QualitativeSurvey />} />
           <Route path="/Login" element={<Login />} />
+          <Route
+            path="/find-account/select"
+            element={<FindAccountSelectPage />}
+          />
+          <Route path="/find-account/:userType" element={<FindAccountPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/Signup" element={<Signup />} />
           <Route path="/signup-complete" element={<SignupComplete />} />
           <Route path="/dashboard" element={<Dashboard />} />

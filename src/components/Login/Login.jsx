@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
 import {
   authState,
@@ -124,8 +124,8 @@ function Login() {
               onChange={(e) => setUserType(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md"
             >
-              <option value="user">일반회원</option>
-              <option value="expert">관리자</option>
+              <option value="user">기관회원</option>
+              <option value="expert">전문가회원</option>
             </select>
           </div>
 
@@ -170,6 +170,14 @@ function Login() {
           >
             {isSubmitting ? "로그인 중..." : "로그인"}
           </button>
+          <div className="flex justify-between">
+            <Link
+              to="/find-account/select"
+              className="text-blue-800 font-semibold"
+            >
+              비밀번호 찾기
+            </Link>
+          </div>
         </div>
       </div>
     </div>
