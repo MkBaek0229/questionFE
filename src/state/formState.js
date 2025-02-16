@@ -22,8 +22,7 @@ export const formState = atom({
       major_carrea: "", // 추가된 필드
     },
     name: "",
-    min_subjects: "",
-    max_subjects: "",
+    num_data_subjects: "", // ✅ 변경된 필드 반영
     purpose: "",
     is_private: "포함", // 기본값 설정
     is_unique: "미포함", // 기본값 설정

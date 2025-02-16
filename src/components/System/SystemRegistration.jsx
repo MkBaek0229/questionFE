@@ -96,29 +96,15 @@ function SystemRegistration() {
           </div>
           <div>
             <label className="block text-gray-700 font-medium">
-              최소 문항 수
+              정보 주체수
             </label>
             <input
               type="number"
-              name="min_subjects"
-              value={formData.min_subjects || ""}
+              name="num_data_subjects"
+              value={formData.num_data_subjects || ""}
               onChange={handleChange}
               className="w-full p-2 border rounded"
-              placeholder="최소 문항 수를 입력하세요"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">
-              최대 문항 수
-            </label>
-            <input
-              type="number"
-              name="max_subjects"
-              value={formData.max_subjects || ""}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              placeholder="최대 문항 수를 입력하세요"
+              placeholder="정보 주체 수를 입력하세요"
               required
             />
           </div>
