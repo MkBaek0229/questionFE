@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useRecoilState } from "recoil";
 import { systemsState } from "../../state/system"; // ✅ 시스템 상태 가져오기
+import CategoryScoresChart from "../../components/Chart/CategoryScoresChart";
 
 function CompletionPage() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function CompletionPage() {
   const [resultData, setResultData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [finalUserId, setFinalUserId] = useState(null);
 
   const { userId, systemId, userType } = location.state || {};
@@ -122,6 +124,11 @@ function CompletionPage() {
             <h3 className="text-lg font-bold text-green-600">등급</h3>
             <p className="text-3xl font-extrabold">{grade ?? "N/A"}</p>
           </div>
+        </div>
+
+        <div className="flex justify-center mb-6">
+          {/* ✅ 보호 수준 그래프 추가 */}
+          <CategoryScoresChart systemId={systemId} />
         </div>
 
         <div className="flex justify-center gap-4">
