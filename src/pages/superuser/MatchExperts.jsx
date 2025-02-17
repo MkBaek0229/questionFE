@@ -135,17 +135,17 @@ function SuperUserPage() {
           <label className="block text-lg font-medium mb-2">관리자 선택</label>
           <select
             value={selectedManager || ""}
-            onChange={(e) => setSelectedManager(Number(e.target.value))} // 👈 숫자로 변환
+            onChange={(e) => {
+              setSelectedManager(e.target.value); // ✅ 숫자로 변환
+              console.log(e.target.value);
+            }} // 👈 숫자로 변환
             className="w-full p-3 border border-gray-300 rounded-lg"
           >
             <option value="" disabled>
               관리자를 선택하세요
             </option>
             {managers.map((manager) => (
-              <option
-                key={`manager-${manager.expert_id}`}
-                value={manager.expert_id}
-              >
+              <option key={`manager-${manager.id}`} value={manager.id}>
                 {manager.expert_name} ({manager.email})
               </option>
             ))}
