@@ -137,7 +137,6 @@ function SuperUserPage() {
             value={selectedManager || ""}
             onChange={(e) => {
               setSelectedManager(e.target.value); // ✅ 숫자로 변환
-              console.log(e.target.value);
             }} // 👈 숫자로 변환
             className="w-full p-3 border border-gray-300 rounded-lg"
           >

@@ -8,6 +8,18 @@ import {
 } from "../../state/selfTestState";
 import { qualitativeFeedbackState } from "../../state/feedback";
 
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
+
 function QualitativeSurveyFeedback() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,6 +34,15 @@ function QualitativeSurveyFeedback() {
   const [responses, setResponses] = useState({});
   const [newFeedbacks, setNewFeedbacks] = useState({});
   const [maxSteps, setMaxSteps] = useState(0);
+  const [csrfToken, setCsrfToken] = useState("");
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
 
   useEffect(() => {
     if (!systemId) {
@@ -142,7 +163,12 @@ function QualitativeSurveyFeedback() {
           expertId,
           feedbackResponses: feedbackData,
         },
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: {
+            "X-CSRF-Token": csrfToken, // ✅ CSRF 토큰 추가
+          },
+        }
       );
 
       console.log("✅ [SUCCESS] Feedback saved:", feedbackData);
