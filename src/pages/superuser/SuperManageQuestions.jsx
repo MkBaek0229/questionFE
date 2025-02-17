@@ -13,6 +13,9 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import TiptapEditor from "../../components/Super/TiptapEditor";
+import { faFolderOpen } from "@fortawesome/free-regular-svg-icons";
+import CategoryManager from "./CategoryManager";
+
 const getCsrfToken = async () => {
   try {
     const response = await axios.get("http://localhost:3000/csrf-token", {
@@ -25,6 +28,9 @@ const getCsrfToken = async () => {
   }
 };
 function SuperManageQuestions() {
+  const [categories, setCategories] = useState([]); // ✅ 카테고리 목록 저장
+  const [isCategoryModalOpen, setCategoryModalOpen] = useState(false); // ✅ 모달 상태 추가
+
   const [quantitativeQuestions, setQuantitativeQuestions] = useRecoilState(
     quantitativeQuestionsState
   );
@@ -34,18 +40,19 @@ function SuperManageQuestions() {
   const [newQuestion, setNewQuestion] = useState({
     type: "quantitative",
     question_number: "",
+    category_id: "", // ✅ 추가: 선택한 카테고리 ID
     question: "",
     indicator: "",
     indicator_definition: "",
     evaluation_criteria: "", // ✅ 기본값을 빈 문자열로 설정
     reference_info: "",
     legal_basis: "",
-    score: "",
   });
   const [selectedQuestion, setSelectedQuestion] = useState(null); // 수정할 문항 저장
   const [editedData, setEditedData] = useState({}); // 수정 데이터 저장
   const quillRef = useRef(null); // ✅ Quill ref 추가
   const [csrfToken, setCsrfToken] = useState("");
+
   useEffect(() => {
     const fetchCsrfToken = async () => {
       const token = await getCsrfToken();
@@ -53,6 +60,20 @@ function SuperManageQuestions() {
     };
     fetchCsrfToken();
   }, []);
+
+  useEffect(() => {
+    // ✅ 서버에서 카테고리 목록 가져오기
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get("http://localhost:3000/categories");
+        setCategories(response.data);
+      } catch (error) {
+        console.error("❌ 카테고리 목록 불러오기 실패:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   // ✅ 문항 목록 API 요청
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -233,6 +254,35 @@ function SuperManageQuestions() {
         <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
           슈퍼유저 문항 관리
         </h1>
+
+        {/* ✅ 카테고리 관리 버튼 (모달 열기) */}
+        <button
+          onClick={() => setCategoryModalOpen(true)}
+          className="mb-4 px-4 py-2 bg-blue-500 text-white rounded-md flex items-center"
+        >
+          <FontAwesomeIcon icon={faFolderOpen} className="mr-2" />
+          카테고리 관리
+        </button>
+
+        {/* ✅ 모달 추가 (카테고리 관리) */}
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 relative">
+              <h2 className="text-xl font-bold mb-4">카테고리 관리</h2>
+              <CategoryManager
+                categories={categories}
+                fetchCategories={() => {}}
+              />
+              <button
+                onClick={() => setCategoryModalOpen(false)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+              >
+                ✖
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ✅ 문항 추가 폼 */}
         <div className="bg-gray-50 p-6 rounded-lg shadow-md mb-6">
           <h2 className="text-xl font-semibold mb-4">새로운 문항 추가</h2>
@@ -262,6 +312,24 @@ function SuperManageQuestions() {
                 }
                 className="w-full p-2 mb-2 border rounded"
               />
+              {/* ✅ 카테고리 선택 드롭다운 */}
+              <select
+                value={newQuestion.category_id}
+                onChange={(e) =>
+                  setNewQuestion({
+                    ...newQuestion,
+                    category_id: e.target.value,
+                  })
+                }
+                className="w-full p-2 mb-2 border rounded"
+              >
+                <option value="">카테고리 선택</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 placeholder="문항 내용"
