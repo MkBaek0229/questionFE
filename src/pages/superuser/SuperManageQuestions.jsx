@@ -151,7 +151,7 @@ function SuperManageQuestions() {
       });
     } catch (error) {
       console.error("❌ 문항 추가 실패:", error.response?.data || error);
-      alert("문항 추가 중 오류가 발생했습니다.");
+      alert("❌ 문항 추가 실패:", error.response.data.message);
     }
   };
 

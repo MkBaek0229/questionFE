@@ -5,8 +5,29 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import axios from "axios";
 
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
+
 const TiptapEditor = ({ value, onChange }) => {
   const [editorContent, setEditorContent] = useState(value || "");
+  const [csrfToken, setCsrfToken] = useState("");
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
 
   useEffect(() => {
     if (editor) {
@@ -46,7 +67,13 @@ const TiptapEditor = ({ value, onChange }) => {
         const response = await axios.post(
           "http://localhost:3000/upload", // ✅ 업로드 API 경로
           formData,
-          { headers: { "Content-Type": "multipart/form-data" } }
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "multipart/form-data",
+              "X-CSRF-Token": csrfToken, // ✅ CSRF 토큰 추가
+            },
+          }
         );
 
         const url = response.data.url;
