@@ -176,18 +176,6 @@ function SuperManageQuestions() {
     }
   };
 
-  // ✅ 수정 버튼 클릭 시 문항 정보 불러오기
-  const handleEditStart = (question, type) => {
-    console.log("📝 수정할 문항 데이터:", question); // 🔥 디버깅
-
-    setSelectedQuestion({ ...question, type });
-
-    setEditedData({
-      ...question,
-      evaluation_criteria: question.evaluation_criteria || "<p><br></p>", // ✅ 빈 값 방지
-    });
-  };
-
   // ✅ 수정 저장 버튼 클릭
   const handleEditSave = async (id, type) => {
     const endpoint =
@@ -248,6 +236,23 @@ function SuperManageQuestions() {
       alert("문항 삭제 중 오류가 발생했습니다.");
     }
   };
+
+  const handleEditStart = (question, type) => {
+    console.log("📝 수정할 문항 데이터:", question); // 🔥 디버깅
+
+    setSelectedQuestion({ ...question, type });
+
+    setEditedData({
+      ...question,
+      category_id: question.category_id || "", // ✅ 기존 카테고리 값 불러오기
+      evaluation_criteria: question.evaluation_criteria || "<p><br></p>", // ✅ 빈 값 방지
+      score_fulfilled: question.score_fulfilled || 0, // ✅ 기존 점수 불러오기
+      score_unfulfilled: question.score_unfulfilled || 0,
+      score_consult: question.score_consult || 0,
+      score_not_applicable: question.score_not_applicable || 0,
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
       <div className="max-w-6xl w-full bg-white p-8 rounded-lg shadow-lg">
@@ -534,6 +539,25 @@ function SuperManageQuestions() {
                   }
                   className="w-full p-2 mb-2 border rounded"
                 />
+                {/* ✅ 기존 카테고리 표시 및 변경 가능하도록 추가 */}
+                <label className="text-gray-700 font-semibold">카테고리</label>
+                <select
+                  value={editedData.category_id}
+                  onChange={(e) =>
+                    setEditedData({
+                      ...editedData,
+                      category_id: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 mb-2 border rounded"
+                >
+                  <option value="">카테고리 선택</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
                 <TiptapEditor
                   value={editedData.evaluation_criteria || ""} // ✅ 빈 값 방지
                   onChange={(content) => {
@@ -560,10 +584,10 @@ function SuperManageQuestions() {
                 <input
                   type="number"
                   placeholder="이행 점수"
-                  value={newQuestion.score_fulfilled || ""}
+                  value={editedData.score_fulfilled || ""}
                   onChange={(e) =>
                     setNewQuestion({
-                      ...newQuestion,
+                      ...editedData,
                       score_fulfilled: e.target.value,
                     })
                   }
@@ -572,10 +596,10 @@ function SuperManageQuestions() {
                 <input
                   type="number"
                   placeholder="미이행 점수"
-                  value={newQuestion.score_unfulfilled || ""}
+                  value={editedData.score_unfulfilled || ""}
                   onChange={(e) =>
                     setNewQuestion({
-                      ...newQuestion,
+                      ...editedData,
                       score_unfulfilled: e.target.value,
                     })
                   }
@@ -584,10 +608,10 @@ function SuperManageQuestions() {
                 <input
                   type="number"
                   placeholder="자문 필요 점수"
-                  value={newQuestion.score_consult || ""}
+                  value={editedData.score_consult || ""}
                   onChange={(e) =>
                     setNewQuestion({
-                      ...newQuestion,
+                      ...editedData,
                       score_consult: e.target.value,
                     })
                   }
@@ -596,10 +620,10 @@ function SuperManageQuestions() {
                 <input
                   type="number"
                   placeholder="해당 없음 점수"
-                  value={newQuestion.score_not_applicable || ""}
+                  value={editedData.score_not_applicable || ""}
                   onChange={(e) =>
                     setNewQuestion({
-                      ...newQuestion,
+                      ...editedData,
                       score_not_applicable: e.target.value,
                     })
                   }
@@ -656,10 +680,10 @@ function SuperManageQuestions() {
                 <input
                   type="number"
                   placeholder="자문 필요 점수"
-                  value={newQuestion.score_consult || ""}
+                  value={editedData.score_consult || ""}
                   onChange={(e) =>
                     setNewQuestion({
-                      ...newQuestion,
+                      ...editedData,
                       score_consult: e.target.value,
                     })
                   }
@@ -668,10 +692,10 @@ function SuperManageQuestions() {
                 <input
                   type="number"
                   placeholder="해당 없음 점수"
-                  value={newQuestion.score_not_applicable || ""}
+                  value={editedData.score_not_applicable || ""}
                   onChange={(e) =>
                     setNewQuestion({
-                      ...newQuestion,
+                      ...editedData,
                       score_not_applicable: e.target.value,
                     })
                   }
