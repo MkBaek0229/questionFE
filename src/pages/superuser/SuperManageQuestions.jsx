@@ -75,37 +75,35 @@ function SuperManageQuestions() {
   }, []);
 
   // ✅ 문항 목록 API 요청
+  const fetchQuestions = async () => {
+    try {
+      const [quantitativeRes, qualitativeRes] = await Promise.all([
+        axios.get("http://localhost:3000/super/selftest/quantitative", {
+          withCredentials: true,
+        }),
+        axios.get("http://localhost:3000/super/selftest/qualitative", {
+          withCredentials: true,
+        }),
+      ]);
+
+      console.log("🔍 [DEBUG] 정량 문항 응답 데이터:", quantitativeRes.data);
+      console.log("🔍 [DEBUG] 정성 문항 응답 데이터:", qualitativeRes.data);
+
+      // ✅ API 응답에서 `data` 키를 추출하여 설정
+      setQuantitativeQuestions(
+        Array.isArray(quantitativeRes.data.data)
+          ? quantitativeRes.data.data
+          : []
+      );
+      setQualitativeQuestions(
+        Array.isArray(qualitativeRes.data.data) ? qualitativeRes.data.data : []
+      );
+    } catch (error) {
+      console.error("❌ 문항 불러오기 오류:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const [quantitativeRes, qualitativeRes] = await Promise.all([
-          axios.get("http://localhost:3000/super/selftest/quantitative", {
-            withCredentials: true,
-          }),
-          axios.get("http://localhost:3000/super/selftest/qualitative", {
-            withCredentials: true,
-          }),
-        ]);
-
-        console.log("🔍 [DEBUG] 정량 문항 응답 데이터:", quantitativeRes.data);
-        console.log("🔍 [DEBUG] 정성 문항 응답 데이터:", qualitativeRes.data);
-
-        // ✅ API 응답에서 `data` 키를 추출하여 설정
-        setQuantitativeQuestions(
-          Array.isArray(quantitativeRes.data.data)
-            ? quantitativeRes.data.data
-            : []
-        );
-        setQualitativeQuestions(
-          Array.isArray(qualitativeRes.data.data)
-            ? qualitativeRes.data.data
-            : []
-        );
-      } catch (error) {
-        console.error("❌ 문항 불러오기 오류:", error);
-      }
-    };
-
     fetchQuestions();
   }, []);
 
@@ -121,6 +119,7 @@ function SuperManageQuestions() {
         newQuestion.type === "quantitative"
           ? {
               question_number: newQuestion.question_number,
+              category_id: newQuestion.category_id, // ✅ 카테고리 ID 추가
               question: newQuestion.question,
               evaluation_criteria: newQuestion.evaluation_criteria,
               legal_basis: newQuestion.legal_basis,
@@ -149,10 +148,16 @@ function SuperManageQuestions() {
       });
 
       alert("✅ 문항이 추가되었습니다!");
+
+      // 문항 목록 다시 불러오기
+      fetchQuestions();
+
+      const addedQuestion = response.data;
+
       if (newQuestion.type === "quantitative") {
-        setQuantitativeQuestions([...quantitativeQuestions, response.data]);
+        setQuantitativeQuestions([...quantitativeQuestions, addedQuestion]);
       } else {
-        setQualitativeQuestions([...qualitativeQuestions, response.data]);
+        setQualitativeQuestions([...qualitativeQuestions, addedQuestion]);
       }
 
       // 입력 필드 초기화
@@ -201,6 +206,8 @@ function SuperManageQuestions() {
           prev.map((q) => (q.id === id ? editedData : q))
         );
       }
+      // 문항 목록 다시 불러오기
+      fetchQuestions();
     } catch (error) {
       console.error("❌ 문항 수정 실패:", error);
       alert("문항 수정 중 오류가 발생했습니다.");
@@ -586,7 +593,7 @@ function SuperManageQuestions() {
                   placeholder="이행 점수"
                   value={editedData.score_fulfilled || ""}
                   onChange={(e) =>
-                    setNewQuestion({
+                    setEditedData({
                       ...editedData,
                       score_fulfilled: e.target.value,
                     })
@@ -598,7 +605,7 @@ function SuperManageQuestions() {
                   placeholder="미이행 점수"
                   value={editedData.score_unfulfilled || ""}
                   onChange={(e) =>
-                    setNewQuestion({
+                    setEditedData({
                       ...editedData,
                       score_unfulfilled: e.target.value,
                     })
@@ -610,7 +617,7 @@ function SuperManageQuestions() {
                   placeholder="자문 필요 점수"
                   value={editedData.score_consult || ""}
                   onChange={(e) =>
-                    setNewQuestion({
+                    setEditedData({
                       ...editedData,
                       score_consult: e.target.value,
                     })
@@ -622,7 +629,7 @@ function SuperManageQuestions() {
                   placeholder="해당 없음 점수"
                   value={editedData.score_not_applicable || ""}
                   onChange={(e) =>
-                    setNewQuestion({
+                    setEditedData({
                       ...editedData,
                       score_not_applicable: e.target.value,
                     })
@@ -682,7 +689,7 @@ function SuperManageQuestions() {
                   placeholder="자문 필요 점수"
                   value={editedData.score_consult || ""}
                   onChange={(e) =>
-                    setNewQuestion({
+                    setEditedData({
                       ...editedData,
                       score_consult: e.target.value,
                     })
@@ -694,7 +701,7 @@ function SuperManageQuestions() {
                   placeholder="해당 없음 점수"
                   value={editedData.score_not_applicable || ""}
                   onChange={(e) =>
-                    setNewQuestion({
+                    setEditedData({
                       ...editedData,
                       score_not_applicable: e.target.value,
                     })

@@ -8,10 +8,31 @@ import {
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
 
+const getCsrfToken = async () => {
+  try {
+    const response = await axios.get("http://localhost:3000/csrf-token", {
+      withCredentials: true, // ✅ 세션 쿠키 포함
+    });
+    return response.data.csrfToken;
+  } catch (error) {
+    console.error("❌ CSRF 토큰 가져오기 실패:", error);
+    return null;
+  }
+};
+
 function CategoryManager({ categories, fetchCategories, setNewQuestion }) {
   const [newCategory, setNewCategory] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
   const [editedName, setEditedName] = useState("");
+  const [csrfToken, setCsrfToken] = useState("");
+
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      const token = await getCsrfToken();
+      setCsrfToken(token);
+    };
+    fetchCsrfToken();
+  }, []);
 
   // ✅ 새로운 카테고리 추가
   const handleAddCategory = async () => {
@@ -21,9 +42,17 @@ function CategoryManager({ categories, fetchCategories, setNewQuestion }) {
     }
 
     try {
-      await axios.post("http://localhost:3000/categories/add", {
-        name: newCategory,
-      });
+      const response = await axios.post(
+        "http://localhost:3000/categories/add",
+        { name: newCategory },
+        {
+          withCredentials: true,
+          headers: {
+            "X-CSRF-Token": csrfToken, // ✅ CSRF 토큰 추가
+          },
+        }
+      );
+
       alert("✅ 카테고리 추가 완료!");
       setNewCategory("");
       fetchCategories();
