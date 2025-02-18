@@ -131,7 +131,13 @@ function CompletionPage() {
 
         <div className="flex justify-center gap-4">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              if (userType === "전문가") {
+                navigate("/system-management");
+              } else {
+                navigate("/dashboard");
+              }
+            }}
             className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
           >
             대시보드로 이동
