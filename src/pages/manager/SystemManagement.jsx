@@ -77,16 +77,27 @@ function SystemManagement() {
   };
 
   // ✅ 평가 결과 보기
-  const handleViewResults = (system) => {
-    navigate("/completion", {
-      state: {
-        systemId: system.systems_id,
-        userId: expert.user?.id,
-        userType: "전문가",
-      },
-    });
-  };
+  const handleViewResults = async (system) => {
+    try {
+      const response = await axios.get("http://localhost:3000/system-owner", {
+        params: { systemId: system.systems_id },
+        withCredentials: true,
+      });
 
+      const userId = response.data.userId;
+
+      navigate("/completion", {
+        state: {
+          systemId: system.systems_id,
+          userId: userId, // ✅ 시스템 소유자의 userId를 전달
+          userType: "전문가",
+        },
+      });
+    } catch (error) {
+      console.error("❌ 시스템 소유자 조회 실패:", error);
+      alert("시스템 소유자 조회 중 오류가 발생했습니다.");
+    }
+  };
   // ✅ 피드백 작성 후 상태 업데이트
   const handleProvideFeedback = async (system) => {
     console.log("🟢 [handleProvideFeedback] 시스템 ID:", system.systems_id);

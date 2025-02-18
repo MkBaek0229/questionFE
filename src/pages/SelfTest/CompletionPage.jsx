@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useRecoilState } from "recoil";
-import { systemsState } from "../../state/system"; // ✅ 시스템 상태 가져오기
+import { systemsState } from "../../state/system";
 import CategoryScoresChart from "../../components/Chart/CategoryScoresChart";
 
 function CompletionPage() {
@@ -16,8 +16,6 @@ function CompletionPage() {
   const [finalUserId, setFinalUserId] = useState(null);
 
   const { userId, systemId, userType } = location.state || {};
-  const isExpert = userType === "전문가";
-  const isInstitution = userType === "기관회원";
 
   // ✅ 시스템 상태 가져오기
   const [systems, setSystems] = useRecoilState(systemsState);
@@ -126,8 +124,8 @@ function CompletionPage() {
           </div>
         </div>
 
+        {/* ✅ 보호 수준 그래프 추가 */}
         <div className="flex justify-center mb-6">
-          {/* ✅ 보호 수준 그래프 추가 */}
           <CategoryScoresChart systemId={systemId} />
         </div>
 
