@@ -104,6 +104,40 @@ function DiagnosisPage() {
     fetchQuantitativeData();
   }, [systemId, userId, setQuantitativeData, setQuantitativeResponses]);
 
+  // ✅ 파일 업로드 핸들러
+  const handleFileUpload = async (event, questionNumber) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/upload/response-file", // ✅ 파일 업로드 API 경로
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            "X-CSRF-Token": csrfToken,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const filePath = response.data.url; // ✅ 업로드된 파일 경로 받기
+      console.log("✅ 업로드된 파일 경로:", filePath);
+      setQuantitativeResponses((prev) => ({
+        ...prev,
+        [questionNumber]: {
+          ...prev[questionNumber],
+          filePath,
+        },
+      }));
+    } catch (error) {
+      console.error("❌ 파일 업로드 실패:", error);
+      alert("파일 업로드 중 오류가 발생했습니다.");
+    }
+  };
+
   const handleNextClick = async () => {
     const totalQuestions = quantitativeData.length;
 
@@ -216,6 +250,49 @@ function DiagnosisPage() {
                           ?.evaluation_criteria || "N/A",
                     }}
                   />
+                </td>
+              </tr>
+              <tr>
+                <td className="bg-gray-200 p-2 border">파일 업로드</td>
+                <td colSpan="3" className="p-2 border">
+                  <label className="cursor-pointer bg-blue-500 text-white px-3 py-2 rounded">
+                    파일 선택
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx"
+                      onChange={(e) => handleFileUpload(e, currentStep)}
+                      className="hidden"
+                    />
+                  </label>
+                  {quantitativeResponses[currentStep]?.filePath && (
+                    <div className="mt-2 flex items-center">
+                      <a
+                        href={`http://localhost:3000${quantitativeResponses[currentStep].filePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        {quantitativeResponses[currentStep].filePath
+                          .split("/")
+                          .pop()}{" "}
+                        {/* 파일명 표시 */}
+                      </a>
+                      <button
+                        onClick={() =>
+                          setQuantitativeResponses((prev) => ({
+                            ...prev,
+                            [currentStep]: {
+                              ...prev[currentStep],
+                              filePath: null,
+                            },
+                          }))
+                        }
+                        className="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
               <tr>

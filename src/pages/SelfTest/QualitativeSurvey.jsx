@@ -103,6 +103,40 @@ function QualitativeSurvey() {
     fetchQualitativeData();
   }, [systemId, userId, setQualitativeData, setResponses]);
 
+  // ✅ 파일 업로드 핸들러
+  const handleFileUpload = async (event, questionNumber) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/upload/response-file", // ✅ 파일 업로드 API 경로
+        formData,
+        {
+          withCredentials: true,
+          headers: {
+            "X-CSRF-Token": csrfToken,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      const filePath = response.data.url; // ✅ 업로드된 파일 경로 받기
+      console.log("✅ 업로드된 파일 경로:", filePath);
+      setResponses((prev) => ({
+        ...prev,
+        [questionNumber]: {
+          ...prev[questionNumber],
+          filePath,
+        },
+      }));
+    } catch (error) {
+      console.error("❌ 파일 업로드 실패:", error);
+      alert("파일 업로드 중 오류가 발생했습니다.");
+    }
+  };
+
   const handleNextClick = () => {
     const totalQuestions = qualitativeData.length; // ✅ DB에서 가져온 문항 개수 반영
 
@@ -226,6 +260,46 @@ function QualitativeSurvey() {
                 <td className="border border-gray-300 p-2 bg-gray-200">지표</td>
                 <td className="border border-gray-300 p-2">
                   {qualitativeData[currentStep - 1]?.indicator || "질문 없음"}
+                </td>
+              </tr>
+              {/* ✅ 파일 업로드 추가 */}
+              <tr>
+                <td className="border border-gray-300 p-2 bg-gray-200">
+                  파일 업로드
+                </td>
+                <td className="border border-gray-300 p-2">
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    onChange={(e) => handleFileUpload(e, currentStep)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                  {responses[currentStep]?.filePath && (
+                    <div className="mt-2 flex items-center">
+                      <a
+                        href={`http://localhost:3000${responses[currentStep].filePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        {responses[currentStep].filePath.split("/").pop()}
+                      </a>
+                      <button
+                        onClick={() =>
+                          setResponses((prev) => ({
+                            ...prev,
+                            [currentStep]: {
+                              ...prev[currentStep],
+                              filePath: null,
+                            },
+                          }))
+                        }
+                        className="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
               <tr>

@@ -29,11 +29,12 @@ const TiptapEditor = ({ value, onChange }) => {
     fetchCsrfToken();
   }, []);
 
+  // ✅ `editor`가 `null`이 아닐 때만 실행되도록 변경
   useEffect(() => {
-    if (editor) {
+    if (editor && editorContent) {
       editor.commands.setContent(editorContent);
     }
-  }, [editorContent]);
+  }, [editor, editorContent]);
 
   const editor = useEditor({
     extensions: [StarterKit, Image, Link],
@@ -65,7 +66,7 @@ const TiptapEditor = ({ value, onChange }) => {
 
       try {
         const response = await axios.post(
-          "http://localhost:3000/upload", // ✅ 업로드 API 경로
+          "http://localhost:3000/upload/question-image",
           formData,
           {
             withCredentials: true,
@@ -76,7 +77,7 @@ const TiptapEditor = ({ value, onChange }) => {
           }
         );
 
-        const url = response.data.url;
+        const url = `http://localhost:3000${response.data.url}`; // ✅ 서버의 응답을 절대 경로로 변환
         console.log("✅ 업로드된 이미지 URL:", url);
 
         editor.chain().focus().setImage({ src: url }).run();
