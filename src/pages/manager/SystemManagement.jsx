@@ -98,6 +98,7 @@ function SystemManagement() {
       alert("시스템 소유자 조회 중 오류가 발생했습니다.");
     }
   };
+
   // ✅ 피드백 작성 후 상태 업데이트
   const handleProvideFeedback = async (system) => {
     console.log("🟢 [handleProvideFeedback] 시스템 ID:", system.systems_id);

@@ -57,6 +57,23 @@ function CompletionPage() {
     fetchData();
   }, [userId, systemId]);
 
+  const getGradeClassName = (grade) => {
+    switch (grade) {
+      case "S":
+        return "bg-green-100 text-green-600"; // 초록색
+      case "A":
+        return "bg-lime-100 text-lime-600"; // 연두색
+      case "B":
+        return "bg-yellow-100 text-yellow-600"; // 노란색
+      case "C":
+        return "bg-orange-100 text-orange-600"; // 주황색
+      case "D":
+        return "bg-red-100 text-red-600"; // 빨간색
+      default:
+        return "bg-gray-100 text-gray-600"; // 기본 회색
+    }
+  };
+
   // ✅ 시스템 상태 업데이트 함수 추가
   const updateSystemStatus = async (systemId) => {
     try {
@@ -118,7 +135,9 @@ function CompletionPage() {
             <h3 className="text-lg font-bold text-blue-600">점수</h3>
             <p className="text-3xl font-extrabold">{score ?? "N/A"}</p>
           </div>
-          <div className="p-4 bg-green-100 rounded-md text-center">
+          <div
+            className={`p-4 rounded-md text-center ${getGradeClassName(grade)}`}
+          >
             <h3 className="text-lg font-bold text-green-600">등급</h3>
             <p className="text-3xl font-extrabold">{grade ?? "N/A"}</p>
           </div>
