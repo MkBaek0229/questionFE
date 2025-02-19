@@ -103,7 +103,7 @@ function Login() {
     } catch (error) {
       console.error("❌ [LOGIN] 오류:", error.response?.data || error.message);
       setErrorMessage(
-        error.response?.data?.msg || "로그인 요청 중 문제가 발생했습니다."
+        error.response?.data?.message || "로그인 요청 중 문제가 발생했습니다."
       );
     } finally {
       setIsSubmitting(false);
