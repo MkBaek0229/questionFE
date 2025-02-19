@@ -26,12 +26,13 @@ import QualitativeSurveyfeedback from "./pages/feedback/QualitativeSurveyfeedbac
 import DiagnosisView from "./pages/SelfTest/DiagnosisView";
 import SuperDashboard from "./pages/superuser/SuperDashboard";
 import ViewSystems from "./pages/superuser/ViewSystems";
-import SystemDetail from "./pages/superuser/SystemDetail";
 import SuperManageQuestions from "./pages/superuser/SuperManageQuestions";
 import SuperManageUsers from "./pages/superuser/SuperManageUsers";
+import SuperDiagnosisView from "./pages/superuser/SuperDiagnosisView";
 import FindAccountSelectPage from "./components/Login/FindAccountSelectPage";
 import FindAccountPage from "./components/Login/FindAccountPage";
 import ResetPasswordPage from "./components/Login/ResetPasswordPage";
+
 function App() {
   const [auth, setAuthState] = useRecoilState(
     authState || { isLoggedIn: false, user: null }
@@ -170,12 +171,12 @@ function App() {
           <Route path="/DiagnosisView" element={<DiagnosisView />} />
           <Route path="/SuperDashboard" element={<SuperDashboard />} />
           <Route path="/ViewSystems" element={<ViewSystems />} />
-          <Route path="/SystemDetail/:id" element={<SystemDetail />} />
           <Route
             path="/SuperManageQuestions"
             element={<SuperManageQuestions />}
           />
           <Route path="/SuperManageUsers" element={<SuperManageUsers />} />
+          <Route path="/SuperDiagnosisView" element={<SuperDiagnosisView />} />
         </Routes>
       </Layout>
     </BrowserRouter>

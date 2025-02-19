@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useRecoilState } from "recoil";
-import { systemsState } from "../../state/system"; // Recoil로 상태 관리
+
+import { systemsState, selectedSystemState } from "../../state/system"; // Recoil로 상태 관리
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuilding,
@@ -29,8 +30,10 @@ function ViewSystems() {
   const [csrfToken, setCsrfToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedSystem, setSelectedSystem] =
+    useRecoilState(selectedSystemState);
 
-  // ✅ 전체 시스템 목록 가져오기
+  // ✅ 시스템 목록 가져오기
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -75,7 +78,19 @@ function ViewSystems() {
       alert("🚨 시스템 삭제 중 오류가 발생했습니다.");
     }
   };
-
+  // ✅ 시스템 클릭 시 선택 & 이동 (유저 ID 포함)
+  const handleSelectSystem = (system) => {
+    setSelectedSystem(system.systems_id);
+    setTimeout(() => {
+      navigate("/SuperDiagnosisView", {
+        state: {
+          systemId: system.systems_id,
+          systemName: system.system_name,
+          userId: system.user_id, // ✅ 작성자 ID 추가됨
+        },
+      });
+    }, 100);
+  };
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
       <div className="max-w-5xl w-full bg-white p-8 rounded-lg shadow-lg">
@@ -104,27 +119,31 @@ function ViewSystems() {
                 {systems.map((system) => (
                   <li
                     key={system.systems_id}
-                    className="p-6 border rounded-lg shadow-md bg-gray-50 flex justify-between items-center transition-transform transform hover:scale-105"
+                    className="p-6 border rounded-lg shadow-md bg-gray-50 flex justify-between items-center transition-transform transform hover:scale-105 cursor-pointer"
+                    onClick={() => handleSelectSystem(system)}
                   >
-                    <div
-                      className="cursor-pointer"
-                      onClick={() =>
-                        navigate(`/SystemDetail/${system.systems_id}`)
-                      }
-                    >
+                    <div>
                       <h2 className="text-xl font-semibold text-gray-900">
                         {system.system_name}
                       </h2>
                       <p className="text-gray-600">
                         기관명: {system.institution_name}
                       </p>
+                      <p className="text-gray-500 text-sm">
+                        작성자 ID: {system.user_id}
+                      </p>{" "}
+                      {/* ✅ 유저 ID 표시 */}
                     </div>
 
                     {/* ✅ 삭제 버튼 */}
                     <button
-                      onClick={() => handleDeleteSystem(system.systems_id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSystem(system.systems_id);
+                      }}
                       className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center text-sm"
                     >
+                      {" "}
                       <FontAwesomeIcon icon={faTrash} className="mr-1" />
                       삭제
                     </button>

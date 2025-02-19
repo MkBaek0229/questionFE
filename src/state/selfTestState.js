@@ -104,3 +104,21 @@ export const editorContentState = atom({
   key: "editorContentState",
   default: "", // 초기값은 빈 문자열
 });
+
+// ✅ 피드백 상태 (정량 + 정성)
+export const feedbackState = atom({
+  key: "feedbackState",
+  default: [],
+});
+
+export const systemDataState = atom({
+  key: "systemDataState",
+  default: {
+    quantitativeQuestions: [],
+    quantitativeResponses: [],
+    quantitativeFeedbacks: [],
+    qualitativeQuestions: [],
+    qualitativeResponses: [],
+    qualitativeFeedbacks: [],
+  },
+});

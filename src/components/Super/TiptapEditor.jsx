@@ -5,37 +5,28 @@ import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import axios from "axios";
 
-const getCsrfToken = async () => {
-  try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
-    return response.data.csrfToken;
-  } catch (error) {
-    console.error("❌ CSRF 토큰 가져오기 실패:", error);
-    return null;
-  }
-};
-
 const TiptapEditor = ({ value, onChange }) => {
+  // ✅ `useState`는 반드시 컴포넌트 내부에서 호출
   const [editorContent, setEditorContent] = useState(value || "");
   const [csrfToken, setCsrfToken] = useState("");
 
+  // ✅ CSRF 토큰 가져오기 (컴포넌트 내부에서 실행)
   useEffect(() => {
     const fetchCsrfToken = async () => {
-      const token = await getCsrfToken();
-      setCsrfToken(token);
+      try {
+        const response = await axios.get("http://localhost:3000/csrf-token", {
+          withCredentials: true, // ✅ 세션 쿠키 포함
+        });
+        setCsrfToken(response.data.csrfToken);
+      } catch (error) {
+        console.error("❌ CSRF 토큰 가져오기 실패:", error);
+      }
     };
+
     fetchCsrfToken();
   }, []);
 
-  // ✅ `editor`가 `null`이 아닐 때만 실행되도록 변경
-  useEffect(() => {
-    if (editor && editorContent) {
-      editor.commands.setContent(editorContent);
-    }
-  }, [editor, editorContent]);
-
+  // ✅ `editor`는 반드시 `useEffect`보다 먼저 정의
   const editor = useEditor({
     extensions: [StarterKit, Image, Link],
     content: editorContent,
@@ -46,11 +37,18 @@ const TiptapEditor = ({ value, onChange }) => {
     },
   });
 
+  // ✅ `editor`가 `null`이 아닐 때만 실행되도록 변경
+  useEffect(() => {
+    if (editor && editorContent) {
+      editor.commands.setContent(editorContent);
+    }
+  }, [editor, editorContent]);
+
   if (!editor) {
     return <div>Loading editor...</div>;
   }
 
-  // ✅ 이미지 업로드 핸들러 (파일 업로드 방식)
+  // ✅ 이미지 업로드 핸들러
   const addImage = async () => {
     const input = document.createElement("input");
     input.setAttribute("type", "file");
@@ -69,10 +67,10 @@ const TiptapEditor = ({ value, onChange }) => {
           "http://localhost:3000/upload/question-image",
           formData,
           {
-            withCredentials: true,
+            withCredentials: true, // ✅ 세션 쿠키 포함 (CSRF 보호)
             headers: {
               "Content-Type": "multipart/form-data",
-              "X-CSRF-Token": csrfToken, // ✅ CSRF 토큰 추가
+              "X-CSRF-Token": csrfToken,
             },
           }
         );
