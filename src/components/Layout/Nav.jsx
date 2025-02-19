@@ -16,11 +16,21 @@ function Nav() {
   return (
     <header className="bg-blue-600 text-white py-5 shadow-md drop-shadow">
       <div className="container mx-auto flex items-center justify-between">
-        <div
-          className="text-lg font-bold cursor-pointer"
-          onClick={handleLogoClick}
-        >
-          개인정보 컴플라이언스 강화 플랫폼
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-white">
+            <img
+              src="src/assets/logo/MainLogo.png"
+              alt="마틴랩 로고"
+              className="w-3/4 h-3/4 object-contain cursor-pointer"
+              onClick={handleLogoClick}
+            />
+          </div>
+          <span
+            className="text-lg font-bold cursor-pointer"
+            onClick={handleLogoClick}
+          >
+            개인정보 컴플라이언스 강화 플랫폼
+          </span>
         </div>
         <nav className="flex space-x-4">
           {/* 비로그인 상태 */}
@@ -38,16 +48,6 @@ function Nav() {
               onClick={() => navigate("/system-management")}
             >
               피드백
-            </button>
-          )}
-
-          {/* 슈퍼유저 로그인 상태 */}
-          {isSuperUserLoggedIn && (
-            <button
-              className="hover:underline"
-              onClick={() => navigate("/superuser-page")}
-            >
-              슈퍼유저 페이지
             </button>
           )}
 
