@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
+import useMediaQuery from "../../hooks/useMediaQuery";
 
 function SignupStep3({ prevStep, handleSubmit }) {
   const [formData, setFormData] = useRecoilState(formState);
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const isMobile = useMediaQuery("(max-width: 425px)");
 
   useEffect(() => {
     console.log("formData updated:", formData);
@@ -14,13 +16,12 @@ function SignupStep3({ prevStep, handleSubmit }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "password" ? value : prev[name], // password 필드 업데이트
+      [name]: name === "password" ? value : prev[name],
       [prev.member_type]: {
         ...prev[prev.member_type],
-        [name]: name !== "password" ? value : prev[prev.member_type][name], // 다른 필드 업데이트
+        [name]: name !== "password" ? value : prev[prev.member_type][name],
       },
     }));
   };
@@ -103,12 +104,93 @@ function SignupStep3({ prevStep, handleSubmit }) {
     ));
   };
 
+  // 모바일 전용 디자인
+  if (isMobile) {
+    return (
+      <>
+        {/* 모바일 진행 바 */}
+        <div className="flex items-center justify-center w-full py-4">
+          <div className="flex justify-between w-full px-4">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 flex items-center justify-center border-2 border-blue-500 bg-blue-500 text-white rounded-full text-sm">
+                1
+              </div>
+              <span className="text-blue-600 text-xs mt-1">약관동의</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 flex items-center justify-center border-2 border-blue-500 bg-blue-500 text-white rounded-full text-sm">
+                2
+              </div>
+              <span className="text-blue-600 text-xs mt-1">이메일 인증</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 flex items-center justify-center border-2 border-blue-500 bg-blue-500 text-white rounded-full text-sm">
+                3
+              </div>
+              <span className="text-blue-600 text-xs mt-1">회원정보 입력</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 모바일 폼 컨테이너 */}
+        <div className="bg-white p-4 rounded-md shadow-sm w-full max-w-sm mx-auto">
+          <h1 className="text-xl font-bold text-center mb-4">
+            {formData.member_type === "user"
+              ? "기관회원 가입"
+              : "전문가 회원가입"}
+          </h1>
+
+          <div className="space-y-4">
+            {renderFields()}
+            <InputField
+              label="비밀번호"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+            />
+            <InputField
+              label="비밀번호 확인"
+              type="password"
+              value={passwordConfirm}
+              onChange={handlePasswordConfirmChange}
+            />
+            {passwordError && (
+              <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+            )}
+          </div>
+
+          {errorMessage && (
+            <div className="mt-3 text-red-500 text-center text-xs">
+              {errorMessage}
+            </div>
+          )}
+
+          <div className="flex justify-between mt-4">
+            <button
+              className="px-3 py-2 bg-gray-300 text-gray-700 rounded text-xs"
+              onClick={prevStep}
+            >
+              이전
+            </button>
+            <button
+              className="px-3 py-2 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+              onClick={handleSignupSubmit}
+            >
+              완료
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // 데스크탑 전용 디자인 (기존 코드)
   return (
     <>
       {/* 📌 진행 바 UI */}
       <div className="flex items-center justify-center w-full py-8">
         <div className="flex items-center w-4/5 max-w-2xl relative justify-between">
-          {/* STEP 1  */}
           <div className="relative flex flex-col items-center w-1/4">
             <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
               {" "}
@@ -119,7 +201,6 @@ function SignupStep3({ prevStep, handleSubmit }) {
             </span>
           </div>
 
-          {/* STEP 2 */}
           <div className="relative flex flex-col items-center w-1/4">
             <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
               {" "}
@@ -130,9 +211,9 @@ function SignupStep3({ prevStep, handleSubmit }) {
             </span>
           </div>
 
-          {/* STEP 3 */}
           <div className="relative flex flex-col items-center w-1/4">
             <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
+              {" "}
               ✓
             </div>
             <span className="text-blue-600 text-xl font-bold mt-3">
@@ -147,7 +228,6 @@ function SignupStep3({ prevStep, handleSubmit }) {
             ? "기관회원 가입"
             : "전문가 회원가입"}
         </h1>
-
         <div className="space-y-6">
           {renderFields()}
           <InputField

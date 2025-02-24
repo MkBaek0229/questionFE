@@ -32,6 +32,8 @@ import SuperDiagnosisView from "./pages/superuser/SuperDiagnosisView";
 import FindAccountSelectPage from "./components/Login/FindAccountSelectPage";
 import FindAccountPage from "./components/Login/FindAccountPage";
 import ResetPasswordPage from "./components/Login/ResetPasswordPage";
+import MobileRestriction from "./components/MobileRestriction"; // ✅ 모바일 접근 제한 컴포넌트 추가
+import useMediaQuery from "./hooks/useMediaQuery"; // ✅ useMediaQuery 훅 추가
 
 function App() {
   const [auth, setAuthState] = useRecoilState(
@@ -43,6 +45,8 @@ function App() {
   const [superUserAuth, setSuperUserAuthState] = useRecoilState(
     superUserAuthState || { isLoggedIn: false, user: null }
   );
+
+  const isMobile = useMediaQuery("(max-width: 425px)"); // ✅ 모바일 화면 감지
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -124,6 +128,10 @@ function App() {
 
     fetchUserData();
   }, [setAuthState, setExpertAuthState, setSuperUserAuthState]);
+
+  if (isMobile) {
+    return <MobileRestriction />; // ✅ 모바일 접근 제한 메시지 렌더링
+  }
 
   return (
     <BrowserRouter>
