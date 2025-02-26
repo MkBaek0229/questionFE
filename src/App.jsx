@@ -12,7 +12,7 @@ import {
 import Login from "./components/Login/Login";
 import Signup from "./pages/Login/Signup";
 import SystemManagement from "./pages/manager/SystemManagement";
-import MainPage from "./pages/mainpage";
+import MainPage from "./pages/MainPage";
 import SelfTestStart from "./pages/SelfTest/SelfTestStart";
 import DiagnosisPage from "./pages/SelfTest/DiagnosisPage";
 import QualitativeSurvey from "./pages/SelfTest/QualitativeSurvey";
