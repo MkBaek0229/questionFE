@@ -44,7 +44,7 @@ function MainPage({ isExpertLoggedIn }) {
       <div className="flex flex-col lg:flex-row items-center justify-center max-w-[800px] space-y-4 lg:space-y-0 lg:space-x-4 xl:space-x-8 mt-8">
         {/* 로그인 버튼 */}
         <button
-          className="flex flex-col items-center justify-center w-[200px] h-[200px] 2xl:w-[350px] 2xl:h-[350px] md:w-[250px] md:h-[250px] sm:w-[200px] sm:h-[200px]  bg-blue-600 text-white shadow-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-xl"
+          className="flex flex-col items-center justify-center w-[200px] h-[200px] 2xl:w-[300px] 2xl:h-[300px] md:w-[250px] md:h-[250px] sm:w-[200px] sm:h-[200px]  bg-blue-600 text-white shadow-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-xl"
           onClick={handleLoginClick}
         >
           <FontAwesomeIcon
@@ -58,7 +58,7 @@ function MainPage({ isExpertLoggedIn }) {
         </button>
         {/* 회원가입 버튼 */}
         <button
-          className="flex flex-col items-center justify-center w-[200px] h-[200px] 2xl:w-[350px] 2xl:h-[350px] md:w-[250px] md:h-[250px] sm:w-[200px] sm:h-[200px] bg-red-500 text-white shadow-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-300 rounded-xl"
+          className="flex flex-col items-center justify-center w-[200px] h-[200px] 2xl:w-[300px] 2xl:h-[300px] md:w-[250px] md:h-[250px] sm:w-[200px] sm:h-[200px] bg-red-500 text-white shadow-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-300 rounded-xl"
           onClick={handleSignupClick}
         >
           <FontAwesomeIcon
