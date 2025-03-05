@@ -1,0 +1,27 @@
+name: Frontend Deployment
+
+on:
+  push:
+    branches:
+      - main # 메인 브랜치 변경 시 실행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /home/bmk/questionFE  # 프론트엔드 폴더 이동
+            git pull origin main
+            npm install
+            npm run build
+            sudo systemctl restart nginx  # Nginx 재시작
