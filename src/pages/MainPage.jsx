@@ -53,7 +53,7 @@ function MainPage({ isExpertLoggedIn }) {
             className="mb-10 md:mb-8 sm:mb-6 mb-4"
           />
           <span className="text-2xl 2xl:text md:text-3xl text-base font-bold tracking-wide">
-            로그인
+            로그인ss
           </span>
         </button>
         {/* 회원가입 버튼 */}
