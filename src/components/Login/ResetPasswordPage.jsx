@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ function ResetPasswordPage() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/csrf-token", {
+      const response = await axios.get("/csrf-token", {
         withCredentials: true, // ✅ 쿠키 포함 필수
       });
       return response.data.csrfToken;
@@ -69,7 +69,7 @@ function ResetPasswordPage() {
       }
 
       await axios.post(
-        "http://localhost:3000/reset-password",
+        "/reset-password",
         { token, password },
         {
           withCredentials: true, // ✅ 쿠키 포함 필수

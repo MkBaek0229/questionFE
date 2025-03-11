@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { Link, useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
 import {
@@ -21,7 +21,7 @@ function Login() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/csrf-token", {
+      const response = await axios.get("/csrf-token", {
         withCredentials: true, // ✅ 세션 쿠키 포함 필수!
         headers: {
           "Content-Type": "application/json",
@@ -48,10 +48,10 @@ function Login() {
 
     const endpoint =
       finalUserType === "user"
-        ? "http://localhost:3000/login"
+        ? "/login"
         : finalUserType === "superuser"
-        ? "http://localhost:3000/login/superuser"
-        : "http://localhost:3000/login/expert";
+        ? "/superuser"
+        : "/expert";
 
     try {
       console.log("🚀 [LOGIN] CSRF 토큰 가져오는 중...");

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "../axiosConfig";
+import axios from "../../axiosConfig";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import {
   quantitativeDataState,

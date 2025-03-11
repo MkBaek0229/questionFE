@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useNavigate } from "react-router-dom";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 import { formState } from "../../state/formState";
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -55,7 +55,7 @@ function SystemRegistration() {
       console.log("📋 [DEBUG] reason 값:", formData.reason);
 
       const response = await axios.post(
-        "http://localhost:3000/systems",
+        "/systems",
         { ...formData, user_id: auth.user.id },
         {
           withCredentials: true,
