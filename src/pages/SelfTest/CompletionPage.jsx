@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useRecoilState } from "recoil";
 import { systemsState } from "../../state/system";
 import CategoryScoresChart from "../../components/Chart/CategoryScoresChart";
@@ -30,13 +30,10 @@ function CompletionPage() {
 
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/assessment/result",
-          {
-            params: { userId, systemId },
-            withCredentials: true,
-          }
-        );
+        const response = await axios.get("/assessment/result", {
+          params: { userId, systemId },
+          withCredentials: true,
+        });
 
         const sortedData = response.data.sort(
           (a, b) => new Date(b.completed_at) - new Date(a.completed_at)
@@ -77,12 +74,9 @@ function CompletionPage() {
   // ✅ 시스템 상태 업데이트 함수 추가
   const updateSystemStatus = async (systemId) => {
     try {
-      const response = await axios.get(
-        "http://localhost:3000/assessment/status",
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await axios.get("/assessment/status", {
+        withCredentials: true,
+      });
 
       console.log("✅ [DEBUG] 최신 진단 상태:", response.data);
 

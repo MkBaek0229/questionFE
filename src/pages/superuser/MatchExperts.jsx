@@ -3,11 +3,11 @@ import { useRecoilState } from "recoil";
 import { systemsState } from "../../state/system";
 import { managersState } from "../../state/superUserState";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -35,7 +35,7 @@ function SuperUserPage() {
   useEffect(() => {
     const fetchSystems = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/all-systems", {
+        const response = await axios.get("/all-systems", {
           withCredentials: true,
         });
         console.log("📋 [FETCH SYSTEMS] 시스템 데이터:", response.data);
@@ -47,12 +47,9 @@ function SuperUserPage() {
 
     const fetchManagers = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:3000/superuser/experts",
-          {
-            withCredentials: true,
-          }
-        );
+        const response = await axios.get("/superuser/experts", {
+          withCredentials: true,
+        });
         console.log("📋 [FETCH MANAGERS] 관리자 데이터:", response.data);
         setManagers(response.data.data || []);
       } catch (error) {
@@ -84,11 +81,10 @@ function SuperUserPage() {
     console.log("📩 [ASSIGN MANAGER] 매칭 요청 데이터:", requestData);
 
     try {
-      const response = await axios.post(
-        "http://localhost:3000/match-experts",
-        requestData,
-        { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
-      );
+      const response = await axios.post("/match-experts", requestData, {
+        withCredentials: true,
+        headers: { "X-CSRF-Token": csrfToken },
+      });
       console.log("✅ [ASSIGN MANAGER] 매칭 성공:", response.data);
       alert("관리자가 시스템에 성공적으로 매칭되었습니다.");
     } catch (error) {

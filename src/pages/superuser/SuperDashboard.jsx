@@ -8,13 +8,13 @@ import {
   faClipboardList,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useRecoilState } from "recoil";
 import { superUserAuthState } from "../../state/authState"; // Recoil 상태 가져오기
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true,
     });
     return response.data.csrfToken;
@@ -41,7 +41,7 @@ function SuperDashboard() {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:3000/logout/SuperUser",
+        "/logout/SuperUser",
         {},
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );

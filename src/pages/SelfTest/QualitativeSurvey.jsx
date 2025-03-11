@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import {
   qualitativeDataState,
@@ -10,7 +10,7 @@ import {
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -72,7 +72,7 @@ function QualitativeSurvey() {
     const fetchQualitativeData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/selftest/qualitative",
+          "/selftest/qualitative",
           {
             params: { systemId },
             withCredentials: true,
@@ -112,7 +112,7 @@ function QualitativeSurvey() {
     formData.append("file", file);
     try {
       const response = await axios.post(
-        "http://localhost:3000/upload/response-file", // ✅ 파일 업로드 API 경로
+        "/upload/response-file", // ✅ 파일 업로드 API 경로
         formData,
         {
           withCredentials: true,
@@ -182,7 +182,7 @@ function QualitativeSurvey() {
       console.log("📌 [DEBUG] 전송할 정성 평가 데이터:", formattedResponses);
 
       const response = await axios.post(
-        "http://localhost:3000/user/selftest/qualitative",
+        "/user/selftest/qualitative",
         { responses: formattedResponses },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -190,7 +190,7 @@ function QualitativeSurvey() {
       console.log("✅ [SUCCESS] 정성 평가 저장 응답:", response.data);
 
       const assessmentResponse = await axios.post(
-        "http://localhost:3000/assessment/complete",
+        "/assessment/complete",
         { userId, systemId },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -277,7 +277,7 @@ function QualitativeSurvey() {
                   {responses[currentStep]?.filePath && (
                     <div className="mt-2 flex items-center">
                       <a
-                        href={`http://localhost:3000${responses[currentStep].filePath}`}
+                        href={`${responses[currentStep].filePath}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 underline"

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import {
@@ -62,31 +62,29 @@ function DiagnosisView() {
           qualResponsesRes,
           qualFeedbackRes,
         ] = await Promise.all([
-          axios.get(`http://localhost:3000/selftest/quantitative`, {
+          axios.get(`/selftest/quantitative`, {
             params: { systemId },
             withCredentials: true,
           }),
+          axios.get(`/selftest/quantitative/responses/${systemId}/${userId}`, {
+            withCredentials: true,
+          }),
           axios.get(
-            `http://localhost:3000/selftest/quantitative/responses/${systemId}/${userId}`,
+            `
+            /selftest/feedback`,
             {
+              params: { systemId, type: "quantitative" },
               withCredentials: true,
             }
           ),
-          axios.get(`http://localhost:3000/selftest/feedback`, {
-            params: { systemId, type: "quantitative" },
-            withCredentials: true,
-          }),
-          axios.get(`http://localhost:3000/selftest/qualitative`, {
+          axios.get(`/selftest/qualitative`, {
             params: { systemId },
             withCredentials: true,
           }),
-          axios.get(
-            `http://localhost:3000/selftest/qualitative/responses/${systemId}/${userId}`,
-            {
-              withCredentials: true,
-            }
-          ),
-          axios.get(`http://localhost:3000/selftest/feedback`, {
+          axios.get(`/selftest/qualitative/responses/${systemId}/${userId}`, {
+            withCredentials: true,
+          }),
+          axios.get(`/selftest/feedback`, {
             params: { systemId, type: "qualitative" },
             withCredentials: true,
           }),
@@ -225,7 +223,7 @@ function DiagnosisView() {
                   <td className="p-3 text-center">
                     {responseObj.file_path ? (
                       <a
-                        href={`http://localhost:3000${responseObj.file_path}`}
+                        href={`${responseObj.file_path}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-500 underline"
@@ -309,7 +307,7 @@ function DiagnosisView() {
                   <td className="p-3 text-center">
                     {responseObj.file_path ? (
                       <a
-                        href={`http://localhost:3000${responseObj.file_path}`}
+                        href={`${responseObj.file_path}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-500 underline"

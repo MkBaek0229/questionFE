@@ -3,7 +3,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import axios from "axios";
+import axios from "../../axiosConfig";
 
 const TiptapEditor = ({ value, onChange }) => {
   // ✅ `useState`는 반드시 컴포넌트 내부에서 호출
@@ -14,7 +14,7 @@ const TiptapEditor = ({ value, onChange }) => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/csrf-token", {
+        const response = await axios.get("/csrf-token", {
           withCredentials: true, // ✅ 세션 쿠키 포함
         });
         setCsrfToken(response.data.csrfToken);
@@ -63,19 +63,15 @@ const TiptapEditor = ({ value, onChange }) => {
       formData.append("image", file);
 
       try {
-        const response = await axios.post(
-          "http://localhost:3000/upload/question-image",
-          formData,
-          {
-            withCredentials: true, // ✅ 세션 쿠키 포함 (CSRF 보호)
-            headers: {
-              "Content-Type": "multipart/form-data",
-              "X-CSRF-Token": csrfToken,
-            },
-          }
-        );
+        const response = await axios.post("/upload/question-image", formData, {
+          withCredentials: true, // ✅ 세션 쿠키 포함 (CSRF 보호)
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "X-CSRF-Token": csrfToken,
+          },
+        });
 
-        const url = `http://localhost:3000${response.data.url}`; // ✅ 서버의 응답을 절대 경로로 변환
+        const url = `${response.data.url}`; // ✅ 서버의 응답을 절대 경로로 변환
         console.log("✅ 업로드된 이미지 URL:", url);
 
         editor.chain().focus().setImage({ src: url }).run();

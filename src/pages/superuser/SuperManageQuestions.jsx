@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useRecoilState } from "recoil";
 import {
   quantitativeQuestionsState,
@@ -18,7 +18,7 @@ import CategoryManager from "./CategoryManager";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -65,7 +65,7 @@ function SuperManageQuestions() {
     // ✅ 서버에서 카테고리 목록 가져오기
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/categories");
+        const response = await axios.get("/categories");
         setCategories(response.data);
       } catch (error) {
         console.error("❌ 카테고리 목록 불러오기 실패:", error);
@@ -78,10 +78,10 @@ function SuperManageQuestions() {
   const fetchQuestions = async () => {
     try {
       const [quantitativeRes, qualitativeRes] = await Promise.all([
-        axios.get("http://localhost:3000/super/selftest/quantitative", {
+        axios.get("/super/selftest/quantitative", {
           withCredentials: true,
         }),
-        axios.get("http://localhost:3000/super/selftest/qualitative", {
+        axios.get("/super/selftest/qualitative", {
           withCredentials: true,
         }),
       ]);
@@ -112,8 +112,8 @@ function SuperManageQuestions() {
     try {
       const endpoint =
         newQuestion.type === "quantitative"
-          ? "http://localhost:3000/super/selftest/quantitative/add"
-          : "http://localhost:3000/super/selftest/qualitative/add";
+          ? "/super/selftest/quantitative/add"
+          : "/super/selftest/qualitative/add";
 
       const questionData =
         newQuestion.type === "quantitative"
@@ -185,8 +185,8 @@ function SuperManageQuestions() {
   const handleEditSave = async (id, type) => {
     const endpoint =
       type === "quantitative"
-        ? `http://localhost:3000/super/selftest/quantitative/put/${id}`
-        : `http://localhost:3000/super/selftest/qualitative/put/${id}`;
+        ? `/super/selftest/quantitative/put/${id}`
+        : `/super/selftest/qualitative/put/${id}`;
 
     try {
       await axios.put(endpoint, editedData, {
@@ -220,8 +220,8 @@ function SuperManageQuestions() {
     try {
       const endpoint =
         type === "quantitative"
-          ? `http://localhost:3000/super/selftest/quantitative/del/${id}`
-          : `http://localhost:3000/super/selftest/qualitative/del/${id}`;
+          ? `/super/selftest/quantitative/del/${id}`
+          : `/super/selftest/qualitative/del/${id}`;
 
       await axios.delete(endpoint, {
         withCredentials: true,

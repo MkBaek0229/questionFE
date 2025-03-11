@@ -8,6 +8,7 @@ import SignupStep2 from "../../components/Login/SignupStep2";
 import SignupStep3 from "../../components/Login/SignupStep3";
 import { useResetRecoilState } from "recoil";
 import { useEffect } from "react";
+import axios from "../../axiosConfig";
 
 function Signup() {
   const [step, setStep] = useState(0); // 현재 단계
@@ -27,11 +28,10 @@ function Signup() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await fetch("http://localhost:3000/csrf-token", {
-        credentials: "include", // ✅ 쿠키 포함 필수
+      const response = await axios.get("/csrf-token", {
+        withCredentials: true, // ✅ 쿠키 포함 필수
       });
-      const data = await response.json();
-      return data.csrfToken;
+      return response.data.csrfToken;
     } catch (error) {
       console.error("❌ CSRF 토큰 가져오기 실패:", error);
       return null;
@@ -57,9 +57,7 @@ function Signup() {
     }
 
     const endpoint =
-      formData.member_type === "user"
-        ? "http://localhost:3000/register"
-        : "http://localhost:3000/register/expert";
+      formData.member_type === "user" ? "/register" : "/register/expert";
 
     const payload = {
       ...formData[formData.member_type], // 선택된 회원 유형의 데이터만 포함

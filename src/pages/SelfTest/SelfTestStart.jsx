@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   selfTestFormState,
@@ -10,7 +10,7 @@ import { authState } from "../../state/authState";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -85,7 +85,7 @@ function SelfTestStart() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/selftest",
+        "/selftest",
         { ...formData, systemId, userId },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );

@@ -4,12 +4,12 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { expertAuthState } from "../../state/authState";
 import { systemsState } from "../../state/system";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -39,7 +39,7 @@ function SystemManagement() {
 
       try {
         const response = await axios.get(
-          `http://localhost:3000/assigned-systems?expertId=${expert.user.id}`,
+          `/assigned-systems?expertId=${expert.user.id}`,
           { withCredentials: true }
         );
         console.log("✅ 매칭된 시스템 데이터:", response.data);
@@ -59,7 +59,7 @@ function SystemManagement() {
   const handleLogout = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/logout/expert",
+        "/logout/expert",
         {},
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -79,7 +79,7 @@ function SystemManagement() {
   // ✅ 평가 결과 보기
   const handleViewResults = async (system) => {
     try {
-      const response = await axios.get("http://localhost:3000/system-owner", {
+      const response = await axios.get("/system-owner", {
         params: { systemId: system.systems_id },
         withCredentials: true,
       });
@@ -124,7 +124,7 @@ function SystemManagement() {
     // ✅ 백엔드 업데이트 요청
     try {
       const updateResponse = await axios.post(
-        "http://localhost:3000/selftest/qualitative/update-status",
+        "/selftest/qualitative/update-status",
         { systemId: system.systems_id },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -137,7 +137,7 @@ function SystemManagement() {
       // ✅ 상태 갱신 후 데이터 다시 불러오기
       setTimeout(async () => {
         const response = await axios.get(
-          `http://localhost:3000/assigned-systems?expertId=${expert.user.id}`,
+          `/assigned-systems?expertId=${expert.user.id}`,
           { withCredentials: true }
         );
 

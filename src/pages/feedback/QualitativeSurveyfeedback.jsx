@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useRecoilState } from "recoil";
 import {
   qualitativeDataState,
@@ -10,7 +10,7 @@ import { qualitativeFeedbackState } from "../../state/feedback";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -57,10 +57,10 @@ function QualitativeSurveyFeedback() {
       try {
         console.log("📡 Fetching qualitative data for systemId:", systemId);
 
-        const ownerResponse = await axios.get(
-          "http://localhost:3000/system-owner",
-          { params: { systemId }, withCredentials: true }
-        );
+        const ownerResponse = await axios.get("/system-owner", {
+          params: { systemId },
+          withCredentials: true,
+        });
 
         if (!ownerResponse.data.userId) {
           alert("기관회원 정보를 가져올 수 없습니다.");
@@ -70,7 +70,7 @@ function QualitativeSurveyFeedback() {
         const userId = ownerResponse.data.userId;
 
         const responseResponse = await axios.get(
-          `http://localhost:3000/selftest/qualitative/responses/${systemId}/${userId}`,
+          `/selftest/qualitative/responses/${systemId}/${userId}`,
           { withCredentials: true }
         );
 
@@ -112,7 +112,7 @@ function QualitativeSurveyFeedback() {
         );
 
         const response = await axios.get(
-          `http://localhost:3000/selftest/feedback?systemId=${systemId}&questionNumber=${currentStep}`,
+          `/selftest/feedback?systemId=${systemId}&questionNumber=${currentStep}`,
           { withCredentials: true }
         );
 
@@ -157,7 +157,7 @@ function QualitativeSurveyFeedback() {
       console.log("📡 [REQUEST] Sending feedback data:", feedbackData);
 
       await axios.post(
-        "http://localhost:3000/selftest/qualitative/feedback",
+        "/selftest/qualitative/feedback",
         {
           systemId,
           expertId,

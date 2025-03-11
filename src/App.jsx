@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import { useRecoilState } from "recoil";
 import { useEffect } from "react";
-import axios from "axios";
+import axios from "../axiosConfig";
 import {
   authState,
   expertAuthState,
@@ -39,6 +39,7 @@ function App() {
   const [auth, setAuthState] = useRecoilState(
     authState || { isLoggedIn: false, user: null }
   );
+
   const [expertAuth, setExpertAuthState] = useRecoilState(
     expertAuthState || { isLoggedIn: false, user: null }
   );

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faUsers, faUserTie } from "@fortawesome/free-solid-svg-icons";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
+    const response = await axios.get("/csrf-token", {
       withCredentials: true, // ✅ 세션 쿠키 포함
     });
     return response.data.csrfToken;
@@ -35,12 +35,9 @@ function SuperManageUsers() {
   // ✅ 유저 목록 가져오기
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3000/superuser/users",
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await axios.get("/superuser/users", {
+        withCredentials: true,
+      });
       setUsers(response.data.data);
     } catch (error) {
       console.error("❌ 유저 목록 조회 실패:", error);
@@ -50,12 +47,9 @@ function SuperManageUsers() {
   // ✅ 전문가 목록 가져오기
   const fetchExperts = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:3000/superuser/experts",
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await axios.get("/superuser/experts", {
+        withCredentials: true,
+      });
       setExperts(response.data.data);
     } catch (error) {
       console.error("❌ 전문가 목록 조회 실패:", error);
@@ -68,7 +62,7 @@ function SuperManageUsers() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://localhost:3000/superuser/${type}/${id}`, {
+      await axios.delete(`/superuser/${type}/${id}`, {
         withCredentials: true,
         headers: { "X-CSRF-Token": csrfToken },
       });

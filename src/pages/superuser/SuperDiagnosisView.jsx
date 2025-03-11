@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 function SuperDiagnosisView() {
   const navigate = useNavigate();
@@ -27,20 +27,18 @@ function SuperDiagnosisView() {
           qualitativeQuestionsRes,
           qualitativeResponsesRes,
         ] = await Promise.all([
-          axios.get(`http://localhost:3000/super/selftest/quantitative`, {
+          axios.get(`/super/selftest/quantitative`, {
             withCredentials: true,
           }),
-          axios.get(
-            `http://localhost:3000/super/selftest/quantitative/responses/${systemId}`,
-            { withCredentials: true }
-          ),
-          axios.get(`http://localhost:3000/super/selftest/qualitative`, {
+          axios.get(`/super/selftest/quantitative/responses/${systemId}`, {
             withCredentials: true,
           }),
-          axios.get(
-            `http://localhost:3000/super/selftest/qualitative/responses/${systemId}`,
-            { withCredentials: true }
-          ),
+          axios.get(`/super/selftest/qualitative`, {
+            withCredentials: true,
+          }),
+          axios.get(`/super/selftest/qualitative/responses/${systemId}`, {
+            withCredentials: true,
+          }),
         ]);
         console.log("📌 정량 문항 데이터:", quantitativeQuestionsRes.data);
         console.log("📌 정량 응답 데이터:", quantitativeResponsesRes.data);
@@ -141,7 +139,7 @@ function SuperDiagnosisView() {
                         <td className="p-3 text-center">
                           {responseObj.file_path ? (
                             <a
-                              href={`http://localhost:3000${responseObj.file_path}`}
+                              href={`${responseObj.file_path}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 underline"
@@ -210,7 +208,7 @@ function SuperDiagnosisView() {
                         <td className="p-3 text-center">
                           {responseObj.file_path ? (
                             <a
-                              href={`http://localhost:3000${responseObj.file_path}`}
+                              href={`${responseObj.file_path}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 underline"

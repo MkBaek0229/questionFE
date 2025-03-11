@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import axios from "../../axiosConfig";
 import { useNavigate, useLocation } from "react-router-dom";
 
 function FindAccountPage() {
@@ -15,7 +15,7 @@ function FindAccountPage() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/csrf-token", {
+      const response = await axios.get("/csrf-token", {
         withCredentials: true, // ✅ 쿠키 포함 필수
         headers: {
           "Content-Type": "application/json",
@@ -60,7 +60,7 @@ function FindAccountPage() {
       console.log("🚀 [POST] 비밀번호 찾기 요청 보내는 중...");
 
       await axios.post(
-        "http://localhost:3000/find-password",
+        "/find-password",
         { email },
         {
           withCredentials: true, // ✅ 쿠키 포함 필수
