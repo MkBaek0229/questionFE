@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import { useRecoilState } from "recoil";
 import { useEffect } from "react";
-import axios from "../axiosConfig";
+import axios from "../src/axiosConfig"; // ✅ axiosConfig 불러오기
 import {
   authState,
   expertAuthState,
