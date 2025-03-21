@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 import { formState } from "../../state/formState";
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -34,7 +37,7 @@ function SystemRegistration() {
     const { name, value } = e.target;
     setFormData((prevState) => ({
       ...prevState,
-      [name]: value || "", // 기본값 설정
+      [name]: typeof value === "string" ? value.trim() : value, // 공백 제거
     }));
   };
 
@@ -54,7 +57,7 @@ function SystemRegistration() {
       });
       console.log("📋 [DEBUG] reason 값:", formData.reason);
 
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/systems",
         { ...formData, user_id: auth.user.id },
         {

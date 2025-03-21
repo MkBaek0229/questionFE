@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState } from "recoil";
 import {
   quantitativeQuestionsState,
@@ -18,9 +18,12 @@ import CategoryManager from "./CategoryManager";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -65,7 +68,9 @@ function SuperManageQuestions() {
     // ✅ 서버에서 카테고리 목록 가져오기
     const fetchCategories = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/categories");
+        const response = await axiosInstance.get(
+          "http://localhost:3000/categories"
+        );
         setCategories(response.data);
       } catch (error) {
         console.error("❌ 카테고리 목록 불러오기 실패:", error);
@@ -78,10 +83,10 @@ function SuperManageQuestions() {
   const fetchQuestions = async () => {
     try {
       const [quantitativeRes, qualitativeRes] = await Promise.all([
-        axios.get("http://localhost:3000/super/selftest/quantitative", {
+        axiosInstance.get("http://localhost:3000/super/selftest/quantitative", {
           withCredentials: true,
         }),
-        axios.get("http://localhost:3000/super/selftest/qualitative", {
+        axiosInstance.get("http://localhost:3000/super/selftest/qualitative", {
           withCredentials: true,
         }),
       ]);
@@ -142,7 +147,7 @@ function SuperManageQuestions() {
 
       console.log("📤 전송할 데이터:", questionData); // 디버깅 로그 추가
 
-      const response = await axios.post(endpoint, questionData, {
+      const response = await axiosInstance.post(endpoint, questionData, {
         withCredentials: true,
         headers: { "X-CSRF-Token": csrfToken },
       });
@@ -189,7 +194,7 @@ function SuperManageQuestions() {
         : `http://localhost:3000/super/selftest/qualitative/put/${id}`;
 
     try {
-      await axios.put(endpoint, editedData, {
+      await axiosInstance.put(endpoint, editedData, {
         withCredentials: true,
         headers: { "X-CSRF-Token": csrfToken },
       });
@@ -223,7 +228,7 @@ function SuperManageQuestions() {
           ? `http://localhost:3000/super/selftest/quantitative/del/${id}`
           : `http://localhost:3000/super/selftest/qualitative/del/${id}`;
 
-      await axios.delete(endpoint, {
+      await axiosInstance.delete(endpoint, {
         withCredentials: true,
         headers: { "X-CSRF-Token": csrfToken },
       });

@@ -8,15 +8,18 @@ import {
   faClipboardList,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState } from "recoil";
 import { superUserAuthState } from "../../state/authState"; // Recoil 상태 가져오기
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true,
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true,
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -40,7 +43,7 @@ function SuperDashboard() {
   // ✅ 로그아웃 기능
   const handleLogout = async () => {
     try {
-      await axios.post(
+      await axiosInstance.post(
         "http://localhost:3000/logout/SuperUser",
         {},
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }

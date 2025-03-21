@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useRecoilState } from "recoil";
 import {
@@ -62,31 +62,31 @@ function DiagnosisView() {
           qualResponsesRes,
           qualFeedbackRes,
         ] = await Promise.all([
-          axios.get(`http://localhost:3000/selftest/quantitative`, {
+          axiosInstance.get(`http://localhost:3000/selftest/quantitative`, {
             params: { systemId },
             withCredentials: true,
           }),
-          axios.get(
+          axiosInstance.get(
             `http://localhost:3000/selftest/quantitative/responses/${systemId}/${userId}`,
             {
               withCredentials: true,
             }
           ),
-          axios.get(`http://localhost:3000/selftest/feedback`, {
+          axiosInstance.get(`http://localhost:3000/selftest/feedback`, {
             params: { systemId, type: "quantitative" },
             withCredentials: true,
           }),
-          axios.get(`http://localhost:3000/selftest/qualitative`, {
+          axiosInstance.get(`http://localhost:3000/selftest/qualitative`, {
             params: { systemId },
             withCredentials: true,
           }),
-          axios.get(
+          axiosInstance.get(
             `http://localhost:3000/selftest/qualitative/responses/${systemId}/${userId}`,
             {
               withCredentials: true,
             }
           ),
-          axios.get(`http://localhost:3000/selftest/feedback`, {
+          axiosInstance.get(`http://localhost:3000/selftest/feedback`, {
             params: { systemId, type: "qualitative" },
             withCredentials: true,
           }),

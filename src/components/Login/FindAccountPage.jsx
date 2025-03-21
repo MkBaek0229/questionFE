@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
+import axiosInstance from "../../../axiosInstance";
 
 function FindAccountPage() {
   const [email, setEmail] = useState("");
@@ -15,12 +15,15 @@ function FindAccountPage() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/csrf-token", {
-        withCredentials: true, // ✅ 쿠키 포함 필수
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.get(
+        "http://localhost:3000/csrf-token",
+        {
+          withCredentials: true, // ✅ 쿠키 포함 필수
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return response.data.csrfToken;
     } catch (error) {
       console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -59,7 +62,7 @@ function FindAccountPage() {
 
       console.log("🚀 [POST] 비밀번호 찾기 요청 보내는 중...");
 
-      await axios.post(
+      await axiosInstance.post(
         "http://localhost:3000/find-password",
         { email },
         {

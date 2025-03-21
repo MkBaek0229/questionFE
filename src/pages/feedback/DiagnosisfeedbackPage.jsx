@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState } from "recoil";
 import {
   quantitativeDataState,
@@ -10,9 +10,12 @@ import { quantitativeFeedbackState } from "../../state/feedback";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -58,7 +61,7 @@ function DiagnosisFeedbackPage() {
       try {
         console.log("📡 Fetching quantitative data for systemId:", systemId);
 
-        const ownerResponse = await axios.get(
+        const ownerResponse = await axiosInstance.get(
           "http://localhost:3000/system-owner",
           { params: { systemId }, withCredentials: true }
         );
@@ -71,7 +74,7 @@ function DiagnosisFeedbackPage() {
         const userId = ownerResponse.data.userId;
 
         // ✅ 정량 문항 데이터를 가져오는 API 수정
-        const responseResponse = await axios.get(
+        const responseResponse = await axiosInstance.get(
           `http://localhost:3000/selftest/quantitative/responses/${systemId}/${userId}`,
           { withCredentials: true }
         );
@@ -115,7 +118,7 @@ function DiagnosisFeedbackPage() {
           currentStep
         );
 
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `http://localhost:3000/selftest/feedback?systemId=${systemId}&questionNumber=${currentStep}`,
           { withCredentials: true }
         );
@@ -167,7 +170,7 @@ function DiagnosisFeedbackPage() {
     try {
       console.log("📡 [REQUEST] Sending feedback data:", feedbackData);
 
-      await axios.post(
+      await axiosInstance.post(
         "http://localhost:3000/selftest/quantitative/feedback",
         {
           systemId,

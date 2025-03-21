@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEdit,
@@ -10,9 +10,12 @@ import {
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -42,7 +45,7 @@ function CategoryManager({ categories, fetchCategories, setNewQuestion }) {
     }
 
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/categories/add",
         { name: newCategory },
         {
@@ -76,9 +79,12 @@ function CategoryManager({ categories, fetchCategories, setNewQuestion }) {
     }
 
     try {
-      await axios.put(`http://localhost:3000/categories/edit/${categoryId}`, {
-        name: editedName,
-      });
+      await axiosInstance.put(
+        `http://localhost:3000/categories/edit/${categoryId}`,
+        {
+          name: editedName,
+        }
+      );
       alert("✅ 카테고리 수정 완료!");
       setEditingCategory(null);
       fetchCategories();
@@ -93,7 +99,7 @@ function CategoryManager({ categories, fetchCategories, setNewQuestion }) {
     if (!window.confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      await axios.delete(
+      await axiosInstance.delete(
         `http://localhost:3000/categories/delete/${categoryId}`
       );
       alert("✅ 카테고리 삭제 완료!");

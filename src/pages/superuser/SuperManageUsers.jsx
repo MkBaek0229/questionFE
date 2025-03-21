@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faUsers, faUserTie } from "@fortawesome/free-solid-svg-icons";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -35,7 +38,7 @@ function SuperManageUsers() {
   // ✅ 유저 목록 가져오기
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         "http://localhost:3000/superuser/users",
         {
           withCredentials: true,
@@ -50,7 +53,7 @@ function SuperManageUsers() {
   // ✅ 전문가 목록 가져오기
   const fetchExperts = async () => {
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         "http://localhost:3000/superuser/experts",
         {
           withCredentials: true,
@@ -68,10 +71,13 @@ function SuperManageUsers() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://localhost:3000/superuser/${type}/${id}`, {
-        withCredentials: true,
-        headers: { "X-CSRF-Token": csrfToken },
-      });
+      await axiosInstance.delete(
+        `http://localhost:3000/superuser/${type}/${id}`,
+        {
+          withCredentials: true,
+          headers: { "X-CSRF-Token": csrfToken },
+        }
+      );
       alert("✅ 회원이 삭제되었습니다.");
       type === "user" ? fetchUsers() : fetchExperts();
     } catch (error) {

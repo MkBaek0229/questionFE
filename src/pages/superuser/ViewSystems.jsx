@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState } from "recoil";
 
 import { systemsState, selectedSystemState } from "../../state/system"; // Recoil로 상태 관리
@@ -14,9 +14,12 @@ import {
 // ✅ CSRF 토큰 가져오기
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true,
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true,
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -40,9 +43,12 @@ function ViewSystems() {
         const token = await getCsrfToken();
         setCsrfToken(token);
 
-        const response = await axios.get("http://localhost:3000/all-systems", {
-          withCredentials: true,
-        });
+        const response = await axiosInstance.get(
+          "http://localhost:3000/all-systems",
+          {
+            withCredentials: true,
+          }
+        );
 
         setSystems(response.data.data || []);
       } catch (error) {
@@ -62,10 +68,13 @@ function ViewSystems() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://localhost:3000/system/superuser/${systemId}`, {
-        withCredentials: true,
-        headers: { "X-CSRF-Token": csrfToken },
-      });
+      await axiosInstance.delete(
+        `http://localhost:3000/system/superuser/${systemId}`,
+        {
+          withCredentials: true,
+          headers: { "X-CSRF-Token": csrfToken },
+        }
+      );
 
       alert("✅ 시스템이 삭제되었습니다.");
 

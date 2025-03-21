@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { Link, useNavigate } from "react-router-dom";
 import { useSetRecoilState } from "recoil";
 import {
@@ -21,12 +21,15 @@ function Login() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/csrf-token", {
-        withCredentials: true, // ✅ 세션 쿠키 포함 필수!
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.get(
+        "http://localhost:3000/csrf-token",
+        {
+          withCredentials: true, // ✅ 세션 쿠키 포함 필수!
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       return response.data.csrfToken;
     } catch (error) {
       console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -48,7 +51,7 @@ function Login() {
 
     const endpoint =
       finalUserType === "user"
-        ? "http://localhost:3000/login"
+        ? "http://localhost:3000/auth/login"
         : finalUserType === "superuser"
         ? "http://localhost:3000/login/superuser"
         : "http://localhost:3000/login/expert";
@@ -64,7 +67,7 @@ function Login() {
       }
 
       console.log("🚀 [LOGIN] 요청 전송:", endpoint);
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         endpoint,
         { email, password },
         {

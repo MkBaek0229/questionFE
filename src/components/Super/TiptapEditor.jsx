@@ -3,7 +3,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 
 const TiptapEditor = ({ value, onChange }) => {
   // ✅ `useState`는 반드시 컴포넌트 내부에서 호출
@@ -14,9 +14,12 @@ const TiptapEditor = ({ value, onChange }) => {
   useEffect(() => {
     const fetchCsrfToken = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/csrf-token", {
-          withCredentials: true, // ✅ 세션 쿠키 포함
-        });
+        const response = await axiosInstance.get(
+          "http://localhost:3000/csrf-token",
+          {
+            withCredentials: true, // ✅ 세션 쿠키 포함
+          }
+        );
         setCsrfToken(response.data.csrfToken);
       } catch (error) {
         console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -63,7 +66,7 @@ const TiptapEditor = ({ value, onChange }) => {
       formData.append("image", file);
 
       try {
-        const response = await axios.post(
+        const response = await axiosInstance.post(
           "http://localhost:3000/upload/question-image",
           formData,
           {

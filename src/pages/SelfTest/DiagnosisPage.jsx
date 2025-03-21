@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import {
   quantitativeDataState,
@@ -10,9 +10,12 @@ import {
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -74,7 +77,7 @@ function DiagnosisPage() {
   useEffect(() => {
     const fetchQuantitativeData = async () => {
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           "http://localhost:3000/selftest/quantitative",
           {
             params: { systemId },
@@ -112,7 +115,7 @@ function DiagnosisPage() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/upload/response-file", // ✅ 파일 업로드 API 경로
         formData,
         {
@@ -173,7 +176,7 @@ function DiagnosisPage() {
     );
 
     try {
-      await axios.post(
+      await axiosInstance.post(
         "http://localhost:3000/user/selftest/quantitative",
         { responses: formattedResponses },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }

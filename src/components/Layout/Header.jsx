@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { authState, superUserAuthState } from "../../state/authState";
 
-function Nav() {
+function Header() {
   const navigate = useNavigate();
   const { isLoggedIn, isExpertLoggedIn, user } = useRecoilValue(authState);
   const { isLoggedIn: isSuperUserLoggedIn, user: superUser } =
@@ -15,9 +15,9 @@ function Nav() {
 
   return (
     <header className="bg-blue-600 text-white py-5 shadow-md drop-shadow">
-      <div className="container mx-auto flex items-center justify-between">
+      <div className="max-w-[1000px] mx-auto flex justify-between items-center px-4">
         <div className="flex items-center space-x-4">
-          <div className="flex items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-white">
+          <div className="flex items-center justify-center  w-10 h-10 rounded-full overflow-hidden bg-white">
             <img
               src="src/assets/logo/MainLogo.png"
               alt="마틴랩 로고"
@@ -50,17 +50,10 @@ function Nav() {
               피드백
             </button>
           )}
-
-          {/* 로그인된 사용자 이름 표시 */}
-          {(isLoggedIn || isSuperUserLoggedIn) && (user || superUser) && (
-            <span className="ml-4">
-              환영합니다, {user?.name || superUser?.name}님!
-            </span>
-          )}
         </nav>
       </div>
     </header>
   );
 }
 
-export default Nav;
+export default Header;

@@ -3,13 +3,16 @@ import { useRecoilState } from "recoil";
 import { systemsState } from "../../state/system";
 import { managersState } from "../../state/superUserState";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -35,9 +38,12 @@ function SuperUserPage() {
   useEffect(() => {
     const fetchSystems = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/all-systems", {
-          withCredentials: true,
-        });
+        const response = await axiosInstance.get(
+          "http://localhost:3000/all-systems",
+          {
+            withCredentials: true,
+          }
+        );
         console.log("📋 [FETCH SYSTEMS] 시스템 데이터:", response.data);
         setSystems(response.data.data || []);
       } catch (error) {
@@ -47,7 +53,7 @@ function SuperUserPage() {
 
     const fetchManagers = async () => {
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           "http://localhost:3000/superuser/experts",
           {
             withCredentials: true,
@@ -84,7 +90,7 @@ function SuperUserPage() {
     console.log("📩 [ASSIGN MANAGER] 매칭 요청 데이터:", requestData);
 
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/match-experts",
         requestData,
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }

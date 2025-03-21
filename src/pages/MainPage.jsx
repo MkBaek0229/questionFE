@@ -1,15 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUserCheck,
-  faUserPlus,
-  faShieldAlt,
-  faClipboardCheck,
-  faFileSignature,
-} from "@fortawesome/free-solid-svg-icons";
-import { useEffect } from "react";
 
+import ShieldIcon from "../assets/sheild-front-color.svg";
+import SelfAssessmentIcon from "../assets/chat-text-iso-color.svg";
+import FeedbackIcon from "../assets/computer-iso-color.svg";
 function MainPage({ isExpertLoggedIn }) {
   const navigate = useNavigate();
 
@@ -28,87 +22,70 @@ function MainPage({ isExpertLoggedIn }) {
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100 justify-evenly">
-      {/* 설명 섹션 */}
-      <div className="text-center mt-6 px-4 ">
-        <h2 className="text-2xl 2xl:text-7xl lg:text-5xl md:text-4xl sm:text-3xl  font-extrabold text-gray-800 mb-6">
-          공공기관의 개인정보 보호 역량 향상
-        </h2>
-        <p className="text-2xl 2xl:text-4xl lg:text-2xl md:text-xl sm:text-lg text-base text-gray-600 mt-1">
-          공공기관의 개인정보 관리 현황, 취약 점 등 파악 및 개선점 도출을 위한
-          플랫폼
-        </p>
-      </div>
+    <div className="flex flex-col items-center min-h-screen">
+      {/* 배너 섹션 */}
+      <section className="relative w-full h-[300px] flex items-center justify-center">
+        {/* 텍스트 콘텐츠 */}
+        <div className="relative text-center px-6">
+          <div className="flex flex-col text-6xl items-center font-bold">
+            <h1 className=" leading-tight mb-4 ">
+              공공기관의 개인정보 보호 역량 향상
+            </h1>
+            <span className="text-blue-600 font-extrabold">
+              개인정보 컴플라이언스 강화 플랫폼
+            </span>
+          </div>
+          <p className="text-2xl text-gray-500 leading-relaxed mt-4 font-light">
+            공공기관의 개인정보 관리 현황,취약점 파악 및 개선점 도출을 위한
+            자가진단 서비스
+          </p>
+        </div>
+      </section>
 
-      {/* 버튼 영역 */}
-      <div className="flex flex-col lg:flex-row items-center justify-center max-w-[800px] space-y-4 lg:space-y-0 lg:space-x-4 xl:space-x-8 mt-8">
+      {/* 버튼 섹션 */}
+      <div className="flex flex-col lg:flex-row items-center justify-center max-w-[1200px] gap-[20px]">
         {/* 로그인 버튼 */}
         <button
-          className="flex flex-col items-center justify-center w-[200px] h-[200px] 2xl:w-[350px] 2xl:h-[350px] md:w-[250px] md:h-[250px] sm:w-[200px] sm:h-[200px]  bg-blue-600 text-white shadow-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-xl"
+          className="group flex flex-col items-center justify-center w-[200px] h-[70px] rounded-[50px] shadow-md bg-blue-400 hover:bg-blue-600"
           onClick={handleLoginClick}
         >
-          <FontAwesomeIcon
-            icon={faUserCheck}
-            size="3x"
-            className="mb-10 md:mb-8 sm:mb-6 mb-4"
-          />
-          <span className="text-2xl 2xl:text md:text-3xl text-base font-bold tracking-wide">
+          <span className="text-lg md:text-xl font-bold tracking-wide">
             로그인
           </span>
         </button>
+
         {/* 회원가입 버튼 */}
         <button
-          className="flex flex-col items-center justify-center w-[200px] h-[200px] 2xl:w-[350px] 2xl:h-[350px] md:w-[250px] md:h-[250px] sm:w-[200px] sm:h-[200px] bg-red-500 text-white shadow-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-300 rounded-xl"
+          className="group flex flex-col items-center justify-center w-[200px] h-[70px] rounded-[50px] shadow-md bg-red-400 hover:bg-red-600"
           onClick={handleSignupClick}
         >
-          <FontAwesomeIcon
-            icon={faUserPlus}
-            size="3x"
-            className="mb-10 md:mb-8 sm:mb-6 mb-4"
-          />
-          <span className="text-2xl 2xl:text md:text-3xl text-base font-bold tracking-wide">
+          <span className="text-lg md:text-xl font-bold tracking-wide">
             회원가입
           </span>
         </button>
       </div>
 
-      {/* 서비스 특징 아이콘 섹션 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10 text-gray-700">
-        <div className="flex flex-col items-center">
-          <div className=" sm:w-24 sm:h-24 w-20 h-20 flex items-center justify-center bg-blue-100 rounded-full shadow-sm">
-            <FontAwesomeIcon
-              icon={faShieldAlt}
-              size="2x"
-              className="text-blue-600  sm:text-4xl text-1x"
-            />
+      {/* 서비스 특징 섹션 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-16 px-4 max-w-[1200px]">
+        <div className="flex items-center text-center">
+          <div className="w-[300px] h-[300px]  flex items-center flex-col justify-center  bg-blue-50 rounded-[50px] shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px] ">
+            <img src={ShieldIcon} className="w-[150px]" />{" "}
+            <p className="mt-4 text-[24px] font-bold">
+              개인정보 보호 역량 향상
+            </p>
           </div>
-          <p className="mt-3 font-medium text-lg md:text-base sm:text-md text-2xl">
-            개인정보 보호 역량 향상
-          </p>
         </div>
-        <div className="flex flex-col items-center">
-          <div className=" sm:w-24 sm:h-24 w-20 h-20 flex items-center justify-center bg-green-100 rounded-full shadow-sm">
-            <FontAwesomeIcon
-              icon={faClipboardCheck}
-              size="2x"
-              className="text-green-600 sm:text-4xl text-1x"
-            />
+        <div className="flex flex-col items-center text-center">
+          <div className="w-[300px] h-[300px]  flex items-center flex-col  justify-center bg-blue-50 rounded-[50px] shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]">
+            <img src={SelfAssessmentIcon} className="w-[150px]" />
+            <p className="mt-4 text-[24px] font-bold ">지표별 자가진단</p>
           </div>
-          <p className="mt-3 font-medium text-lg md:text-base sm:text-md text-2xl">
-            지표별 자가진단
-          </p>
         </div>
-        <div className="flex flex-col items-center">
-          <div className=" sm:w-24 sm:h-24 w-20 h-20 flex items-center justify-center bg-red-100 rounded-full shadow-sm">
-            <FontAwesomeIcon
-              icon={faFileSignature}
-              size="2x"
-              className="text-red-600  sm:text-4xl text-1x"
-            />
+        <div className="flex flex-col items-center text-center">
+          <div className="w-[300px] h-[300px]   flex items-center flex-col  justify-center bg-blue-50 rounded-[50px] shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]">
+            <img src={FeedbackIcon} className="w-[150px]" />
+            <p className="mt-4 text-[24px] font-bold">전문가 리포트 제공</p>
           </div>
-          <p className="mt-3 font-medium text-lg md:text-base sm:text-md text-2xl">
-            전문가 리포트 제공
-          </p>
         </div>
       </div>
     </div>

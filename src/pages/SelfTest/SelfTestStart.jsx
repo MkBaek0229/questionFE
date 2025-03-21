@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState, useRecoilValue } from "recoil";
 import {
   selfTestFormState,
@@ -10,9 +10,12 @@ import { authState } from "../../state/authState";
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -84,7 +87,7 @@ function SelfTestStart() {
     if (!validateForm()) return;
 
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/selftest",
         { ...formData, systemId, userId },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }

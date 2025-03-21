@@ -1,13 +1,12 @@
-import React, { useState } from "react";
-import { useRecoilState } from "recoil";
+import React, { useState, useEffect } from "react";
+import { useRecoilState, useResetRecoilState } from "recoil";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../../axiosInstance";
 import { formState } from "../../state/formState";
 import SignupStep0 from "../../components/Login/SignupStep0";
 import SignupStep1 from "../../components/Login/SignupStep1";
 import SignupStep2 from "../../components/Login/SignupStep2";
 import SignupStep3 from "../../components/Login/SignupStep3";
-import { useResetRecoilState } from "recoil";
-import { useEffect } from "react";
 
 function Signup() {
   const [step, setStep] = useState(0); // 현재 단계
@@ -16,9 +15,8 @@ function Signup() {
   const resetFormState = useResetRecoilState(formState);
 
   useEffect(() => {
-    // 컴포넌트가 언마운트될 때 formState 초기화
     return () => {
-      resetFormState();
+      resetFormState(); // 컴포넌트 언마운트 시 formState 초기화
     };
   }, [resetFormState]);
 
@@ -27,10 +25,12 @@ function Signup() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await fetch("http://localhost:3000/csrf-token", {
-        credentials: "include", // ✅ 쿠키 포함 필수
-      });
-      const data = await response.json();
+      const { data } = await axiosInstance.get(
+        "http://localhost:3000/csrf-token",
+        {
+          withCredentials: true, // ✅ 쿠키 포함
+        }
+      );
       return data.csrfToken;
     } catch (error) {
       console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -58,7 +58,7 @@ function Signup() {
 
     const endpoint =
       formData.member_type === "user"
-        ? "http://localhost:3000/register"
+        ? "http://localhost:3000/auth/register"
         : "http://localhost:3000/register/expert";
 
     const payload = {
@@ -71,28 +71,21 @@ function Signup() {
     console.log("📩 회원가입 요청 데이터:", payload);
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
+      const { data } = await axiosInstance.post(endpoint, payload, {
         headers: {
           "Content-Type": "application/json",
           "X-CSRF-Token": csrfToken, // ✅ CSRF 토큰 추가
         },
-        credentials: "include", // ✅ 쿠키 포함 필수
-        body: JSON.stringify(payload),
+        withCredentials: true, // ✅ 쿠키 포함
       });
 
-      const data = await response.json();
-      console.log("Response received:", data);
-
-      if (response.ok) {
-        alert(data.message || "회원가입 성공");
-        navigate("/");
-      } else {
-        alert(data.message || "회원가입 실패");
-      }
+      alert(data.message || "회원가입 성공");
+      navigate("/");
     } catch (error) {
-      console.error("Error during signup:", error.message);
-      alert("회원가입 요청 중 오류가 발생했습니다.");
+      console.error("❌ 회원가입 오류:", error.response?.data || error.message);
+      alert(
+        error.response?.data?.message || "회원가입 요청 중 오류가 발생했습니다."
+      );
     }
   };
 

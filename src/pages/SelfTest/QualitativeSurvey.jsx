@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState, useResetRecoilState } from "recoil";
 import {
   qualitativeDataState,
@@ -10,9 +10,12 @@ import {
 
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -71,7 +74,7 @@ function QualitativeSurvey() {
   useEffect(() => {
     const fetchQualitativeData = async () => {
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           "http://localhost:3000/selftest/qualitative",
           {
             params: { systemId },
@@ -111,7 +114,7 @@ function QualitativeSurvey() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/upload/response-file", // ✅ 파일 업로드 API 경로
         formData,
         {
@@ -181,7 +184,7 @@ function QualitativeSurvey() {
     try {
       console.log("📌 [DEBUG] 전송할 정성 평가 데이터:", formattedResponses);
 
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/user/selftest/qualitative",
         { responses: formattedResponses },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
@@ -189,7 +192,7 @@ function QualitativeSurvey() {
 
       console.log("✅ [SUCCESS] 정성 평가 저장 응답:", response.data);
 
-      const assessmentResponse = await axios.post(
+      const assessmentResponse = await axiosInstance.post(
         "http://localhost:3000/assessment/complete",
         { userId, systemId },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }

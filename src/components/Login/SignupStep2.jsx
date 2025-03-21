@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
 
 // ✅ CSRF 토큰 가져오는 함수
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함 (중요)
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함 (중요)
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -70,7 +73,7 @@ function SignupStep2({ prevStep, nextStep }) {
         return;
       }
 
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/email/send-verification-code",
         { email },
         {
@@ -107,7 +110,7 @@ function SignupStep2({ prevStep, nextStep }) {
         return;
       }
 
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         "http://localhost:3000/email/verify-code",
         { email, code: verificationCode },
         {

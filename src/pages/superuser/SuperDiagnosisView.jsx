@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useNavigate, useLocation } from "react-router-dom";
 function SuperDiagnosisView() {
   const navigate = useNavigate();
@@ -27,17 +27,23 @@ function SuperDiagnosisView() {
           qualitativeQuestionsRes,
           qualitativeResponsesRes,
         ] = await Promise.all([
-          axios.get(`http://localhost:3000/super/selftest/quantitative`, {
-            withCredentials: true,
-          }),
-          axios.get(
+          axiosInstance.get(
+            `http://localhost:3000/super/selftest/quantitative`,
+            {
+              withCredentials: true,
+            }
+          ),
+          axiosInstance.get(
             `http://localhost:3000/super/selftest/quantitative/responses/${systemId}`,
             { withCredentials: true }
           ),
-          axios.get(`http://localhost:3000/super/selftest/qualitative`, {
-            withCredentials: true,
-          }),
-          axios.get(
+          axiosInstance.get(
+            `http://localhost:3000/super/selftest/qualitative`,
+            {
+              withCredentials: true,
+            }
+          ),
+          axiosInstance.get(
             `http://localhost:3000/super/selftest/qualitative/responses/${systemId}`,
             { withCredentials: true }
           ),

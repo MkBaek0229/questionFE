@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
 import useMediaQuery from "../../hooks/useMediaQuery";
+import DaumPostcode from "react-daum-postcode";
 
 function SignupStep3({ prevStep, handleSubmit }) {
   const [formData, setFormData] = useRecoilState(formState);
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 425px)");
 
   useEffect(() => {
@@ -76,6 +78,18 @@ function SignupStep3({ prevStep, handleSubmit }) {
     }
   };
 
+  const handleAddressSelect = (data) => {
+    // 주소 선택 시 formData에 저장
+    setFormData((prev) => ({
+      ...prev,
+      [prev.member_type]: {
+        ...prev[prev.member_type],
+        institution_address: data.address,
+      },
+    }));
+    setIsPostcodeOpen(false); // 주소 검색창 닫기
+  };
+
   const renderFields = () => {
     const fields =
       formData.member_type === "user"
@@ -93,17 +107,48 @@ function SignupStep3({ prevStep, handleSubmit }) {
             { label: "주요 경력", name: "major_carrea" },
           ];
 
-    return fields.map((field) => (
-      <InputField
-        key={field.name}
-        label={field.label}
-        name={field.name}
-        value={formData[formData.member_type][field.name]}
-        onChange={handleChange}
-      />
-    ));
+    return fields.map((field) =>
+      field.name === "institution_address" ? (
+        <div key={field.name}>
+          <label className="block text-sm font-medium">{field.label}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              name={field.name}
+              value={formData[formData.member_type][field.name] || ""}
+              onChange={handleChange}
+              className="flex-1 p-2 border border-gray-300 rounded-md"
+              readOnly
+            />
+            <button
+              type="button"
+              onClick={() => setIsPostcodeOpen(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 font-bold"
+            >
+              주소 검색
+            </button>
+          </div>
+          {isPostcodeOpen && (
+            <div className="mt-2">
+              <DaumPostcode
+                onComplete={handleAddressSelect}
+                autoClose={false}
+                style={{ height: "400px" }}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <InputField
+          key={field.name}
+          label={field.label}
+          name={field.name}
+          value={formData[formData.member_type][field.name]}
+          onChange={handleChange}
+        />
+      )
+    );
   };
-
   // 모바일 전용 디자인
   if (isMobile) {
     return (

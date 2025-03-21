@@ -1,6 +1,6 @@
 // Dashboard.js
 import React, { useEffect } from "react";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
@@ -16,9 +16,12 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { systemsState } from "../../state/system";
 const getCsrfToken = async () => {
   try {
-    const response = await axios.get("http://localhost:3000/csrf-token", {
-      withCredentials: true, // ✅ 세션 쿠키 포함
-    });
+    const response = await axiosInstance.get(
+      "http://localhost:3000/csrf-token",
+      {
+        withCredentials: true, // ✅ 세션 쿠키 포함
+      }
+    );
     return response.data.csrfToken;
   } catch (error) {
     console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -42,8 +45,10 @@ function Dashboard() {
     try {
       console.log("⏳ [FETCH] 시스템 정보 요청 중...");
       const [systemsResponse, statusResponse] = await Promise.all([
-        axios.get("http://localhost:3000/systems", { withCredentials: true }),
-        axios.get("http://localhost:3000/assessment/status", {
+        axiosInstance.get("http://localhost:3000/system/systems", {
+          withCredentials: true,
+        }),
+        axiosInstance.get("http://localhost:3000/result/assessment-statuses", {
           withCredentials: true,
         }),
       ]);
@@ -97,7 +102,7 @@ function Dashboard() {
         alert("CSRF 토큰을 가져오는 데 실패했습니다.");
         return;
       }
-      const response = await axios.delete(
+      const response = await axiosInstance.delete(
         `http://localhost:3000/system/${systemId}`, // ✅ URL 확인
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -163,7 +168,7 @@ function Dashboard() {
         alert("CSRF 토큰을 가져오는 데 실패했습니다.");
         return;
       }
-      const response = await fetch("http://localhost:3000/logout", {
+      const response = await fetch("http://localhost:3000/auth/logout", {
         method: "POST",
         credentials: "include",
         headers: { "X-CSRF-Token": csrfToken },

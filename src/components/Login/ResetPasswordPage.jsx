@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../../../axiosInstance";
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -14,9 +14,12 @@ function ResetPasswordPage() {
 
   const getCsrfToken = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/csrf-token", {
-        withCredentials: true, // ✅ 쿠키 포함 필수
-      });
+      const response = await axiosInstance.get(
+        "http://localhost:3000/csrf-token",
+        {
+          withCredentials: true, // ✅ 쿠키 포함 필수
+        }
+      );
       return response.data.csrfToken;
     } catch (error) {
       console.error("❌ CSRF 토큰 가져오기 실패:", error);
@@ -68,7 +71,7 @@ function ResetPasswordPage() {
         return;
       }
 
-      await axios.post(
+      await axiosInstance.post(
         "http://localhost:3000/reset-password",
         { token, password },
         {

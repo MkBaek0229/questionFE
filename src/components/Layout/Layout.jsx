@@ -1,10 +1,10 @@
 import Footer from "./Footer";
-import Nav from "./Nav";
+import Header from "./Header";
 
 function Layout({ children, isExpertLoggedIn }) {
   return (
     <div className="flex flex-col min-h-screen">
-      <Nav
+      <Header
         className="fixed top-0 left-0 right-0 h-16 z-50"
         isExpertLoggedIn={isExpertLoggedIn}
       />
