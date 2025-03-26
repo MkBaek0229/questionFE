@@ -3,7 +3,7 @@ function Footer() {
 
   return (
     <>
-      <footer className="w-full py-6 bg-gray-200 text-gray-700 text-center">
+      <footer className="w-full py-6 text-gray-700 text-center shadow-inner">
         <p>
           © {year} 개인정보보호위원회 |{" "}
           <a

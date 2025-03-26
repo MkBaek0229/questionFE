@@ -26,7 +26,7 @@ const getCsrfToken = async () => {
 function QualitativeSurvey() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { userId, systemId } = location.state || {};
+  const { userId, systemId, diagnosisRound } = location.state || {};
 
   const [currentStep, setCurrentStep] = useRecoilState(
     qualitativeCurrentStepState
@@ -75,7 +75,7 @@ function QualitativeSurvey() {
     const fetchQualitativeData = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:3000/selftest/qualitative",
+          "http://localhost:3000/selftest/qualitative-questions",
           {
             params: { systemId },
             withCredentials: true,
@@ -166,6 +166,7 @@ function QualitativeSurvey() {
         return {
           systemId,
           userId,
+          diagnosisRound,
           questionId: question?.id || null, // 🔥 여기가 핵심 (id로 저장)
           response: ["자문필요", "해당없음"].includes(
             responseData.response?.trim()
@@ -185,7 +186,7 @@ function QualitativeSurvey() {
       console.log("📌 [DEBUG] 전송할 정성 평가 데이터:", formattedResponses);
 
       const response = await axiosInstance.post(
-        "http://localhost:3000/user/selftest/qualitative",
+        "http://localhost:3000/selftest/qualitative-responses",
         { responses: formattedResponses },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -193,7 +194,7 @@ function QualitativeSurvey() {
       console.log("✅ [SUCCESS] 정성 평가 저장 응답:", response.data);
 
       const assessmentResponse = await axiosInstance.post(
-        "http://localhost:3000/assessment/complete",
+        "http://localhost:3000/result/complete-selftest",
         { userId, systemId },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
@@ -201,7 +202,9 @@ function QualitativeSurvey() {
       console.log("✅ [SUCCESS] 평가 완료 응답:", assessmentResponse.data);
 
       alert("✅ 정성 평가가 완료되었습니다!");
-      navigate("/completion", { state: { userId, systemId } });
+      navigate("/completion", {
+        state: { userId, systemId, diagnosisRound },
+      });
     } catch (error) {
       console.error(
         "❌ [ERROR] 정성 평가 저장 실패:",

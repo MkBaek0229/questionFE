@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axiosInstance from "../../../axiosInstance";
 import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
+import { toast } from "react-toastify";
 
 // ✅ CSRF 토큰 가져오는 함수
 const getCsrfToken = async () => {
@@ -21,222 +22,177 @@ const getCsrfToken = async () => {
 
 function SignupStep2({ prevStep, nextStep }) {
   const [formData, setFormData] = useRecoilState(formState);
-  const [email, setEmail] = useState(formData.email || "");
-  const [verificationCode, setVerificationCode] = useState("");
-  const [verificationMessage, setVerificationMessage] = useState("");
+  const [emailVerification, setEmailVerification] = useState(false); // 이메일 요청 여부
+  const [emailInput, setEmailInput] = useState("");
+  const [verificationCode, setVerificationCode] = useState();
   const [isVerified, setIsVerified] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [verificationSent, setVerificationSent] = useState(false);
-  const [isCooldown, setIsCooldown] = useState(false);
-  const [cooldownTime, setCooldownTime] = useState(60);
-  const [requestCount, setRequestCount] = useState(0);
 
-  // ⏳ **쿨다운 타이머 업데이트**
-  useEffect(() => {
-    if (isCooldown) {
-      const timer = setInterval(() => {
-        setCooldownTime((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setIsCooldown(false);
-            setRequestCount(0);
-            return 60;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+  // 이메일 검증 함수
+  const EmailCheckMachine = (email) => {
+    const email_regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/i;
 
-      return () => clearInterval(timer);
+    if (!email) {
+      toast.error("이메일을 입력해주세요.");
+      setEmailVerification(false);
+      return false;
     }
-  }, [isCooldown]);
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value.toLowerCase()); // 자동 소문자 변환
-    setVerificationMessage("");
-    setIsVerified(false);
-    setErrorMessage("");
+    if (!email.match(email_regex)) {
+      toast.error("유효하지 않은 이메일 형식입니다.");
+      setEmailVerification(false);
+      return false;
+    }
+
+    setEmailVerification(true);
+    return true;
   };
 
-  // ✅ 이메일 인증 코드 요청 (CSRF 보호 추가)
+  // 인증번호 요청 함수
   const handleSendVerificationCode = async () => {
-    if (isCooldown || requestCount >= 3) {
-      alert("1분 내 요청 횟수를 초과했습니다. 잠시 후 다시 시도하세요.");
-      return;
-    }
+    const isEmailValid = EmailCheckMachine(emailInput);
+    if (!isEmailValid) return;
 
     try {
-      console.log("🚀 [이메일 인증] CSRF 토큰 가져오는 중...");
-      const csrfToken = await getCsrfToken(); // 🔥 CSRF 토큰 가져오기
-
+      const csrfToken = await getCsrfToken();
       if (!csrfToken) {
-        setErrorMessage("CSRF 토큰을 가져오는 데 실패했습니다.");
+        toast.error("CSRF 토큰을 가져오는 데 실패했습니다.");
         return;
       }
 
-      const response = await axiosInstance.post(
+      await axiosInstance.post(
         "http://localhost:3000/email/send-verification-code",
-        { email },
+        {
+          email: emailInput,
+          member_type: "user",
+        },
         {
           withCredentials: true,
-          headers: { "X-CSRF-Token": csrfToken }, // ✅ CSRF 토큰 추가
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
         }
       );
 
-      setVerificationMessage(response.data.message);
-      setErrorMessage("");
-      setVerificationSent(true);
-      setRequestCount(requestCount + 1);
-
-      if (requestCount + 1 >= 3) {
-        setIsCooldown(true);
-        setCooldownTime(60); // 타이머 초기화
-      }
+      toast.success("인증코드가 이메일로 전송되었습니다.");
+      setEmailVerification(true);
     } catch (error) {
-      if (error.response?.status === 429) {
-        setErrorMessage("너무 많은 요청입니다. 1분 후 다시 시도하세요.");
-      }
-      setErrorMessage(error.response?.data?.message || "인증 코드 전송 실패");
+      const errorMessage = error.response?.data?.message || error.message;
+      toast.error(errorMessage);
+
+      setEmailVerification(false);
     }
   };
 
-  // ✅ 인증 코드 확인 (CSRF 보호 추가)
-  const handleVerificationCodeCheck = async () => {
+  // 이메일 인증 코드 검증을 위한 함수
+  const verifyEmailCode = async (email, code) => {
     try {
-      console.log("🚀 [인증 코드 확인] CSRF 토큰 가져오는 중...");
-      const csrfToken = await getCsrfToken(); // 🔥 CSRF 토큰 가져오기
+      const csrfToken = await getCsrfToken();
 
-      if (!csrfToken) {
-        setErrorMessage("CSRF 토큰을 가져오는 데 실패했습니다.");
-        return;
-      }
-
+      // POST 요청 전송: URL, 요청 데이터, 헤더 설정
       const response = await axiosInstance.post(
         "http://localhost:3000/email/verify-code",
-        { email, code: verificationCode },
         {
+          email: email,
+          code: code,
+        },
+        {
+          headers: {
+            "X-CSRF-Token": csrfToken,
+          },
+          // 필요한 경우 쿠키를 함께 보내려면 withCredentials 옵션을 활성화합니다.
           withCredentials: true,
-          headers: { "X-CSRF-Token": csrfToken }, // ✅ CSRF 토큰 추가
         }
       );
 
+      // 요청 성공 시 결과 반환
       if (response.status === 200) {
-        setFormData((prev) => ({ ...prev, email, emailVerified: true }));
+        toast.success("인증 성공");
+        setFormData({ ...formData, email: email, emailVerified: true });
         setIsVerified(true);
-        setVerificationMessage("이메일 인증 성공!");
-        setErrorMessage("");
       }
     } catch (error) {
-      setVerificationMessage(
-        error.response?.data?.message || "인증 코드가 유효하지 않습니다."
-      );
+      // 에러 처리: 콘솔에 출력하고 예외를 던집니다.
+      toast.error("인증 실패");
+      throw error;
     }
   };
 
   return (
-    <>
-      {/* 📌 진행 바 UI */}
-      <div className="flex items-center justify-center w-full py-8">
-        <div className="flex items-center w-4/5 max-w-2xl relative justify-between">
-          {/* STEP 1 */}
-          <div className="relative flex flex-col items-center w-1/4">
-            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
-              ✓
-            </div>
-            <span className="text-blue-600 text-xl font-bold mt-3">
-              약관동의
-            </span>
+    <div className="bg-white p-6 rounded-lg w-3/4 max-w-2xl">
+      {!emailVerification ? (
+        // 이메일 입력 및 인증번호 요청 UI
+        <div>
+          <h1 className="flex text-[32px] font-bold justify-center gap-2">
+            당신의 <p className="text-blue-500">이메일 주소는?</p>
+          </h1>
+          <div className="flex flex-col justify-between mt-6 mb-8">
+            <input
+              type="email"
+              placeholder="이메일을 입력해주세요"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              className="w-full p-6 h-12 border-2 border-blue-60 rounded-3xl mx-auto text-[24px]"
+            />
           </div>
 
-          {/* STEP 2 */}
-          <div className="relative flex flex-col items-center w-1/4">
-            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
-              ✓
-            </div>
-            <span className="text-blue-600 text-xl font-bold mt-3">
-              이메일 인증
-            </span>
-          </div>
-
-          {/* STEP 3 */}
-          <div className="relative flex flex-col items-center w-1/4">
-            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-gray-600 bg-gray-600 text-gray-400 rounded-full text-3xl z-10">
-              ✓
-            </div>
-            <span className="text-gray-400 text-xl mt-3">회원 정보 입력</span>
+          <div className="flex justify-center">
+            {emailInput && (
+              <button
+                onClick={handleSendVerificationCode}
+                className="bg-green-500 text-white rounded-full w-full max-w-md py-3 text-lg font-semibold"
+              >
+                인증번호 발송
+              </button>
+            )}
           </div>
         </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-8">
-          {formData.member_type === "user"
-            ? "기관회원 회원가입"
-            : "전문가 회원가입"}
-        </h1>
-        <div className="mb-6">
-          <label>이메일</label>
+      ) : (
+        // 인증번호 입력 UI
+        <div>
+          <h1 className="flex text-[32px] font-bold justify-center gap-2 ">
+            인증코드를 입력해주세요
+          </h1>
           <input
-            type="email"
-            value={email}
-            onChange={handleEmailChange}
-            className="w-full p-3 border rounded-md"
-            placeholder="이메일을 입력하세요"
-          />
-          <button
-            onClick={handleSendVerificationCode}
-            className={`mt-2 px-4 py-2 rounded-md ${
-              isCooldown
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-            disabled={isCooldown}
-          >
-            {isCooldown
-              ? `다시 요청 가능 (${cooldownTime}s)`
-              : "인증 코드 전송"}
-          </button>
-        </div>
-        <div className="mb-6">
-          <label>인증 코드</label>
-          <input
-            type="text"
+            type="tel"
+            maxLength={6}
+            autoComplete="off"
+            placeholder="인증코드를 입력해주세요"
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value)}
-            className="w-full p-3 border rounded-md"
-            placeholder="인증 코드를 입력하세요"
+            className="w-full p-6 h-12 border-2 border-blue-60 rounded-3xl mx-auto text-[24px] mt-6 mb-12"
           />
-          <button
-            onClick={handleVerificationCodeCheck}
-            className="mt-2 px-4 py-2 bg-gray-600 text-white rounded-md"
-          >
-            확인
-          </button>
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={() => verifyEmailCode(emailInput, verificationCode)}
+              className="bg-blue-500 text-white rounded-full w-full max-w-md py-3 text-lg font-semibold"
+            >
+              인증코드 확인
+            </button>
+          </div>
         </div>
-        {verificationMessage && (
-          <p className="text-green-600">{verificationMessage}</p>
-        )}
-        {errorMessage && <p className="text-red-600">{errorMessage}</p>}
-        <div className="flex justify-between mt-6">
-          <button
-            onClick={prevStep}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md"
-          >
-            이전
-          </button>
-          <button
-            onClick={nextStep}
-            className={`px-4 py-2 rounded-md ${
-              !isVerified
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-            disabled={!isVerified}
-          >
-            다음
-          </button>
-        </div>
-      </div>
-    </>
+      )}
+
+      <button
+        onClick={prevStep}
+        className="w-[100%] h-[50px] text-[22px] font-bold rounded-md"
+      >
+        이전
+      </button>
+
+      {isVerified && (
+        <button
+          className={`w-[100%] h-[50px] text-[22px] font-bold rounded-md ${
+            formData.agreement
+              ? "bg-blue-500 text-white hover:bg-blue-700"
+              : "bg-gray-300 text-gray-700 cursor-not-allowed"
+          }`}
+          onClick={nextStep}
+          disabled={!formData.agreement}
+        >
+          다음
+        </button>
+      )}
+    </div>
   );
 }
 

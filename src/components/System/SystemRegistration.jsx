@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 import { formState } from "../../state/formState";
+
 const getCsrfToken = async () => {
   try {
     const response = await axiosInstance.get(
@@ -58,7 +59,7 @@ function SystemRegistration() {
       console.log("📋 [DEBUG] reason 값:", formData.reason);
 
       const response = await axiosInstance.post(
-        "http://localhost:3000/systems",
+        "http://localhost:3000/system/system",
         { ...formData, user_id: auth.user.id },
         {
           withCredentials: true,
@@ -79,113 +80,113 @@ function SystemRegistration() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-2xl">
-        <h1 className="text-3xl font-bold mb-6">시스템 등록 확인</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-gray-700 font-medium">
-              시스템 이름
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name || ""}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              placeholder="시스템 이름을 입력하세요"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">
-              정보 주체수
-            </label>
-            <input
-              type="number"
-              name="num_data_subjects"
-              value={formData.num_data_subjects || ""}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              placeholder="정보 주체 수를 입력하세요"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">처리 목적</label>
-            <input
-              type="text"
-              name="purpose"
-              value={formData.purpose || ""}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-              placeholder="처리 목적을 입력하세요"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">
-              민감 정보 포함 여부
-            </label>
-            <select
-              name="is_private"
-              value={formData.is_private || "포함"}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-            >
-              <option value="포함">포함</option>
-              <option value="미포함">미포함</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">
-              고유 식별 정보 포함 여부
-            </label>
-            <select
-              name="is_unique"
-              value={formData.is_unique || "미포함"}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-            >
-              <option value="포함">포함</option>
-              <option value="미포함">미포함</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">
-              주민등록번호 포함 여부
-            </label>
-            <select
-              name="is_resident"
-              value={formData.is_resident || "포함"}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-            >
-              <option value="포함">포함</option>
-              <option value="미포함">미포함</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium">수집 근거</label>
-            <select
-              name="reason"
-              value={formData.reason || "동의"}
-              onChange={handleChange}
-              className="w-full p-2 border rounded"
-            >
-              <option value="동의">동의</option>
-              <option value="법적 근거">법적 근거</option>
-              <option value="기타">기타</option>
-            </select>
-          </div>
-          <button
-            type="submit"
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+    <div className="bg-white p-6 rounded-lg w-3/4 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">시스템 등록 확인</h1>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-gray-700 font-medium">시스템 이름</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name || ""}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            placeholder="시스템 이름을 입력하세요"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium">정보 주체수</label>
+          <input
+            type="number"
+            name="num_data_subjects"
+            value={formData.num_data_subjects || ""}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            placeholder="정보 주체 수를 입력하세요"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium">처리 목적</label>
+          <input
+            type="text"
+            name="purpose"
+            value={formData.purpose || ""}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+            placeholder="처리 목적을 입력하세요"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium">
+            민감 정보 포함 여부
+          </label>
+          <select
+            name="is_private"
+            value={formData.is_private || "포함"}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
           >
-            확인
-          </button>
-        </form>
-      </div>
+            <option value="포함">포함</option>
+            <option value="미포함">미포함</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium">
+            고유 식별 정보 포함 여부
+          </label>
+          <select
+            name="is_unique"
+            value={formData.is_unique || "미포함"}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="포함">포함</option>
+            <option value="미포함">미포함</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium">
+            주민등록번호 포함 여부
+          </label>
+          <select
+            name="is_resident"
+            value={formData.is_resident || "포함"}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="포함">포함</option>
+            <option value="미포함">미포함</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-gray-700 font-medium">수집 근거</label>
+          <select
+            name="reason"
+            value={formData.reason || "동의"}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="동의">동의</option>
+            <option value="법적 근거">법적 근거</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="w-full mt-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg"
+        >
+          등록하기
+        </button>
+        <button
+          className="w-full mt-6 py-3 font-bold rounded-lg"
+          onClick={() => navigate("/dashboard")}
+        >
+          이전으로
+        </button>
+      </form>
     </div>
   );
 }

@@ -78,8 +78,6 @@ function Login() {
         }
       );
 
-      console.log("✅ [LOGIN] 응답 데이터:", response.data);
-
       const { id, member_type, ...userData } = response.data.data;
 
       if (member_type === "superuser") {
@@ -113,8 +111,8 @@ function Login() {
     }
   };
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md w-3/4 max-w-md">
+    <div className="min-h-screen flex flex-col justify-center items-center">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 max-w-md">
         <h1 className="text-2xl font-bold mb-6">로그인</h1>
         <div className="space-y-4">
           {/* 회원 유형 선택 */}

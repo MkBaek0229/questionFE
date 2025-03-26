@@ -27,6 +27,7 @@ function DiagnosisPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userId, systemId } = location.state || {};
+  const diagnosisRound = location.state?.diagnosisRound || 1;
 
   const [quantitativeData, setQuantitativeData] = useRecoilState(
     quantitativeDataState
@@ -78,7 +79,7 @@ function DiagnosisPage() {
     const fetchQuantitativeData = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:3000/selftest/quantitative",
+          "http://localhost:3000/selftest/quantitative-questions",
           {
             params: { systemId },
             withCredentials: true,
@@ -165,6 +166,7 @@ function DiagnosisPage() {
       ([question_number, responseData]) => ({
         systemId,
         userId,
+        diagnosisRound,
         questionId: Number(question_number),
         response: responseData.response?.trim() || "이행",
         additionalComment:
@@ -177,13 +179,15 @@ function DiagnosisPage() {
 
     try {
       await axiosInstance.post(
-        "http://localhost:3000/user/selftest/quantitative",
+        "http://localhost:3000/selftest/quantitative-responses",
         { responses: formattedResponses },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
       console.log("✅ [DEBUG] 정량 평가 저장 완료");
       alert("✅ 정량 평가 응답이 저장되었습니다.");
-      navigate("/qualitative-survey", { state: { systemId, userId } });
+      navigate("/qualitative-survey", {
+        state: { systemId, userId, diagnosisRound },
+      });
     } catch (error) {
       console.error(
         "❌ [DEBUG] 정량 평가 저장 실패:",
@@ -222,8 +226,8 @@ function DiagnosisPage() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex flex-col items-center">
-      <div className="container mx-auto max-w-5xl bg-white mt-10 p-6 rounded-lg shadow-lg">
+    <div className="h-full flex flex-col justify-center items-center bg-white p-6">
+      <div className="w-full max-w-[600px] py-8 gap-10">
         <h2 className="text-xl font-bold mb-6">정량 설문조사</h2>
 
         {/* ✅ 현재 문항 표시 */}
@@ -231,20 +235,22 @@ function DiagnosisPage() {
           <table className="w-full border-collapse border border-gray-300 mb-6">
             <tbody>
               <tr>
-                <td className="bg-gray-200 p-2 border">지표 번호</td>
+                <td className="bg-gray-200 p-2 border font-medium">
+                  지표 번호
+                </td>
                 <td className="p-2 border">
                   {quantitativeData[currentStep - 1]?.question_number ||
                     currentStep}
                 </td>
               </tr>
               <tr>
-                <td className="bg-gray-200 p-2 border">지표</td>
+                <td className="bg-gray-200 p-2 border font-medium">지표</td>
                 <td colSpan="3" className="p-2 border">
                   {quantitativeData[currentStep - 1]?.question || "질문 없음"}
                 </td>
               </tr>
               <tr>
-                <td className="bg-gray-200 p-2 border">평가기준</td>
+                <td className="bg-gray-200 p-2 border font-medium">평가기준</td>
                 <td colSpan="3" className="p-2 border">
                   <div
                     dangerouslySetInnerHTML={{
@@ -256,9 +262,11 @@ function DiagnosisPage() {
                 </td>
               </tr>
               <tr>
-                <td className="bg-gray-200 p-2 border">파일 업로드</td>
+                <td className="bg-gray-200 p-2 border font-medium">
+                  파일 업로드
+                </td>
                 <td colSpan="3" className="p-2 border">
-                  <label className="cursor-pointer bg-blue-500 text-white px-3 py-2 rounded">
+                  <label className="cursor-pointer bg-blue-500 text-white px-4 py-1 rounded">
                     파일 선택
                     <input
                       type="file"
@@ -299,7 +307,7 @@ function DiagnosisPage() {
                 </td>
               </tr>
               <tr>
-                <td className="bg-gray-200 p-2 border">평가</td>
+                <td className="bg-gray-200 p-2 border font-medium">평가</td>
                 <td colSpan="3" className="p-2 border">
                   <select
                     value={
@@ -345,14 +353,18 @@ function DiagnosisPage() {
           <p className="text-center text-gray-500">로딩 중...</p>
         )}
 
-        <div className="flex justify-between mt-6">
+        <div className="mt-6">
           <button
+            className="w-[100%] h-[50px] text-[22px]  text-black font-bold rounded-md"
             onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
           >
             이전
           </button>
-          <button onClick={handleNextClick}>
-            {currentStep === quantitativeData.length ? "저장 후 완료" : "다음"}
+          <button
+            className="w-[100%] h-[50px] text-[22px]  bg-blue-600 text-white font-bold rounded-md"
+            onClick={handleNextClick}
+          >
+            {currentStep === quantitativeData.length ? "정량평가 완료" : "체크"}
           </button>
         </div>
       </div>

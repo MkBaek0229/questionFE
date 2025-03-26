@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import { useRecoilState } from "recoil";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   authState,
@@ -9,6 +9,8 @@ import {
   superUserAuthState, // ✅ 슈퍼유저 상태 추가
 } from "./state/authState";
 
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Login from "./components/Login/Login";
 import Signup from "./pages/Login/Signup";
 import MainPage from "./pages/MainPage";
@@ -30,12 +32,15 @@ import SuperManageUsers from "./pages/superuser/SuperManageUsers";
 import SuperDiagnosisView from "./pages/superuser/SuperDiagnosisView";
 import ProtectedRoute from "./components/ProtectedRoute"; // ✅ ProtectedRoute 추가
 import ExpertDashboard from "./pages/expert/SystemManagement";
+import SystemManagement from "./components/System/SystemManagement";
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
   const [expertAuth, setExpertAuthState] = useRecoilState(expertAuthState);
   const [superUserAuth, setSuperUserAuthState] =
     useRecoilState(superUserAuthState);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -46,15 +51,19 @@ function App() {
         setAuthState({ isLoggedIn: true, user: data });
       } catch (error) {
         console.error("Failed to fetch user data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserData();
   }, [setAuthState]);
-
+  if (loading) {
+    return <div>로딩 중...</div>;
+  }
   return (
     <BrowserRouter>
-      <Layout isExpertLoggedIn={expertAuth.isLoggedIn}>
+      <Layout isExpertLoggedIn={expertAuth.isLoggedIn} className="font-sans">
         <Routes>
           <Route
             path="/"
@@ -71,7 +80,7 @@ function App() {
             }
           />
           <Route
-            path="/SelfTestStart"
+            path="/selftest/start/:systemId"
             element={<ProtectedRoute component={SelfTestStart} />}
           />
           <Route
@@ -89,6 +98,8 @@ function App() {
             path="/dashboard"
             element={<ProtectedRoute component={Dashboard} />}
           />
+          <Route path="/system-management" element={<SystemManagement />} />
+
           <Route
             path="/system-register"
             element={<ProtectedRoute component={SystemRegistration} />}
@@ -138,6 +149,7 @@ function App() {
             element={<ProtectedRoute component={SuperDiagnosisView} />}
           />
         </Routes>
+        <ToastContainer />
       </Layout>
     </BrowserRouter>
   );

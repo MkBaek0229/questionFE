@@ -7,6 +7,8 @@ import SignupStep0 from "../../components/Login/SignupStep0";
 import SignupStep1 from "../../components/Login/SignupStep1";
 import SignupStep2 from "../../components/Login/SignupStep2";
 import SignupStep3 from "../../components/Login/SignupStep3";
+import { toast } from "react-toastify";
+import StepProgressBar from "./StepProgressBar";
 
 function Signup() {
   const [step, setStep] = useState(0); // 현재 단계
@@ -40,19 +42,19 @@ function Signup() {
 
   const handleSubmit = async () => {
     if (!formData.emailVerified) {
-      alert("이메일 인증이 필요합니다.");
+      toast.error("이메일 인증이 필요합니다.");
       return;
     }
 
     if (!formData.member_type) {
-      alert("회원 유형을 선택해 주세요.");
+      toast.error("회원 유형을 선택해 주세요.");
       return;
     }
 
     // ✅ CSRF 토큰 가져오기
     const csrfToken = await getCsrfToken();
     if (!csrfToken) {
-      alert("CSRF 토큰을 가져올 수 없습니다.");
+      toast.error("CSRF 토큰을 가져올 수 없습니다.");
       return;
     }
 
@@ -79,11 +81,11 @@ function Signup() {
         withCredentials: true, // ✅ 쿠키 포함
       });
 
-      alert(data.message || "회원가입 성공");
+      toast.success(data.message || "회원가입 성공");
       navigate("/");
     } catch (error) {
       console.error("❌ 회원가입 오류:", error.response?.data || error.message);
-      alert(
+      toast.error(
         error.response?.data?.message || "회원가입 요청 중 오류가 발생했습니다."
       );
     }
@@ -104,8 +106,12 @@ function Signup() {
     }
   };
 
+  const steps = ["회원유형 선택", "약관동의", "이메일 인증", "회원정보 입력"];
+
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-100 p-6">
+    <div className="h-full flex flex-col justify-center items-center bg-white p-6">
+      {/* 2) 상단에 단일 진행 바 UI */}
+      <StepProgressBar steps={steps} currentStep={step} />
       {renderStep()}
     </div>
   );

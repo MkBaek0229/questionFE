@@ -8,54 +8,62 @@ import CategoryScoresChart from "../../components/Chart/CategoryScoresChart";
 function CompletionPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { systemId, diagnosisRound } = location.state || {};
 
   const [resultData, setResultData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [finalUserId, setFinalUserId] = useState(null);
-
-  const { userId, systemId, userType } = location.state || {};
+  const [roundList, setRoundList] = useState([]); // 회차 목록
+  const [selectedRound, setSelectedRound] = useState(diagnosisRound); // 선택된 회차
 
   // ✅ 시스템 상태 가져오기
   const [systems, setSystems] = useRecoilState(systemsState);
   console.log("🟢 Recoil 상태 (systemsState) 확인:", systems);
 
   useEffect(() => {
-    if (!systemId) {
-      setError("🚨 시스템 정보가 누락되었습니다.");
-      setLoading(false);
-      return;
-    }
+    const fetchRounds = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/result/rounds", {
+          params: { systemId },
+          withCredentials: true,
+        });
+        const rounds = res.data;
+        setRoundList(rounds);
+        // 기본 선택이 없다면 최신 회차 선택
+        if (!selectedRound && rounds.length > 0) {
+          setSelectedRound(rounds[rounds.length - 1]);
+        }
+      } catch (error) {
+        console.error("❌ 회차 목록 불러오기 실패:", error);
+      }
+    };
 
-    const fetchData = async () => {
+    fetchRounds();
+  }, [systemId]);
+
+  useEffect(() => {
+    if (!systemId || !selectedRound) return;
+
+    const fetchResultByRound = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/assessment/result",
+          "http://localhost:3000/result/round-result",
           {
-            params: { userId, systemId },
+            params: { systemId, diagnosisRound: selectedRound },
             withCredentials: true,
           }
         );
-
-        const sortedData = response.data.sort(
-          (a, b) => new Date(b.completed_at) - new Date(a.completed_at)
-        );
-
-        setResultData(sortedData[0]);
-
-        // ✅ 진단 상태 업데이트
-        updateSystemStatus(systemId);
+        setResultData(response.data);
       } catch (error) {
-        console.error("❌ 결과 데이터 가져오기 실패:", error);
-        setError("🚨 결과 데이터를 가져오는 중 오류가 발생했습니다.");
+        console.error("❌ 진단 결과 불러오기 실패:", error);
+        setError("🚨 결과 데이터를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [userId, systemId]);
+    fetchResultByRound();
+  }, [systemId, selectedRound]);
 
   const getGradeClassName = (grade) => {
     switch (grade) {
@@ -126,6 +134,23 @@ function CompletionPage() {
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col items-center">
       <div className="container mx-auto max-w-4xl bg-white mt-10 p-6 rounded-lg shadow-lg">
+        {roundList.length > 1 && (
+          <div className="mb-6 text-center">
+            <label className="mr-2 font-medium">회차 선택:</label>
+            <select
+              value={selectedRound}
+              onChange={(e) => setSelectedRound(Number(e.target.value))}
+              className="p-2 border rounded-md"
+            >
+              {roundList.map((round) => (
+                <option key={round} value={round}>
+                  {round}회차
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           자가진단 결과
         </h2>
@@ -151,11 +176,7 @@ function CompletionPage() {
         <div className="flex justify-center gap-4">
           <button
             onClick={() => {
-              if (userType === "전문가") {
-                navigate("/system-management");
-              } else {
-                navigate("/dashboard");
-              }
+              navigate("/dashboard");
             }}
             className="px-6 py-2 bg-gray-400 text-white rounded-md shadow hover:bg-gray-500"
           >

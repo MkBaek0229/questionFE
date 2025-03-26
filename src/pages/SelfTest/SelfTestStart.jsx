@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axiosInstance from "../../../axiosInstance";
 import { useRecoilState, useRecoilValue } from "recoil";
-import {
-  selfTestFormState,
-  selectedSystemState,
-} from "../../state/selfTestState";
+import { selfTestFormState } from "../../state/selfTestState";
 import { authState } from "../../state/authState";
 
 const getCsrfToken = async () => {
@@ -23,17 +20,17 @@ const getCsrfToken = async () => {
   }
 };
 function SelfTestStart() {
+  const { systemId } = useParams(); // URL에서 systemId 가져오기
+
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedSystems } = location.state || {};
+
+  const diagnosisRound = location.state?.diagnosisRound || 1; // 기본값 1
 
   const [formData, setFormData] = useRecoilState(selfTestFormState); // 전역 상태 관리
-  const [selectedSystem, setSelectedSystem] =
-    useRecoilState(selectedSystemState);
+
   const auth = useRecoilValue(authState); // 사용자 정보 가져오기
-  // ✅ Recoil-Persist에서 systemId 가져오기
-  const systemId =
-    selectedSystem || (selectedSystems?.length > 0 ? selectedSystems[0] : null);
+
   const userId = auth.user?.id || null;
 
   const [csrfToken, setCsrfToken] = useState("");
@@ -52,7 +49,7 @@ function SelfTestStart() {
     if (!userId) {
       console.error("유저 정보가 누락되었습니다. 다시 로그인해주세요.");
     }
-  }, [systemId, userId, setSelectedSystem]);
+  }, [systemId, userId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -88,14 +85,16 @@ function SelfTestStart() {
 
     try {
       const response = await axiosInstance.post(
-        "http://localhost:3000/selftest",
-        { ...formData, systemId, userId },
+        "http://localhost:3000/selftest/self-assessment",
+        { ...formData, systemId, userId, diagnosisRound },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
       console.log("서버 응답:", response.data);
+      const nextRound = response.data.diagnosisRound;
+
       navigate("/DiagnosisPage", {
-        state: { systemId, userId },
+        state: { systemId, userId, diagnosisRound: nextRound },
       });
     } catch (error) {
       console.error("서버 저장 실패:", error.response?.data || error.message);
@@ -103,13 +102,13 @@ function SelfTestStart() {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="container mx-auto max-w-5xl p-6 bg-white rounded-lg shadow-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">자가진단 입력</h1>
-        </div>
+    <div className="h-full flex flex-col justify-center items-center bg-white p-6">
+      <div className="w-full max-w-[600px] py-8 gap-10">
+        <h1 className="text-[24px] font-black text-gray-800 mb-4">
+          자가진단 입력
+        </h1>
 
-        <form>
+        <form className="mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label
@@ -187,15 +186,19 @@ function SelfTestStart() {
               </div>
             ))}
           </div>
-          <div className="mt-8 text-center">
-            <button
-              onClick={handleDiagnosisClick}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700"
-            >
-              자가진단하기
-            </button>
-          </div>
         </form>
+        <button
+          onClick={handleDiagnosisClick}
+          className="w-[100%] h-[50px] text-[22px] bg-blue-600 text-white font-bold rounded-md mb-4"
+        >
+          자가진단 시작
+        </button>
+        <button
+          onClick={() => navigate("/Dashboard")}
+          className="w-[100%] h-[50px] text-[22px] font-bold rounded-md"
+        >
+          대시보드로 이동
+        </button>
       </div>
     </div>
   );

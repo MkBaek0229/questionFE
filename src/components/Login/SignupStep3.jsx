@@ -3,6 +3,7 @@ import { useRecoilState } from "recoil";
 import { formState } from "../../state/formState";
 import useMediaQuery from "../../hooks/useMediaQuery";
 import DaumPostcode from "react-daum-postcode";
+import { toast } from "react-toastify";
 
 function SignupStep3({ prevStep, handleSubmit }) {
   const [formData, setFormData] = useRecoilState(formState);
@@ -10,7 +11,6 @@ function SignupStep3({ prevStep, handleSubmit }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 425px)");
 
   useEffect(() => {
     console.log("formData updated:", formData);
@@ -18,6 +18,10 @@ function SignupStep3({ prevStep, handleSubmit }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "password") {
+      const passwordError = validatePassword(value);
+      setPasswordError(passwordError);
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: name === "password" ? value : prev[name],
@@ -35,6 +39,31 @@ function SignupStep3({ prevStep, handleSubmit }) {
         ? "비밀번호가 일치하지 않습니다."
         : ""
     );
+  };
+
+  const handleformatPhoneNumber = (e) => {
+    const formattedValue = e.target.value
+      .replace(/[^0-9]/g, "") // 숫자를 제외한 모든 문자 제거
+      .replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
+
+    setFormData((prev) => ({
+      ...prev,
+      [prev.member_type]: {
+        ...prev[prev.member_type],
+        phone_number: formattedValue, // 전화번호 필드 업데이트
+      },
+    }));
+  };
+
+  const validatePassword = (password) => {
+    const passwordPolicy =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordPolicy.test(password)) {
+      return toast.error(
+        "비밀번호는 최소 8자 이상, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다."
+      );
+    }
+    return "";
   };
 
   const validateInputs = () => {
@@ -110,14 +139,14 @@ function SignupStep3({ prevStep, handleSubmit }) {
     return fields.map((field) =>
       field.name === "institution_address" ? (
         <div key={field.name}>
-          <label className="block text-sm font-medium">{field.label}</label>
+          <label className="block text-sm font-bold mb-2">{field.label}</label>
           <div className="flex items-center gap-2">
             <input
               type="text"
               name={field.name}
               value={formData[formData.member_type][field.name] || ""}
               onChange={handleChange}
-              className="flex-1 p-2 border border-gray-300 rounded-md"
+              className="flex-1 p-2 border border-black-100 rounded-md"
               readOnly
             />
             <button
@@ -144,130 +173,20 @@ function SignupStep3({ prevStep, handleSubmit }) {
           label={field.label}
           name={field.name}
           value={formData[formData.member_type][field.name]}
-          onChange={handleChange}
+          onChange={
+            field.name === "phone_number"
+              ? handleformatPhoneNumber
+              : handleChange
+          }
         />
       )
     );
   };
-  // 모바일 전용 디자인
-  if (isMobile) {
-    return (
-      <>
-        {/* 모바일 진행 바 */}
-        <div className="flex items-center justify-center w-full py-4">
-          <div className="flex justify-between w-full px-4">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 flex items-center justify-center border-2 border-blue-500 bg-blue-500 text-white rounded-full text-sm">
-                1
-              </div>
-              <span className="text-blue-600 text-xs mt-1">약관동의</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 flex items-center justify-center border-2 border-blue-500 bg-blue-500 text-white rounded-full text-sm">
-                2
-              </div>
-              <span className="text-blue-600 text-xs mt-1">이메일 인증</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 flex items-center justify-center border-2 border-blue-500 bg-blue-500 text-white rounded-full text-sm">
-                3
-              </div>
-              <span className="text-blue-600 text-xs mt-1">회원정보 입력</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 모바일 폼 컨테이너 */}
-        <div className="bg-white p-4 rounded-md shadow-sm w-full max-w-sm mx-auto">
-          <h1 className="text-xl font-bold text-center mb-4">
-            {formData.member_type === "user"
-              ? "기관회원 가입"
-              : "전문가 회원가입"}
-          </h1>
-
-          <div className="space-y-4">
-            {renderFields()}
-            <InputField
-              label="비밀번호"
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleChange}
-            />
-            <InputField
-              label="비밀번호 확인"
-              type="password"
-              value={passwordConfirm}
-              onChange={handlePasswordConfirmChange}
-            />
-            {passwordError && (
-              <p className="text-red-500 text-xs mt-1">{passwordError}</p>
-            )}
-          </div>
-
-          {errorMessage && (
-            <div className="mt-3 text-red-500 text-center text-xs">
-              {errorMessage}
-            </div>
-          )}
-
-          <div className="flex justify-between mt-4">
-            <button
-              className="px-3 py-2 bg-gray-300 text-gray-700 rounded text-xs"
-              onClick={prevStep}
-            >
-              이전
-            </button>
-            <button
-              className="px-3 py-2 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
-              onClick={handleSignupSubmit}
-            >
-              완료
-            </button>
-          </div>
-        </div>
-      </>
-    );
-  }
 
   // 데스크탑 전용 디자인 (기존 코드)
   return (
     <>
-      {/* 📌 진행 바 UI */}
-      <div className="flex items-center justify-center w-full py-8">
-        <div className="flex items-center w-4/5 max-w-2xl relative justify-between">
-          <div className="relative flex flex-col items-center w-1/4">
-            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
-              {" "}
-              ✓
-            </div>
-            <span className="text-blue-600 text-xl font-bold mt-3">
-              약관동의
-            </span>
-          </div>
-
-          <div className="relative flex flex-col items-center w-1/4">
-            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
-              {" "}
-              ✓
-            </div>
-            <span className="text-blue-600 text-xl font-bold mt-3">
-              이메일 인증
-            </span>
-          </div>
-
-          <div className="relative flex flex-col items-center w-1/4">
-            <div className="w-[75px] h-[75px] flex items-center justify-center border-4 border-blue-500 bg-blue-500 text-white rounded-full text-3xl z-10">
-              {" "}
-              ✓
-            </div>
-            <span className="text-blue-600 text-xl font-bold mt-3">
-              회원 정보 입력
-            </span>
-          </div>
-        </div>
-      </div>
-      <div className="bg-white p-8 rounded-lg shadow-md w-3/4 max-w-xl mx-auto">
+      <div className="bg-white p-8 rounded-lg w-3/4 max-w-xl mx-auto">
         <h1 className="text-2xl font-bold text-center mb-6">
           {formData.member_type === "user"
             ? "기관회원 가입"
@@ -297,15 +216,20 @@ function SignupStep3({ prevStep, handleSubmit }) {
           <div className="mt-4 text-red-500 text-center">{errorMessage}</div>
         )}
 
-        <div className="flex justify-between mt-8">
+        <div className="mt-8">
           <button
-            className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md"
+            className="w-[100%] h-[50px] text-[22px] font-bold rounded-md"
             onClick={prevStep}
           >
             이전
           </button>
+
           <button
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className={`w-[100%] h-[50px] text-[22px] font-bold rounded-md ${
+              formData.agreement
+                ? "bg-blue-500 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-700 cursor-not-allowed"
+            }`}
             onClick={handleSignupSubmit}
           >
             완료
@@ -318,13 +242,14 @@ function SignupStep3({ prevStep, handleSubmit }) {
 
 const InputField = ({ label, name, type = "text", value, onChange }) => (
   <div>
-    <label className="block text-sm font-medium">{label}</label>
+    <label className="block text-sm font-bold mb-2">{label}</label>
     <input
       type={type}
       name={name}
+      placeholder={label}
       value={value || ""}
       onChange={onChange}
-      className="w-full p-2 border border-gray-300 rounded-md"
+      className="w-full p-2 border border-black-200 rounded-md"
     />
   </div>
 );
