@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useRecoilValue, useRecoilState } from "recoil";
 import { authState } from "../../state/authState";
 import { formState } from "../../state/formState";
+import { toast } from "react-toastify";
 
 const getCsrfToken = async () => {
   try {
@@ -48,7 +49,7 @@ function SystemRegistration() {
 
     try {
       if (!auth.user || !auth.user.id) {
-        alert("사용자 정보가 없습니다. 다시 로그인해주세요.");
+        toast.error("사용자 정보가 없습니다. 다시 로그인해주세요.");
         return;
       }
 
@@ -68,14 +69,16 @@ function SystemRegistration() {
       );
 
       console.log("✅ [POST] 응답 데이터:", response.data);
-      alert("시스템 등록이 완료되었습니다!");
-      navigate("/dashboard"); // 등록 완료 후 대시보드로 이동
+      toast.success("시스템 등록이 완료되었습니다!");
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
     } catch (error) {
       console.error(
         "❌ [POST] 에러 응답:",
         error.response?.data || error.message
       );
-      alert(error.response?.data?.message || "시스템 등록 실패");
+      toast.error(error.response?.data?.message || "시스템 등록 실패");
     }
   };
 
@@ -181,6 +184,7 @@ function SystemRegistration() {
           등록하기
         </button>
         <button
+          type="button"
           className="w-full mt-6 py-3 font-bold rounded-lg"
           onClick={() => navigate("/dashboard")}
         >

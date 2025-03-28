@@ -13,7 +13,7 @@ function CompletionPage() {
   const [resultData, setResultData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [roundList, setRoundList] = useState([]); // 회차 목록
+  const [roundList, setRoundList] = useState(); // 회차 목록
   const [selectedRound, setSelectedRound] = useState(diagnosisRound); // 선택된 회차
 
   // ✅ 시스템 상태 가져오기
@@ -27,11 +27,12 @@ function CompletionPage() {
           params: { systemId },
           withCredentials: true,
         });
+        console.log(res.data);
         const rounds = res.data;
         setRoundList(rounds);
         // 기본 선택이 없다면 최신 회차 선택
         if (!selectedRound && rounds.length > 0) {
-          setSelectedRound(rounds[rounds.length - 1]);
+          setSelectedRound(rounds[rounds.length - 1].diagnosis_round);
         }
       } catch (error) {
         console.error("❌ 회차 목록 불러오기 실패:", error);
@@ -143,8 +144,11 @@ function CompletionPage() {
               className="p-2 border rounded-md"
             >
               {roundList.map((round) => (
-                <option key={round} value={round}>
-                  {round}회차
+                <option
+                  key={round.diagnosis_round}
+                  value={round.diagnosis_round}
+                >
+                  + {round.diagnosis_round}회차
                 </option>
               ))}
             </select>
@@ -170,7 +174,10 @@ function CompletionPage() {
 
         {/* ✅ 보호 수준 그래프 추가 */}
         <div className="flex justify-center mb-6">
-          <CategoryScoresChart systemId={systemId} />
+          <CategoryScoresChart
+            systemId={systemId}
+            diagnosisRound={selectedRound}
+          />
         </div>
 
         <div className="flex justify-center gap-4">

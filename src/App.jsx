@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
 import { useRecoilState } from "recoil";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import {
   authState,
   expertAuthState,
@@ -18,7 +17,8 @@ import SelfTestStart from "./pages/SelfTest/SelfTestStart";
 import DiagnosisPage from "./pages/SelfTest/DiagnosisPage";
 import QualitativeSurvey from "./pages/SelfTest/QualitativeSurvey";
 import SignupComplete from "./components/Login/SignupComplete";
-import Dashboard from "./pages/SelfTest/Dashboard";
+import Dashboard from "../src/pages/SelfTest/Dashboard"; // 명시적 경로
+
 import CompletionPage from "./pages/SelfTest/CompletionPage";
 import SystemRegistration from "./components/System/SystemRegistration";
 import MatchExperts from "./pages/superuser/MatchExperts";
@@ -33,6 +33,7 @@ import SuperDiagnosisView from "./pages/superuser/SuperDiagnosisView";
 import ProtectedRoute from "./components/ProtectedRoute"; // ✅ ProtectedRoute 추가
 import ExpertDashboard from "./pages/expert/SystemManagement";
 import SystemManagement from "./components/System/SystemManagement";
+import axiosInstance from "../axiosInstance";
 
 function App() {
   const [auth, setAuthState] = useRecoilState(authState);
@@ -45,9 +46,12 @@ function App() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const { data } = await axios.get("http://localhost:3000/auth/user", {
-          withCredentials: true,
-        });
+        const { data } = await axiosInstance.get(
+          "http://localhost:3000/auth/user",
+          {
+            withCredentials: true,
+          }
+        );
         setAuthState({ isLoggedIn: true, user: data });
       } catch (error) {
         console.error("Failed to fetch user data:", error);

@@ -26,12 +26,9 @@ function SelfTestStart() {
   const location = useLocation();
 
   const diagnosisRound = location.state?.diagnosisRound || 1; // 기본값 1
+  const auth = useRecoilValue(authState); // 이 라인 추가
 
   const [formData, setFormData] = useRecoilState(selfTestFormState); // 전역 상태 관리
-
-  const auth = useRecoilValue(authState); // 사용자 정보 가져오기
-
-  const userId = auth.user?.id || null;
 
   const [csrfToken, setCsrfToken] = useState("");
   useEffect(() => {
@@ -46,10 +43,7 @@ function SelfTestStart() {
     if (!systemId) {
       console.error("시스템 정보가 누락되었습니다.");
     }
-    if (!userId) {
-      console.error("유저 정보가 누락되었습니다. 다시 로그인해주세요.");
-    }
-  }, [systemId, userId]);
+  }, [systemId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,10 +65,7 @@ function SelfTestStart() {
       console.error("시스템 정보가 누락되었습니다. 다시 선택해주세요.");
       return false;
     }
-    if (!userId) {
-      console.error("유저 정보가 누락되었습니다. 다시 로그인해주세요.");
-      return false;
-    }
+
     return true;
   };
 
@@ -83,10 +74,16 @@ function SelfTestStart() {
 
     if (!validateForm()) return;
 
+    // 여기에 userId 체크 추가 (선택사항)
+    if (!auth.user?.id) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
     try {
       const response = await axiosInstance.post(
         "http://localhost:3000/selftest/self-assessment",
-        { ...formData, systemId, userId, diagnosisRound },
+        { ...formData, systemId, diagnosisRound },
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );
 
@@ -94,7 +91,7 @@ function SelfTestStart() {
       const nextRound = response.data.diagnosisRound;
 
       navigate("/DiagnosisPage", {
-        state: { systemId, userId, diagnosisRound: nextRound },
+        state: { systemId, userId: auth.user.id, diagnosisRound: nextRound },
       });
     } catch (error) {
       console.error("서버 저장 실패:", error.response?.data || error.message);

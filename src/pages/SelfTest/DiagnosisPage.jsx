@@ -29,6 +29,16 @@ function DiagnosisPage() {
   const { userId, systemId } = location.state || {};
   const diagnosisRound = location.state?.diagnosisRound || 1;
 
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+  const storageKey = `quantitative_responses_${systemId}_${userId}_${diagnosisRound}`;
+
+  const saveToLocalStorage = (responses) => {
+    localStorage.setItem(storageKey, JSON.stringify(responses));
+    const currentTime = new Date().toISOString();
+    localStorage.setItem(`${storageKey}_saved_time`, currentTime);
+    setLastSavedTime(currentTime);
+  };
+
   const [quantitativeData, setQuantitativeData] = useRecoilState(
     quantitativeDataState
   );
@@ -74,6 +84,38 @@ function DiagnosisPage() {
     resetCurrentStep,
     resetQuantitativeData,
   ]);
+
+  useEffect(() => {
+    if (!systemId || !userId) return;
+
+    try {
+      const savedData = localStorage.getItem(storageKey);
+      const savedTime = localStorage.getItem(`${storageKey}_saved_time`);
+
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+
+        // 데이터가 있고 초기화된 이후에만 복구
+        if (
+          Object.keys(parsedData).length > 0 &&
+          Object.keys(quantitativeResponses).length > 0
+        ) {
+          console.log("📂 저장된 응답 데이터 발견, 복구 중...");
+          setQuantitativeResponses(parsedData);
+
+          if (savedTime) {
+            setLastSavedTime(savedTime);
+            console.log(
+              "⏰ 마지막 저장 시간:",
+              new Date(savedTime).toLocaleString()
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ 로컬스토리지 데이터 복구 실패:", error);
+    }
+  }, [systemId, userId, quantitativeData.length]);
 
   useEffect(() => {
     const fetchQuantitativeData = async () => {
@@ -129,13 +171,15 @@ function DiagnosisPage() {
       );
       const filePath = response.data.url; // ✅ 업로드된 파일 경로 받기
       console.log("✅ 업로드된 파일 경로:", filePath);
-      setQuantitativeResponses((prev) => ({
-        ...prev,
+      const updatedResponses = {
+        ...quantitativeResponses,
         [questionNumber]: {
-          ...prev[questionNumber],
+          ...quantitativeResponses[questionNumber],
           filePath,
         },
-      }));
+      };
+      setQuantitativeResponses(updatedResponses);
+      saveToLocalStorage(updatedResponses);
     } catch (error) {
       console.error("❌ 파일 업로드 실패:", error);
       alert("파일 업로드 중 오류가 발생했습니다.");
@@ -202,34 +246,92 @@ function DiagnosisPage() {
   };
 
   const handleResponseChange = (questionNumber, value) => {
-    setQuantitativeResponses((prev) => ({
-      ...prev,
+    const updatedResponses = {
+      ...quantitativeResponses,
       [questionNumber]: {
-        ...prev[questionNumber],
+        ...quantitativeResponses[questionNumber],
         response: value,
         additionalComment:
           value === "자문필요"
-            ? prev[questionNumber]?.additionalComment || ""
+            ? quantitativeResponses[questionNumber]?.additionalComment || ""
             : "",
       },
-    }));
+    };
+
+    setQuantitativeResponses(updatedResponses);
+
+    saveToLocalStorage(updatedResponses);
   };
 
   const handleAdditionalCommentChange = (questionNumber, value) => {
-    setQuantitativeResponses((prev) => ({
-      ...prev,
+    const updatedResponses = {
+      ...quantitativeResponses,
       [questionNumber]: {
-        ...prev[questionNumber],
+        ...quantitativeResponses[questionNumber],
         additionalComment: value,
       },
-    }));
+    };
+
+    setQuantitativeResponses(updatedResponses);
+    saveToLocalStorage(updatedResponses);
   };
 
   return (
     <div className="h-full flex flex-col justify-center items-center bg-white p-6">
       <div className="w-full max-w-[600px] py-8 gap-10">
-        <h2 className="text-xl font-bold mb-6">정량 설문조사</h2>
+        <h2 className="text-xl font-bold mb-6">정량 자가진단</h2>
+        <div className="w-full mb-6">
+          {/* 진행 상태 표시 */}
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">진행률</span>
+            <span className="text-sm font-medium text-blue-600">
+              {currentStep} / {quantitativeData.length} 문항
+            </span>
+          </div>
 
+          {/* 진행 상태 바 */}
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              style={{
+                width: `${(currentStep / quantitativeData.length) * 100}%`,
+              }}
+            ></div>
+          </div>
+
+          {/* 단계 표시 */}
+          <div className="flex justify-between mt-2">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">1</span>
+              </div>
+              <span className="text-xs mt-1">정량평가</span>
+            </div>
+            <div className="flex-1 relative top-4">
+              <div className="h-0.5 bg-gray-300 w-full"></div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">2</span>
+              </div>
+              <span className="text-xs mt-1">정성평가</span>
+            </div>
+            <div className="flex-1 relative top-4">
+              <div className="h-0.5 bg-gray-300 w-full"></div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">3</span>
+              </div>
+              <span className="text-xs mt-1">결과</span>
+            </div>
+          </div>
+        </div>
+        {lastSavedTime && (
+          <div className="text-right text-xs text-gray-500 mt-1 mb-2">
+            마지막 저장: {new Date(lastSavedTime).toLocaleString()}
+          </div>
+        )}
         {/* ✅ 현재 문항 표시 */}
         {quantitativeData.length > 0 ? (
           <table className="w-full border-collapse border border-gray-300 mb-6">
@@ -289,15 +391,17 @@ function DiagnosisPage() {
                         {/* 파일명 표시 */}
                       </a>
                       <button
-                        onClick={() =>
-                          setQuantitativeResponses((prev) => ({
-                            ...prev,
+                        onClick={() => {
+                          const updatedResponses = {
+                            ...quantitativeResponses,
                             [currentStep]: {
-                              ...prev[currentStep],
+                              ...quantitativeResponses[currentStep],
                               filePath: null,
                             },
-                          }))
-                        }
+                          };
+                          setQuantitativeResponses(updatedResponses);
+                          saveToLocalStorage(updatedResponses); // 추가: 로컬스토리지에 저장
+                        }}
                         className="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
                       >
                         삭제
@@ -352,7 +456,6 @@ function DiagnosisPage() {
         ) : (
           <p className="text-center text-gray-500">로딩 중...</p>
         )}
-
         <div className="mt-6">
           <button
             className="w-[100%] h-[50px] text-[22px]  text-black font-bold rounded-md"

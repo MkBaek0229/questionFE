@@ -28,6 +28,18 @@ function QualitativeSurvey() {
   const location = useLocation();
   const { userId, systemId, diagnosisRound } = location.state || {};
 
+  // 자동 저장 관련 상태 추가
+  const [lastSavedTime, setLastSavedTime] = useState(null);
+  const storageKey = `qualitative_responses_${systemId}_${userId}_${diagnosisRound}`;
+
+  // 로컬 스토리지 저장 함수
+  const saveToLocalStorage = (currentResponses) => {
+    localStorage.setItem(storageKey, JSON.stringify(currentResponses));
+    const currentTime = new Date().toISOString();
+    localStorage.setItem(`${storageKey}_saved_time`, currentTime);
+    setLastSavedTime(currentTime);
+  };
+
   const [currentStep, setCurrentStep] = useRecoilState(
     qualitativeCurrentStepState
   );
@@ -41,6 +53,7 @@ function QualitativeSurvey() {
   const resetCurrentStep = useResetRecoilState(qualitativeCurrentStepState);
   const resetQualitativeData = useResetRecoilState(qualitativeDataState);
   const [csrfToken, setCsrfToken] = useState("");
+
   useEffect(() => {
     const fetchCsrfToken = async () => {
       const token = await getCsrfToken();
@@ -48,6 +61,7 @@ function QualitativeSurvey() {
     };
     fetchCsrfToken();
   }, []);
+
   // ✅ 시스템 변경 시 상태 초기화
   useEffect(() => {
     if (!systemId || !userId) {
@@ -70,6 +84,39 @@ function QualitativeSurvey() {
     resetCurrentStep,
     resetQualitativeData,
   ]);
+
+  // 로컬스토리지에서 저장된 데이터 복구
+  useEffect(() => {
+    if (!systemId || !userId) return;
+
+    try {
+      const savedData = localStorage.getItem(storageKey);
+      const savedTime = localStorage.getItem(`${storageKey}_saved_time`);
+
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+
+        // 데이터가 있고 초기화된 이후에만 복구
+        if (
+          Object.keys(parsedData).length > 0 &&
+          Object.keys(responses).length > 0
+        ) {
+          console.log("📂 저장된 정성평가 데이터 발견, 복구 중...");
+          setResponses(parsedData);
+
+          if (savedTime) {
+            setLastSavedTime(savedTime);
+            console.log(
+              "⏰ 마지막 저장 시간:",
+              new Date(savedTime).toLocaleString()
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error("❌ 로컬스토리지 데이터 복구 실패:", error);
+    }
+  }, [systemId, userId, qualitativeData.length]);
 
   useEffect(() => {
     const fetchQualitativeData = async () => {
@@ -106,7 +153,19 @@ function QualitativeSurvey() {
     fetchQualitativeData();
   }, [systemId, userId, setQualitativeData, setResponses]);
 
-  // ✅ 파일 업로드 핸들러
+  // 페이지 이탈 경고 추가
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "작성 중인 내용이 있습니다. 페이지를 나가시겠습니까?";
+      return e.returnValue;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // ✅ 파일 업로드 핸들러 - 자동 저장 추가
   const handleFileUpload = async (event, questionNumber) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -127,13 +186,16 @@ function QualitativeSurvey() {
       );
       const filePath = response.data.url; // ✅ 업로드된 파일 경로 받기
       console.log("✅ 업로드된 파일 경로:", filePath);
-      setResponses((prev) => ({
-        ...prev,
+
+      const updatedResponses = {
+        ...responses,
         [questionNumber]: {
-          ...prev[questionNumber],
+          ...responses[questionNumber],
           filePath,
         },
-      }));
+      };
+      setResponses(updatedResponses);
+      saveToLocalStorage(updatedResponses); // 자동 저장 추가
     } catch (error) {
       console.error("❌ 파일 업로드 실패:", error);
       alert("파일 업로드 중 오류가 발생했습니다.");
@@ -218,100 +280,117 @@ function QualitativeSurvey() {
     }
   };
 
+  // 응답 변경 핸들러 - 자동 저장 추가
   const handleResponseChange = (questionNumber, value) => {
-    setResponses((prev) => ({
-      ...prev,
+    const updatedResponses = {
+      ...responses,
       [questionNumber]: {
-        ...prev[questionNumber],
+        ...responses[questionNumber],
         response: value,
         additionalComment:
           value === "자문필요"
-            ? prev[questionNumber]?.additionalComment || ""
+            ? responses[questionNumber]?.additionalComment || ""
             : "",
       },
-    }));
+    };
+    setResponses(updatedResponses);
+    saveToLocalStorage(updatedResponses);
   };
 
+  // 추가 의견 변경 핸들러 - 자동 저장 추가
   const handleAdditionalCommentChange = (questionNumber, value) => {
-    setResponses((prev) => ({
-      ...prev,
+    const updatedResponses = {
+      ...responses,
       [questionNumber]: {
-        ...prev[questionNumber],
+        ...responses[questionNumber],
         additionalComment: value,
       },
-    }));
+    };
+    setResponses(updatedResponses);
+    saveToLocalStorage(updatedResponses);
   };
 
+  // 디자인 통일 - DiagnosisPage와 유사한 디자인으로 변경
   return (
-    <div className="bg-gray-100 min-h-screen flex flex-col items-center">
-      <div className="container mx-auto max-w-5xl bg-white mt-10 p-6 rounded-lg shadow-lg">
-        <h2 className="text-xl font-bold mb-6">
-          정성 평가 ({currentStep}/{qualitativeData.length}번)
-        </h2>
+    <div className="h-full flex flex-col justify-center items-center bg-white p-6">
+      <div className="w-full max-w-[600px] py-8 gap-10">
+        <h2 className="text-xl font-bold mb-6">정성 자가진단</h2>
+        <div className="w-full mb-6">
+          {/* 진행 상태 표시 */}
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">진행률</span>
+            <span className="text-sm font-medium text-blue-600">
+              {currentStep} / {qualitativeData.length} 문항
+            </span>
+          </div>
 
-        {/* ✅ 현재 문항 표시 */}
+          {/* 진행 상태 바 */}
+          <div className="w-full bg-gray-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              style={{
+                width: `${(currentStep / qualitativeData.length) * 100}%`,
+              }}
+            ></div>
+          </div>
+
+          {/* 단계 표시 */}
+          <div className="flex justify-between mt-2">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">1</span>
+              </div>
+              <span className="text-xs mt-1">정량평가</span>
+            </div>
+            <div className="flex-1 relative top-4">
+              <div className="h-0.5 bg-gray-300 w-full"></div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">2</span>
+              </div>
+              <span className="text-xs mt-1">정성평가</span>
+            </div>
+            <div className="flex-1 relative top-4">
+              <div className="h-0.5 bg-gray-300 w-full"></div>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold">3</span>
+              </div>
+              <span className="text-xs mt-1">결과</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 마지막 저장 시간 표시 */}
+        {lastSavedTime && (
+          <div className="text-right text-xs text-gray-500 mt-1 mb-2">
+            마지막 저장: {new Date(lastSavedTime).toLocaleString()}
+          </div>
+        )}
+
+        {/* 현재 문항 표시 */}
         {qualitativeData.length > 0 ? (
           <table className="w-full border-collapse border border-gray-300 mb-6">
             <tbody>
               <tr>
-                <td className="border border-gray-300 p-2 bg-gray-200">
+                <td className="bg-gray-200 p-2 border font-medium">
                   지표 번호
                 </td>
-                <td className="border border-gray-300 p-2">
+                <td className="p-2 border">
                   {qualitativeData[currentStep - 1]?.question_number ||
                     currentStep}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-300 p-2 bg-gray-200">지표</td>
-                <td className="border border-gray-300 p-2">
+                <td className="bg-gray-200 p-2 border font-medium">지표</td>
+                <td colSpan="3" className="p-2 border">
                   {qualitativeData[currentStep - 1]?.indicator || "질문 없음"}
                 </td>
               </tr>
-              {/* ✅ 파일 업로드 추가 */}
               <tr>
-                <td className="border border-gray-300 p-2 bg-gray-200">
-                  파일 업로드
-                </td>
-                <td className="border border-gray-300 p-2">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx"
-                    onChange={(e) => handleFileUpload(e, currentStep)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  />
-                  {responses[currentStep]?.filePath && (
-                    <div className="mt-2 flex items-center">
-                      <a
-                        href={`http://localhost:3000${responses[currentStep].filePath}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        {responses[currentStep].filePath.split("/").pop()}
-                      </a>
-                      <button
-                        onClick={() =>
-                          setResponses((prev) => ({
-                            ...prev,
-                            [currentStep]: {
-                              ...prev[currentStep],
-                              filePath: null,
-                            },
-                          }))
-                        }
-                        className="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <td className="border border-gray-300 p-2 bg-gray-200">
-                  평가기준
-                </td>
+                <td className="bg-gray-200 p-2 border font-medium">평가기준</td>
                 <td colSpan="3" className="p-2 border">
                   <div
                     dangerouslySetInnerHTML={{
@@ -323,8 +402,52 @@ function QualitativeSurvey() {
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-300 p-2 bg-gray-200">평가</td>
-                <td className="border border-gray-300 p-2">
+                <td className="bg-gray-200 p-2 border font-medium">
+                  파일 업로드
+                </td>
+                <td colSpan="3" className="p-2 border">
+                  <label className="cursor-pointer bg-blue-500 text-white px-4 py-1 rounded">
+                    파일 선택
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx"
+                      onChange={(e) => handleFileUpload(e, currentStep)}
+                      className="hidden"
+                    />
+                  </label>
+                  {responses[currentStep]?.filePath && (
+                    <div className="mt-2 flex items-center">
+                      <a
+                        href={`http://localhost:3000${responses[currentStep].filePath}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        {responses[currentStep].filePath.split("/").pop()}
+                      </a>
+                      <button
+                        onClick={() => {
+                          const updatedResponses = {
+                            ...responses,
+                            [currentStep]: {
+                              ...responses[currentStep],
+                              filePath: null,
+                            },
+                          };
+                          setResponses(updatedResponses);
+                          saveToLocalStorage(updatedResponses); // 자동 저장 추가
+                        }}
+                        className="ml-2 bg-red-500 text-white px-2 py-1 rounded text-sm"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td className="bg-gray-200 p-2 border font-medium">평가</td>
+                <td colSpan="3" className="p-2 border">
                   <select
                     value={responses[currentStep]?.response || "해당없음"}
                     onChange={(e) =>
@@ -339,11 +462,10 @@ function QualitativeSurvey() {
               </tr>
               {responses[currentStep]?.response === "자문필요" && (
                 <tr>
-                  <td className="border border-gray-300 p-2 bg-gray-200">
-                    자문 필요 사항
-                  </td>
-                  <td className="border border-gray-300 p-2">
+                  <td className="bg-gray-200 p-2 border">자문 필요 사항</td>
+                  <td className="p-2 border">
                     <textarea
+                      placeholder="자문 필요 내용을 입력하세요"
                       className="w-full p-2 border border-gray-300 rounded-md"
                       value={responses[currentStep]?.additionalComment || ""}
                       onChange={(e) =>
@@ -362,14 +484,18 @@ function QualitativeSurvey() {
           <p className="text-center text-gray-500">로딩 중...</p>
         )}
 
-        <div className="flex justify-between mt-6">
+        <div className="mt-6">
           <button
+            className="w-[100%] h-[50px] text-[22px] text-black font-bold rounded-md"
             onClick={() => setCurrentStep((prev) => Math.max(prev - 1, 1))}
           >
             이전
           </button>
-          <button onClick={handleNextClick}>
-            {currentStep === qualitativeData.length ? "완료" : "다음"}
+          <button
+            className="w-[100%] h-[50px] text-[22px] bg-blue-600 text-white font-bold rounded-md"
+            onClick={handleNextClick}
+          >
+            {currentStep === qualitativeData.length ? "정성평가 완료" : "다음"}
           </button>
         </div>
       </div>

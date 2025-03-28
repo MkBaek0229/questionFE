@@ -2,16 +2,18 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CategoryBarChart from "./CategoryBarChart"; // 그래프 컴포넌트
 
-function CategoryScoresChart({ systemId }) {
+function CategoryScoresChart({ systemId, diagnosisRound }) {
   const [categoryScores, setCategoryScores] = useState([]);
 
   useEffect(() => {
     const fetchCategoryScores = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/category-scores/${systemId}`,
-          { withCredentials: true }
-        );
+        // diagnosisRound가 있으면 쿼리 파라미터로 전달
+        const url = `http://localhost:3000/result/category-protection-scores/${systemId}${
+          diagnosisRound ? `?diagnosisRound=${diagnosisRound}` : ""
+        }`;
+
+        const response = await axios.get(url, { withCredentials: true });
         setCategoryScores(response.data);
       } catch (error) {
         console.error("❌ 분야별 보호 수준 데이터 가져오기 실패:", error);
@@ -19,7 +21,7 @@ function CategoryScoresChart({ systemId }) {
     };
 
     fetchCategoryScores();
-  }, [systemId]);
+  }, [systemId, diagnosisRound]); // diagnosisRound 의존성 추가
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md w-full max-w-2xl">
