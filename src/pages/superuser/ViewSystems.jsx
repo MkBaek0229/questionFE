@@ -44,7 +44,7 @@ function ViewSystems() {
         setCsrfToken(token);
 
         const response = await axiosInstance.get(
-          "http://localhost:3000/all-systems",
+          "http://localhost:3000/superuser/systems",
           {
             withCredentials: true,
           }

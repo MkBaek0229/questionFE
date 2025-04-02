@@ -59,32 +59,35 @@ const TiptapEditor = ({ value, onChange }) => {
     input.click();
 
     input.onchange = async () => {
-      const file = input.files[0];
-      if (!file) return;
+      if (!input.files || !input.files[0]) return;
 
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("file", input.files[0]); // 여기를 확인해주세요!
 
       try {
         const response = await axiosInstance.post(
-          "http://localhost:3000/upload/question-image",
+          "http://localhost:3000/upload/image",
           formData,
           {
-            withCredentials: true, // ✅ 세션 쿠키 포함 (CSRF 보호)
             headers: {
               "Content-Type": "multipart/form-data",
               "X-CSRF-Token": csrfToken,
             },
+            withCredentials: true, // ✅ 세션 쿠키 포함 (CSRF 보호)
           }
         );
 
-        const url = `http://localhost:3000${response.data.url}`; // ✅ 서버의 응답을 절대 경로로 변환
-        console.log("✅ 업로드된 이미지 URL:", url);
+        // 응답에서 이미지 URL 추출
+        const imageUrl = response.data.file.path;
+        // URL이 상대 경로인 경우 서버 주소 추가
+        const fullUrl = imageUrl.startsWith("http")
+          ? imageUrl
+          : `http://localhost:3000/${imageUrl}`;
 
-        editor.chain().focus().setImage({ src: url }).run();
+        editor.chain().focus().setImage({ src: fullUrl }).run();
       } catch (error) {
-        console.error("❌ 이미지 업로드 실패:", error);
-        alert("이미지 업로드 중 오류가 발생했습니다.");
+        console.error("이미지 업로드 실패:", error);
+        alert("이미지 업로드에 실패했습니다.");
       }
     };
   };

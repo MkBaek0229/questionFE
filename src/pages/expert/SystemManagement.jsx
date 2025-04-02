@@ -42,7 +42,7 @@ function ExpertDashboard() {
 
       try {
         const response = await axiosInstance.get(
-          `http://localhost:3000/assigned-systems?expertId=${expert.user.id}`,
+          `http://localhost:3000/feedback/assigned-systems?expertId=${expert.user.id}`,
           { withCredentials: true }
         );
         console.log("✅ 매칭된 시스템 데이터:", response.data);
@@ -83,7 +83,7 @@ function ExpertDashboard() {
   const handleViewResults = async (system) => {
     try {
       const response = await axiosInstance.get(
-        "http://localhost:3000/system-owner",
+        "http://localhost:3000/feedback/systems-result",
         {
           params: { systemId: system.systems_id },
           withCredentials: true,

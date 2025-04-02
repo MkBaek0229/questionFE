@@ -196,8 +196,8 @@ function SuperManageQuestions() {
   const handleEditSave = async (id, type) => {
     const endpoint =
       type === "quantitative"
-        ? `http://localhost:3000/superuser/selftest/qualitative/${id}`
-        : `http://localhost:3000/superuser/selftest/quantitative/${id}`;
+        ? `http://localhost:3000/superuser/selftest/quantitative/${id}`
+        : `http://localhost:3000/superuser/selftest/qualitative/${id}`;
 
     try {
       await axiosInstance.put(endpoint, editedData, {
