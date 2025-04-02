@@ -1,32 +1,70 @@
+import React from "react";
+import { motion } from "framer-motion";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+
 function StepProgressBar({ steps, currentStep }) {
-  // 예: step=0 → 0% / step=1 → 33% / step=2 → 66% / step=3 → 100%
-  const totalSteps = steps.length - 1; // (예: 3)
+  // 진행률 계산
+  const totalSteps = steps.length - 1;
   const progressPercent = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="w-full max-w-[600px] px-4 mb-4">
-      {/* 진행 라인(전체 바탕) */}
-      <div className="relative h-2 bg-gray-300 rounded-full">
-        {/* 채워지는 부분 */}
-        <div
-          className="absolute top-0 left-0 h-2 bg-blue-500 rounded-full transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
+    <div className="w-full max-w-4xl mx-auto">
+      {/* 단계 표시 */}
+      <div className="flex justify-between items-center">
+        {steps.map((step, index) => {
+          const isCompleted = index < currentStep;
+          const isActive = index === currentStep;
 
-      {/* 단계 표시용 마커 */}
-      <div className="flex justify-between mt-2">
-        {steps.map((label, index) => {
-          // 현재 스텝보다 작거나 같으면 활성화(파란색), 아니면 회색
-          const isActive = index <= currentStep;
           return (
-            <div key={index} className="flex flex-col items-center">
+            <div
+              key={index}
+              className="flex flex-col items-center relative flex-1"
+            >
+              {/* 연결선 */}
+              {index > 0 && (
+                <div className="absolute top-5 w-full h-1 -left-1/2">
+                  <div
+                    className={`h-full ${
+                      index <= currentStep ? "bg-blue-600" : "bg-slate-200"
+                    }`}
+                  />
+                </div>
+              )}
+
+              {/* 단계 원형 아이콘 */}
+              <motion.div
+                className={`w-10 h-10 rounded-full flex items-center justify-center z-10 ${
+                  isCompleted || isActive
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-200 text-slate-500"
+                }`}
+                initial={false}
+                animate={
+                  isActive
+                    ? { scale: [1, 1.1, 1], backgroundColor: "#2563eb" }
+                    : {}
+                }
+                transition={{ duration: 0.5 }}
+              >
+                {isCompleted ? (
+                  <FontAwesomeIcon icon={faCheck} className="w-5 h-5" />
+                ) : (
+                  <span className="text-sm font-medium">{index + 1}</span>
+                )}
+              </motion.div>
+
+              {/* 단계 이름 */}
               <span
-                className={`text-sm mt-1 ${
-                  isActive ? "text-blue-600 font-bold" : "text-gray-500"
+                className={`mt-2 text-xs sm:text-sm font-medium ${
+                  isActive
+                    ? "text-blue-600"
+                    : isCompleted
+                    ? "text-slate-700"
+                    : "text-slate-400"
                 }`}
               >
-                {label}
+                {step}
               </span>
             </div>
           );

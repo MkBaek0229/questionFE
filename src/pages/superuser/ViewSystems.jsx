@@ -69,7 +69,7 @@ function ViewSystems() {
 
     try {
       await axiosInstance.delete(
-        `http://localhost:3000/system/superuser/${systemId}`,
+        `http://localhost:3000/superuser/systems/${systemId}`,
         {
           withCredentials: true,
           headers: { "X-CSRF-Token": csrfToken },

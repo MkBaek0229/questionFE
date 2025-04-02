@@ -62,7 +62,7 @@ function ExpertDashboard() {
   const handleLogout = async () => {
     try {
       const response = await axiosInstance.post(
-        "http://localhost:3000/logout/expert",
+        "http://localhost:3000/expert/logout",
         {},
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );

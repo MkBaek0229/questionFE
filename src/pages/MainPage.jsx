@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { motion } from "framer-motion";
 import ShieldIcon from "../assets/sheild-front-color.svg";
 import SelfAssessmentIcon from "../assets/chat-text-iso-color.svg";
 import FeedbackIcon from "../assets/computer-iso-color.svg";
+
 function MainPage({ isExpertLoggedIn }) {
   const navigate = useNavigate();
 
@@ -21,131 +22,218 @@ function MainPage({ isExpertLoggedIn }) {
     navigate("/Signup");
   };
 
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
   return (
-    <main className="flex flex-col items-center min-h-screen">
-      {/* 배너 섹션 */}
-      <section className="relative w-full h-[300px]  flex items-center justify-center">
-        {/* 텍스트 콘텐츠 */}
-        <div className="relative text-center px-6">
-          <div className="flex flex-col  items-center font-bold">
-            <h1 className="leading-tight mb-4 text-3xl">
-              공공기관의 개인정보 보호 역량 향상
-            </h1>
-            <span className="text-blue-600 font-extrabold text-6xl">
-              개인정보 컴플라이언스 강화 플랫폼
-            </span>
-          </div>
-          <p className="text-2xl text-gray-500 leading-relaxed mt-4 font-light">
-            공공기관의 개인정보 관리 현황,취약점 파악 및 개선점 도출을 위한
-            자가진단 서비스입니다.
-          </p>
+    <main className="flex flex-col items-center min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
+      {/* 헤더 배너 섹션 */}
+      <section className="relative w-full py-16 md:py-24 flex items-center justify-center">
+        <div className="container px-4 md:px-6">
+          <motion.div
+            className="text-center space-y-6"
+            initial="hidden"
+            animate="visible"
+            variants={fadeIn}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
+                공공기관의 개인정보 보호 역량 향상
+              </h1>
+              <h2 className="text-4xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                개인정보 컴플라이언스 강화 플랫폼
+              </h2>
+            </div>
+            <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-600">
+              공공기관의 개인정보 관리 현황, 취약점 파악 및 개선점 도출을 위한
+              자가진단 서비스입니다.
+            </p>
+
+            {/* 버튼 그룹 */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+              <button
+                className="w-full sm:w-auto px-8 py-4 text-lg font-bold rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-all"
+                onClick={handleLoginClick}
+              >
+                로그인
+              </button>
+              <button
+                className="w-full sm:w-auto px-8 py-4 text-lg font-bold rounded-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 transition-all"
+                onClick={handleSignupClick}
+              >
+                회원가입
+              </button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* 버튼 섹션 */}
-      <section className="flex flex-col w-full lg:flex-row items-center justify-center gap-[20px]">
-        {/* 로그인 버튼 */}
-        <button
-          className="group flex flex-col items-center justify-center w-[200px] h-[70px] rounded-[50px] shadow-md bg-blue-400 hover:bg-blue-600 hover:text-white"
-          onClick={handleLoginClick}
-        >
-          <span className="text-lg md:text-xl font-black tracking-wide">
-            로그인
-          </span>
-        </button>
+      {/* 서비스 특징 섹션 */}
+      <section className="w-full py-20 md:py-28 bg-gradient-to-b from-white to-slate-50 relative overflow-hidden">
+        {/* 배경 요소 */}
+        <div className="absolute inset-0 overflow-hidden opacity-5">
+          <div className="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-600"></div>
+          <div className="absolute -left-40 top-1/4 w-96 h-96 rounded-full bg-indigo-600"></div>
+          <div className="absolute right-10 bottom-10 w-60 h-60 rounded-full bg-red-500"></div>
+        </div>
 
-        {/* 회원가입 버튼 */}
-        <button
-          className="group flex flex-col items-center justify-center w-[200px] h-[70px] rounded-[50px] shadow-md bg-red-400 hover:bg-red-600 hover:text-white"
-          onClick={handleSignupClick}
-        >
-          <span className="text-lg md:text-xl font-black  tracking-wide">
-            회원가입
-          </span>
-        </button>
+        <div className="container px-4 md:px-6 mx-auto relative z-10">
+          <motion.div
+            className="text-center space-y-6 mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-block px-6 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-full mb-4">
+              <span className="text-sm font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                주요 기능
+              </span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-slate-900">
+              컴플라이언스 강화 플랫폼의{" "}
+              <span className="text-blue-600">핵심 기능</span>
+            </h2>
+            <p className="max-w-2xl mx-auto text-lg text-slate-600">
+              개인정보 보호규칙 준수를 위한 완벽한 솔루션을 제공합니다.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* 시스템 등록 카드 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              whileHover={{ translateY: -8 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 border border-slate-100"
+            >
+              <div className="h-2 bg-gradient-to-r from-red-500 to-red-600"></div>
+              <div className="p-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-28 h-28 rounded-full bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center mb-6 border-4 border-white shadow-md">
+                    <img
+                      src={ShieldIcon}
+                      alt="Shield"
+                      className="w-16 h-16 hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-3">
+                    시스템 등록
+                  </h3>
+                  <div className="h-1 w-16 bg-red-500 rounded-full mb-4"></div>
+                  <p className="text-lg font-semibold text-slate-900 mb-2">
+                    개인정보 보호 역량 향상
+                  </p>
+                  <p className="text-slate-600">
+                    다양한 시스템을 등록하고 각각에 대한 자가진단을 실시할 수
+                    있습니다.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 자가진단 카드 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              whileHover={{ translateY: -8 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 border border-slate-100"
+            >
+              <div className="h-2 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+              <div className="p-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-28 h-28 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center mb-6 border-4 border-white shadow-md">
+                    <img
+                      src={SelfAssessmentIcon}
+                      alt="Self Assessment"
+                      className="w-16 h-16 hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-3">
+                    자가진단
+                  </h3>
+                  <div className="h-1 w-16 bg-blue-500 rounded-full mb-4"></div>
+                  <p className="text-lg font-semibold text-slate-900 mb-2">
+                    지표별 자가진단
+                  </p>
+                  <p className="text-slate-600">
+                    체계적인 문항을 통해 개인정보 보호규칙 준수 수준을
+                    평가합니다.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 전문가 피드백 카드 */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.5 }}
+              whileHover={{ translateY: -8 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] transition-all duration-500 border border-slate-100"
+            >
+              <div className="h-2 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+              <div className="p-8">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-28 h-28 rounded-full bg-gradient-to-br from-indigo-50 to-purple-100 flex items-center justify-center mb-6 border-4 border-white shadow-md">
+                    <img
+                      src={FeedbackIcon}
+                      alt="Feedback"
+                      className="w-16 h-16 hover:scale-110 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-800 mb-3">
+                    전문가 피드백
+                  </h3>
+                  <div className="h-1 w-16 bg-indigo-500 rounded-full mb-4"></div>
+                  <p className="text-lg font-semibold text-slate-900 mb-2">
+                    전문가 리포트 제공
+                  </p>
+                  <p className="text-slate-600">
+                    전문가가 자가진단 결과를 검토하고 개선을 위한 피드백을
+                    제공합니다.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
       </section>
 
-      {/* 서비스 특징 섹션 */}
-      {/* 서비스 특징 섹션 (레퍼런스 구조 반영) */}
-      <section className="w-full py-12 md:py-24 lg:py-32">
+      {/* CTA 섹션 (새로 추가) */}
+      <section className="w-full py-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
         <div className="container px-4 md:px-6 mx-auto">
-          {/* 헤더 영역 */}
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              {/* 레이블 */}
-              <div className="inline-block rounded-lg bg-gray-200 px-3 py-1 text-sm font-bold">
-                주요 기능
-              </div>
-              {/* 제목 */}
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                컴플라이언스 강화 플랫폼의 핵심 기능
-              </h2>
-              {/* 설명 */}
-              <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                개인정보 보호규칙 준수를 위한 완벽한 솔루션을 제공합니다.
-              </p>
-            </div>
-          </div>
-
-          {/* 그리드 아이템들 */}
-          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12">
-            {/* 1번 카드 */}
-            <div className="flex items-center justify-center text-center">
-              <div
-                className="w-[500px] h-[300px] flex flex-col items-center justify-center bg-red-600 text-white
-                        rounded-[10px] shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]"
+          <motion.div
+            className="text-center space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold">
+              지금 바로 시작하세요
+            </h2>
+            <p className="max-w-2xl mx-auto text-lg text-blue-100">
+              개인정보 보호 역량을 강화하고 컴플라이언스 수준을 높이는 첫 걸음을
+              내딛으세요.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+              <button
+                className="w-full sm:w-auto px-8 py-4 text-lg font-bold rounded-full bg-white text-blue-600 hover:bg-blue-50 transition-all"
+                onClick={handleSignupClick}
               >
-                <h2 className="text-[28px] font-black">시스템 등록</h2>
-                <img src={ShieldIcon} className="w-[150px]" alt="Shield Icon" />
-                <p className="mt-4 text-[22px] font-bold">
-                  개인정보 보호 역량 향상
-                </p>
-                <p className="mt-2 text-[16px] font-light">
-                  다양한 시스템을 등록하고 각각에 대한 자가진단을 실시할 수
-                  있습니다.
-                </p>
-              </div>
+                무료로 시작하기
+              </button>
             </div>
-            {/* 2번 카드 */}
-            <div className="flex items-center justify-center text-center">
-              <div
-                className="w-[500px] h-[300px] flex flex-col items-center justify-center bg-blue-600 text-white
-                        rounded-[10px] shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]"
-              >
-                <h2 className="text-[28px]  font-black ">자가진단</h2>
-
-                <img
-                  src={SelfAssessmentIcon}
-                  className="w-[150px]"
-                  alt="Self Assessment Icon"
-                />
-                <p className="mt-4 text-[22px] font-bold">지표별 자가진단</p>
-                <p className="mt-2 text-[16px] font-light">
-                  체계적인 문항을 통해 개인정보 보호규칙 준수 수준을 평가합니다.
-                </p>
-              </div>
-            </div>
-            {/* 3번 카드 */}
-            <div className="flex items-center justify-center text-center">
-              <div
-                className="w-[500px] h-[300px] flex flex-col items-center justify-center bg-blue-400 text-white
-                        rounded-[10px] shadow-[rgba(99,99,99,0.2)_0px_2px_8px_0px]"
-              >
-                <h2 className="text-[28px]  font-black">전문가 피드백</h2>
-
-                <img
-                  src={FeedbackIcon}
-                  className="w-[150px]"
-                  alt="Feedback Icon"
-                />
-                <p className="mt-4 text-[22px] font-bold">전문가 리포트 제공</p>
-                <p className="mt-2 text-[16px] font-light">
-                  전문가가 자가진단 결과를 검토하고 개선을 위한 피드백을
-                  제공합니다.
-                </p>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </main>

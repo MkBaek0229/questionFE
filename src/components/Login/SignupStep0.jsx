@@ -30,10 +30,10 @@ function SignupStep0({ nextStep }) {
       </div>
 
       {/* 버튼 영역 */}
-      <div className="w-full max-w-[500px] space-y-4 mt-10">
+      <div className="w-full  space-y-4 mt-10">
         {/* 전문가 버튼 */}
         <button
-          className="flex flex-col rounded-[10px]  items-center justify-center w-full h-[250px] p-6 bg-green-500 text-white font-bold  shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-200 transform hover:scale-105"
+          className="flex flex-col rounded-[10px]  items-center justify-center w-full  p-6 bg-green-500 text-white font-bold  shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition duration-200 transform hover:scale-105"
           onClick={() => handleMemberTypeSelection("expert")}
         >
           <div className="flex items-center justify-center w-24 h-24 bg-white rounded-full mb-6">

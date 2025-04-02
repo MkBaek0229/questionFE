@@ -39,7 +39,7 @@ function SuperUserPage() {
     const fetchSystems = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:3000/all-systems",
+          "http://localhost:3000/superuser/systems",
           {
             withCredentials: true,
           }
@@ -84,14 +84,14 @@ function SuperUserPage() {
 
     const requestData = {
       systemId: selectedSystem,
-      expertIds: [selectedManager],
+      expertId: selectedManager,
     };
 
     console.log("📩 [ASSIGN MANAGER] 매칭 요청 데이터:", requestData);
 
     try {
       const response = await axiosInstance.post(
-        "http://localhost:3000/match-experts",
+        "http://localhost:3000/superuser/systems/match-experts",
         requestData,
         { withCredentials: true, headers: { "X-CSRF-Token": csrfToken } }
       );

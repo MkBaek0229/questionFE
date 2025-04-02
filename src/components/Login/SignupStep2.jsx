@@ -63,7 +63,7 @@ function SignupStep2({ prevStep, nextStep }) {
         "http://localhost:3000/email/send-verification-code",
         {
           email: emailInput,
-          member_type: "user",
+          member_type: formData.member_type, // 선택된 회원 유형 사용
         },
         {
           withCredentials: true,

@@ -15,13 +15,17 @@ import {
   faChartBar,
   faCircleCheck,
   faCircleInfo,
+  faClipboardCheck,
   faClipboardList,
+  faHome,
   faPlay,
+  faServer,
   faSignOutAlt,
   faTimes,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import RecentActivities from "./RecentActivities";
+
+import MainLogo from "../../assets/logo/MainLogo.png";
 import { format } from "date-fns";
 import { toast } from "react-toastify"; // toast 추가
 
@@ -29,7 +33,9 @@ function Dashboard() {
   const [summaryList, setSummaryList] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState("dashboard");
   const [activeMenuId, setActiveMenuId] = useState(null);
-
+  const [activeFeedbackCard, setActiveFeedbackCard] = useState(null);
+  const [feedbackData, setFeedbackData] = useState({});
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [systems, setSystems] = useRecoilState(systemsState);
   const [assessmentStatuses, setAssessmentStatuses] = useRecoilState(
     assessmentStatusesState
@@ -38,6 +44,11 @@ function Dashboard() {
 
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
+  const [selectedImprovementSystem, setSelectedImprovementSystem] =
+    useState(null);
+
+  const [loadingCategoryScores, setLoadingCategoryScores] = useState(false);
+  const [categoryComparison, setCategoryComparison] = useState([]);
   const [loading, setLoading] = useRecoilState(loadingState);
   const [errorMessage, setErrorMessage] = useRecoilState(errorMessageState);
   const auth = useRecoilValue(authState);
@@ -46,6 +57,9 @@ function Dashboard() {
 
   const [activeDetailCard, setActiveDetailCard] = useState(null);
   const [activeTab, setActiveTab] = useState("quantitative");
+
+  const [diagnosisRounds, setDiagnosisRounds] = useState([]);
+  const [selectedRound, setSelectedRound] = useState(null);
 
   // 메뉴 토글 함수
   const toggleMenu = (systemId) => {
@@ -128,6 +142,10 @@ function Dashboard() {
       );
 
       setSummaryList(res.data);
+
+      if (res.data && res.data.length > 0) {
+        setSelectedImprovementSystem(res.data[0].systems_id);
+      }
     } catch (error) {
       console.error("✅ 시스템 요약 정보 불러오기 실패:", error);
       toast.error("시스템 요약 정보를 불러오는데 실패했습니다.");
@@ -183,13 +201,73 @@ function Dashboard() {
     (system) => !diagnosedSystemIds.includes(system.systems_id)
   );
 
+  const fetchDiagnosisRounds = async (systemId) => {
+    try {
+      const response = await axiosInstance.get(
+        `http://localhost:3000/selftest/diagnosis-rounds/${systemId}`,
+        { withCredentials: true }
+      );
+
+      const rounds = response.data;
+      setDiagnosisRounds(rounds);
+
+      // 기본값으로 최신 회차 선택
+      if (rounds && rounds.length > 0) {
+        setSelectedRound(rounds[0].diagnosis_round);
+        fetchDetailedAssessmentByRound(systemId, rounds[0].diagnosis_round);
+      } else {
+        // 회차가 없으면 기본 데이터 로드
+        fetchDetailedAssessment(systemId);
+      }
+    } catch (error) {
+      console.error("회차 목록 조회 실패:", error);
+      toast.error("진단 회차 목록을 불러오는데 실패했습니다.");
+      // 에러 발생 시 기본 데이터 로드
+      fetchDetailedAssessment(systemId);
+    }
+  };
+
+  const fetchDetailedAssessmentByRound = async (systemId, roundNumber) => {
+    try {
+      const [quantitativeRes, qualitativeRes] = await Promise.all([
+        axiosInstance.get(
+          `http://localhost:3000/selftest/quantitative-responses/${systemId}?round=${roundNumber}`,
+          { withCredentials: true }
+        ),
+        axiosInstance.get(
+          `http://localhost:3000/selftest/qualitative-responses/${systemId}?round=${roundNumber}`,
+          { withCredentials: true }
+        ),
+      ]);
+
+      // 데이터 구조에 따라 적절하게 처리
+      const quantitativeData =
+        quantitativeRes.data.responses || quantitativeRes.data;
+      const qualitativeData =
+        qualitativeRes.data.responses || qualitativeRes.data;
+
+      // 로딩된 데이터 저장
+      setSummaryList((prev) =>
+        prev.map((system) =>
+          system.systems_id === systemId
+            ? {
+                ...system,
+                detailedQuantitative: quantitativeData,
+                detailedQualitative: qualitativeData,
+                currentRound: roundNumber,
+              }
+            : system
+        )
+      );
+    } catch (error) {
+      console.error("회차별 세부 평가 데이터 로딩 실패:", error);
+      toast.error("세부 평가 데이터를 불러오는데 실패했습니다.");
+    }
+  };
+
   // 세부평가 버튼 클릭 시 추가 정보 로딩 함수
   const fetchDetailedAssessment = async (systemId) => {
     try {
-      // 현재 로그인한 사용자 ID
-      const userId = auth.user?.id;
-      if (!userId) return;
-
       const [quantitativeRes, qualitativeRes] = await Promise.all([
         axiosInstance.get(
           `http://localhost:3000/selftest/quantitative-responses/${systemId}`,
@@ -236,7 +314,6 @@ function Dashboard() {
     }
   };
 
-  // 결과 보기 핸들러
   const handleViewResults = async (systemId) => {
     try {
       const res = await axiosInstance.get(
@@ -249,11 +326,14 @@ function Dashboard() {
 
       const rounds = res.data;
       if (!rounds || rounds.length === 0) {
-        toast.warn("완료된 진단 결과가 없습니다."); // alert → toast
+        toast.warn("완료된 진단 결과가 없습니다.");
         return;
       }
 
+      // 최신 회차 가져오기
       const latestRound = rounds[0].diagnosis_round;
+
+      // 결과 페이지로 이동
       navigate("/completion", {
         state: {
           systemId: systemId,
@@ -262,10 +342,43 @@ function Dashboard() {
       });
     } catch (err) {
       console.error("회차 조회 실패", err);
-      toast.error("진단 회차를 불러오지 못했습니다."); // alert → toast
+      toast.error("진단 회차를 불러오지 못했습니다.");
     }
   };
 
+  // 피드백보기 핸들러
+  const fetchFeedbacks = async (systemId) => {
+    if (activeFeedbackCard === systemId) {
+      // 이미 열려있으면 닫기
+      setActiveFeedbackCard(null);
+      return;
+    }
+
+    setLoadingFeedback(true);
+    try {
+      // 시스템에 대한 모든 피드백 조회
+      const response = await axiosInstance.get(
+        `http://localhost:3000/feedback/system-feedbacks/${systemId}`,
+        { withCredentials: true }
+      );
+
+      // 피드백 데이터 설정 및 카드 활성화
+      setFeedbackData((prev) => ({
+        ...prev,
+        [systemId]: response.data,
+      }));
+      setActiveFeedbackCard(systemId);
+    } catch (error) {
+      console.error("피드백 데이터 로딩 실패:", error);
+      if (error.response && error.response.status === 404) {
+        toast.warning("이 시스템에 대한 피드백이 없습니다.");
+      } else {
+        toast.error("피드백을 불러오는데 실패했습니다.");
+      }
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
   // Dashboard 컴포넌트 내 다른 useEffect 아래에 추가
   useEffect(() => {
     // 드롭다운 외부 클릭 시 닫기
@@ -280,6 +393,44 @@ function Dashboard() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropdownOpen]);
+
+  // 시스템 선택 시 카테고리 점수 로드 함수 추가
+  const loadCategoryScores = async (systemId) => {
+    if (!systemId) return;
+
+    setLoadingCategoryScores(true);
+    try {
+      const response = await axiosInstance.get(
+        `http://localhost:3000/result/category-comparison/${systemId}`,
+        { withCredentials: true }
+      );
+
+      // 자가진단 데이터가 있는 경우
+      if (response.data && response.data.length > 0) {
+        setCategoryComparison(response.data);
+      } else {
+        setCategoryComparison([]);
+      }
+    } catch (error) {
+      console.error("카테고리 비교 데이터 로딩 실패:", error);
+      if (error.response && error.response.status === 404) {
+        // 자가진단이 필요한 경우
+        toast.warning("해당 시스템의 자가진단이 필요합니다.");
+      } else {
+        toast.error("개선 필요 영역 데이터를 불러오는데 실패했습니다.");
+      }
+      setCategoryComparison([]);
+    } finally {
+      setLoadingCategoryScores(false);
+    }
+  };
+
+  // 시스템이 선택되었을 때 데이터 로드
+  useEffect(() => {
+    if (selectedImprovementSystem) {
+      loadCategoryScores(selectedImprovementSystem);
+    }
+  }, [selectedImprovementSystem]);
 
   const renderDashboard = () => (
     <>
@@ -319,7 +470,192 @@ function Dashboard() {
         </div>
       </div>
 
-      <RecentActivities />
+      {/* RecentActivities 대신 새로운 컨텐츠 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* 등급별 시스템 분포 */}
+        <div className="bg-white p-5 rounded-lg shadow">
+          <h2 className="text-lg font-bold mb-4 border-b pb-2">
+            등급별 시스템 분포
+          </h2>
+          <div className="flex justify-center items-center space-x-3">
+            {["S", "A", "B", "C", "D"].map((grade) => {
+              const count = summaryList.filter((s) => s.grade === grade).length;
+              const gradeColor =
+                grade === "S"
+                  ? "bg-purple-100 text-purple-600"
+                  : grade === "A"
+                  ? "bg-green-100 text-green-600"
+                  : grade === "B"
+                  ? "bg-emerald-100 text-emerald-600"
+                  : grade === "C"
+                  ? "bg-yellow-100 text-yellow-600"
+                  : "bg-red-100 text-red-600";
+
+              return (
+                <div key={grade} className="flex flex-col items-center">
+                  <div
+                    className={`w-16 h-16 rounded-full ${gradeColor} flex items-center justify-center text-2xl font-bold mb-2`}
+                  >
+                    {grade}
+                  </div>
+                  <div className="text-sm font-semibold">{count}개</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 개선이 필요한 영역 */}
+        <div className="bg-white p-5 rounded-lg shadow">
+          <h2 className="text-lg font-bold mb-4 border-b pb-2 flex justify-between items-center">
+            <span>개선이 필요한 주요 영역</span>
+            {summaryList.length > 0 && (
+              <select
+                className="text-sm border rounded-md p-1 bg-white"
+                value={selectedImprovementSystem || ""}
+                onChange={(e) => setSelectedImprovementSystem(e.target.value)}
+                disabled={loadingCategoryScores}
+              >
+                {summaryList.map((system) => (
+                  <option key={system.systems_id} value={system.systems_id}>
+                    {system.system_name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </h2>
+          {loadingCategoryScores ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : categoryComparison.length > 0 ? (
+            <ul className="space-y-4">
+              {categoryComparison
+                .slice(0, 4) // 상위 4개만 표시 (이미 백엔드에서 정렬됨)
+                .map((item, index) => {
+                  const needsImprovement = item.achievement_percentage < 80; // 80% 미만이면 개선 필요
+
+                  return (
+                    <li key={index} className="flex flex-col">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium">
+                          {item.category_name}
+                        </span>
+                        <div className="text-right">
+                          <span
+                            className={
+                              needsImprovement
+                                ? "text-red-600 font-bold"
+                                : "text-green-600 font-bold"
+                            }
+                          >
+                            {Math.round(item.actual_score)}
+                          </span>
+                          <span className="text-gray-500 text-xs ml-1">
+                            / {Math.round(item.max_possible_score)}점 (
+                            {item.achievement_percentage}%)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div
+                          className={`h-3 rounded-full ${
+                            needsImprovement ? "bg-red-500" : "bg-green-500"
+                          }`}
+                          style={{ width: `${item.achievement_percentage}%` }}
+                        ></div>
+                      </div>
+                      {needsImprovement && (
+                        <p className="text-xs text-red-600 mt-1">
+                          달성률 {item.achievement_percentage}% - 개선 필요
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+            </ul>
+          ) : summaryList.length > 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              <p>카테고리별 점수 데이터가 없습니다.</p>
+              <p className="text-sm mt-1">
+                자가진단을 완료하면 결과가 표시됩니다.
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-6 text-gray-500">
+              <p>완료된 자가진단이 없습니다.</p>
+              <p className="text-sm mt-1">
+                시스템을 등록하고 자가진단을 진행해주세요.
+              </p>
+            </div>
+          )}{" "}
+        </div>
+      </div>
+
+      {/* 최근 자가진단 결과 */}
+      <div className="bg-white rounded-lg shadow lg:col-span-2">
+        <h2 className="text-lg font-bold p-4 border-b">최근 자가진단 결과</h2>
+        {summaryList.length > 0 ? (
+          <div className="p-4">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    시스템명
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    점수
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    등급
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    진단일
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {summaryList.slice(0, 5).map((system) => (
+                  <tr key={system.systems_id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm">{system.system_name}</td>
+                    <td className="px-4 py-3 text-sm">
+                      {system.compliance_rate}점
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        ${
+                          system.grade === "S"
+                            ? "bg-purple-100 text-purple-800"
+                            : system.grade === "A"
+                            ? "bg-green-100 text-green-800"
+                            : system.grade === "B"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : system.grade === "C"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {system.grade} 등급
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {format(
+                        new Date(system.last_assessment_date),
+                        "yyyy-MM-dd"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-6 text-center text-gray-500">
+            <p>완료된 자가진단이 없습니다.</p>
+          </div>
+        )}
+      </div>
     </>
   );
 
@@ -520,9 +856,9 @@ function Dashboard() {
   const renderSelfAssessment = () => {
     return (
       <>
-        <h1 className="text-3xl font-bold">자가진단</h1>
+        <h1 className="text-3xl font-bold">자가진단 체크 목록 및 피드백</h1>
         <p className="text-gray-500 text-sm mt-1 mb-4">
-          시스템별 항목별 체크 결과를 확인하세요.
+          자가진단 체크 목록 및 피드백을 확인하세요.
         </p>
 
         {/* 시스템 선택 드롭다운 */}
@@ -642,13 +978,13 @@ function Dashboard() {
                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                 fill="none"
                                 stroke={
-                                  system.compliance_rate >= 90
+                                  system.grade === "S"
                                     ? "#8B5CF6" // S 등급: 보라색
-                                    : system.compliance_rate >= 80
+                                    : system.grade === "A"
                                     ? "#4ade80" // A 등급: 녹색
-                                    : system.compliance_rate >= 70
+                                    : system.grade === "B"
                                     ? "#22c55e" // B 등급: 진한 녹색
-                                    : system.compliance_rate >= 60
+                                    : system.grade === "C"
                                     ? "#facc15" // C 등급: 노란색
                                     : "#ef4444" // D 등급: 빨간색
                                 }
@@ -667,28 +1003,19 @@ function Dashboard() {
                               </span>
                               <div className="flex flex-col items-start">
                                 <span
-                                  className={`text-md font-bold py-0.5 px-2 rounded  ${
-                                    system.compliance_rate >= 90
+                                  className={`text-md font-bold py-0.5 px-2 rounded ${
+                                    system.grade === "S"
                                       ? "text-purple-600"
-                                      : system.compliance_rate >= 80
+                                      : system.grade === "A"
                                       ? "text-green-600"
-                                      : system.compliance_rate >= 70
+                                      : system.grade === "B"
                                       ? "text-green-700"
-                                      : system.compliance_rate >= 60
+                                      : system.grade === "C"
                                       ? "text-yellow-600"
                                       : "text-red-600"
                                   }`}
                                 >
-                                  {system.compliance_rate >= 90
-                                    ? "S"
-                                    : system.compliance_rate >= 80
-                                    ? "A"
-                                    : system.compliance_rate >= 70
-                                    ? "B"
-                                    : system.compliance_rate >= 60
-                                    ? "C"
-                                    : "D"}{" "}
-                                  등급
+                                  {system.grade} 등급
                                 </span>
                               </div>
                             </div>
@@ -759,13 +1086,13 @@ function Dashboard() {
                         <div className="flex border-t">
                           <button
                             className="flex-1 py-3 text-center font-bold text-blue-600 hover:bg-blue-50 transition-colors border-r"
-                            onClick={() => handleViewResults(system.systems_id)}
+                            onClick={() => fetchFeedbacks(system.systems_id)} // handleViewResults에서 fetchFeedbacks로 변경
                           >
                             <FontAwesomeIcon
                               icon={faCircleCheck}
                               className="mr-2"
                             />
-                            결과 보기
+                            피드백 보기
                           </button>
                           <button
                             className="flex-1 py-3 text-center font-bold text-green-600 hover:bg-green-50 transition-colors"
@@ -775,8 +1102,8 @@ function Dashboard() {
                                   ? null
                                   : system.systems_id;
                               setActiveDetailCard(newState);
-                              if (newState && !system.detailedQuantitative) {
-                                fetchDetailedAssessment(system.systems_id);
+                              if (newState) {
+                                fetchDiagnosisRounds(system.systems_id);
                               }
                             }}
                           >
@@ -803,6 +1130,41 @@ function Dashboard() {
   }`}
                         >
                           <div className="h-full flex flex-col">
+                            {/* 회차 선택 드롭다운 */}
+                            {diagnosisRounds && diagnosisRounds.length > 0 && (
+                              <div className="p-3 border-b bg-gray-50">
+                                <div className="flex items-center justify-between">
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    진단 회차:
+                                  </label>
+                                  <select
+                                    className="ml-2 p-1 pl-2 pr-8 border rounded-md text-sm bg-white"
+                                    value={selectedRound || ""}
+                                    onChange={(e) => {
+                                      const round = Number(e.target.value);
+                                      setSelectedRound(round);
+                                      fetchDetailedAssessmentByRound(
+                                        system.systems_id,
+                                        round
+                                      );
+                                    }}
+                                  >
+                                    {diagnosisRounds.map((round) => (
+                                      <option
+                                        key={round.diagnosis_round}
+                                        value={round.diagnosis_round}
+                                      >
+                                        {round.diagnosis_round}회차
+                                        {round.diagnosis_date &&
+                                          ` (${new Date(
+                                            round.diagnosis_date
+                                          ).toLocaleDateString()})`}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            )}
                             {/* 헤더 탭 */}
                             <div className="flex border-b">
                               <button
@@ -990,7 +1352,7 @@ function Dashboard() {
                                                     viewBox="0 0 20 20"
                                                   >
                                                     <path d="M8.707 7.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l2-2a1 1 0 00-1.414-1.414L11 7.586V3a1 1 0 10-2 0v4.586l-.293-.293z"></path>
-                                                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4.586l1.293-1.293a1 1 0 011.414 0l2 2a1 1 0 010 1.414l-2 2a1 1 0 01-1.414 0L12 13.414V15a2 2 0 01-2 2h-7a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h7a1 1 0 001-1v-4.586l.293.293a1 1 0 001.414 0l2-2a1 1 0 000-1.414l-2-2a1 1 0 00-1.414 0L12 6.414V5a1 1 0 00-1-1H4z"></path>
+                                                    <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4.586l1.293-1.293a1 1 0 011.414 0l2-2a1 1 0 010 1.414l-2 2a1 1 0 01-1.414 0L12 13.414V15a2 2 0 01-2 2h-7a2 2 0 01-2-2V5zm2-1a1 1 0 00-1 1v10a1 1 0 001 1h7a1 1 0 001-1v-4.586l.293.293a1 1 0 001.414 0l2-2a1 1 0 000-1.414l-2-2a1 1 0 00-1.414 0L12 6.414V5a1 1 0 00-1-1H4z"></path>
                                                   </svg>
                                                   <span className="text-sm">
                                                     첨부파일 다운로드
@@ -1036,8 +1398,125 @@ function Dashboard() {
                             {/* 하단 닫기 버튼 */}
                             <div className="border-t p-3">
                               <button
-                                className="w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium"
+                                className="w-full py-2 bg-blue-500 text-white  hover:bg-blue-600 rounded-lg text-gray-700 font-bold"
                                 onClick={() => setActiveDetailCard(null)}
+                              >
+                                닫기
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        {/* 피드백 카드 (전문가 피드백 내용) */}
+                        <div
+                          className={`absolute inset-0 bg-white rounded-lg transform transition-all duration-500 
+    ${
+      activeFeedbackCard === system.systems_id
+        ? "translate-y-0 opacity-100 z-10"
+        : "translate-y-full opacity-0 -z-10"
+    }`}
+                        >
+                          <div className="h-full flex flex-col">
+                            {/* 헤더 */}
+                            <div className="p-3 border-b bg-indigo-50">
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-bold text-indigo-800 text-lg">
+                                  전문가 피드백
+                                </h3>
+                                <button
+                                  className="text-gray-600 hover:text-gray-800"
+                                  onClick={() => setActiveFeedbackCard(null)}
+                                >
+                                  <FontAwesomeIcon icon={faTimes} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* 내용 영역 - 스크롤 가능 */}
+                            <div className="flex-1 overflow-y-auto p-4 max-h-[60vh]">
+                              {loadingFeedback &&
+                              activeFeedbackCard === system.systems_id ? (
+                                <div className="flex justify-center items-center h-40">
+                                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+                                </div>
+                              ) : feedbackData[system.systems_id] &&
+                                feedbackData[system.systems_id].length > 0 ? (
+                                <div className="space-y-4">
+                                  {feedbackData[system.systems_id].map(
+                                    (feedback, idx) => (
+                                      <div
+                                        key={idx}
+                                        className="border rounded-lg p-4 bg-indigo-50"
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <div>
+                                            <h4 className="text-sm font-semibold">
+                                              문항 {feedback.question_number}
+                                            </h4>
+                                            <p className="text-xs text-gray-600 mt-1">
+                                              {feedback.question_text ||
+                                                "문항 정보 없음"}
+                                            </p>
+                                          </div>
+                                          <span className="text-xs text-gray-500">
+                                            {new Date(
+                                              feedback.created_at
+                                            ).toLocaleDateString()}
+                                          </span>
+                                        </div>
+
+                                        <div className="mt-3 bg-white p-3 rounded border-l-4 border-indigo-500">
+                                          <p className="text-sm font-medium text-indigo-700">
+                                            전문가 피드백:
+                                          </p>
+                                          <p className="mt-1 text-sm">
+                                            {feedback.feedback}
+                                          </p>
+                                        </div>
+
+                                        <div className="mt-3 text-xs text-gray-600 flex justify-between">
+                                          <span>
+                                            작성자:{" "}
+                                            {feedback.expert_name || "전문가"}
+                                          </span>
+                                          <span className="bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full">
+                                            {feedback.status || "피드백 제공됨"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex flex-col items-center justify-center py-10">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-16 w-16 text-indigo-300 mb-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                                    />
+                                  </svg>
+                                  <p className="text-gray-500 text-lg">
+                                    아직 피드백이 없습니다
+                                  </p>
+                                  <p className="text-gray-400 mt-2">
+                                    전문가의 피드백을 기다려주세요
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* 하단 닫기 버튼 */}
+                            <div className="border-t p-3">
+                              <button
+                                className="w-full py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-bold"
+                                onClick={() => setActiveFeedbackCard(null)}
                               >
                                 닫기
                               </button>
@@ -1111,58 +1590,79 @@ function Dashboard() {
     );
   };
   return (
-    <div className="flex flex-col min-h-screen max-w-[1000px] mx-auto p-6">
-      <nav className="flex gap-10 justify-center w-full">
-        <button
-          onClick={() => setSelectedMenu("dashboard")}
-          className={`font-semibold ${
-            selectedMenu === "dashboard"
-              ? "text-black"
-              : "text-gray-600 hover:text-black"
-          }`}
-        >
-          대시보드
-        </button>
-        <button
-          onClick={() => setSelectedMenu("system-management")}
-          className={`font-semibold ${
-            selectedMenu === "system-management"
-              ? "text-black"
-              : "text-gray-600 hover:text-black"
-          }`}
-        >
-          시스템 관리
-        </button>
-        <button
-          onClick={() => setSelectedMenu("self-assessment")}
-          className={`font-semibold ${
-            selectedMenu === "self-assessment"
-              ? "text-black"
-              : "text-gray-600 hover:text-black"
-          }`}
-        >
-          자가진단
-        </button>
-        <button className="text-gray-600 hover:text-black">
-          결과 및 보고서
-        </button>
-      </nav>
+    <div className="min-h-screen flex bg-gray-100 text-gray-800">
+      {/* 사이드바 */}
+      <aside className="w-64 bg-white shadow-lg flex flex-col h-screen sticky top-0 rounded-r-[20px]">
+        {/* 상단 로고/타이틀 */}
 
-      <main className="flex-1 p-10">
+        <div className="h-60 flex flex-col items-center justify-center  gap-2">
+          <img src={MainLogo} alt="메인로고" className="w-16 h-12" />
+
+          <p className="font-medium text-black text-[16px]">
+            개인정보 컴플라이언스 강화 플랫폼
+          </p>
+        </div>
+
+        {/* 사이드 메뉴 목록 */}
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          {[
+            { key: "dashboard", label: "대시보드", icon: faHome },
+            {
+              key: "system-management",
+              label: "시스템 관리 및 결과",
+              icon: faServer,
+            },
+            {
+              key: "self-assessment",
+              label: "체크 목록 및 피드백",
+              icon: faClipboardCheck,
+            },
+          ].map((menu) => (
+            <button
+              key={menu.key}
+              onClick={() => setSelectedMenu(menu.key)}
+              className={`
+                w-full flex items-center gap-3 px-3 py-2 rounded-md 
+                font-semibold transition-colors
+                ${
+                  selectedMenu === menu.key
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-700 hover:bg-gray-200"
+                }
+              `}
+            >
+              <FontAwesomeIcon icon={menu.icon} />
+              <span>{menu.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* 하단 로그아웃 버튼 */}
+        <div className="p-4 border-t">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-md"
+          >
+            <FontAwesomeIcon icon={faSignOutAlt} />
+            <span>로그아웃</span>
+          </button>
+          {/* 저작권 문구 */}
+          <div className="mt-5 pt-3 text-center text-xs px-2 border-t border-gray-100">
+            <a href="https://www.martinlab.co.kr/" target="blank">
+              © 주식회사 마틴 랩
+            </a>
+            <p className="text-gray-400">문의 : martin@martinlab.co.kr</p>
+          </div>
+        </div>
+      </aside>
+
+      {/* 메인 컨텐츠 */}
+      <main className="flex-1 p-6 overflow-y-auto">
         {selectedMenu === "dashboard" && renderDashboard()}
         {selectedMenu === "system-management" && renderSystemManagement()}
         {selectedMenu === "self-assessment" && renderSelfAssessment()}
       </main>
-
-      <button
-        onClick={handleLogout}
-        className="fixed bottom-5 right-5 bg-blue-500 text-white p-4 rounded-full shadow-lg hover:bg-blue-600 w-[100px] h-[100px] flex flex-col items-center justify-center"
-      >
-        <FontAwesomeIcon icon={faSignOutAlt} size="2xl" />
-        <p className="text-sm mt-1">로그아웃</p>
-      </button>
     </div>
   );
 }
-
 export default Dashboard;

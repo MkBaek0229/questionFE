@@ -69,7 +69,7 @@ function SuperManageQuestions() {
     const fetchCategories = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:3000/categories"
+          "http://localhost:3000/superuser/categories"
         );
         setCategories(response.data);
       } catch (error) {
@@ -83,12 +83,18 @@ function SuperManageQuestions() {
   const fetchQuestions = async () => {
     try {
       const [quantitativeRes, qualitativeRes] = await Promise.all([
-        axiosInstance.get("http://localhost:3000/super/selftest/quantitative", {
-          withCredentials: true,
-        }),
-        axiosInstance.get("http://localhost:3000/super/selftest/qualitative", {
-          withCredentials: true,
-        }),
+        axiosInstance.get(
+          "http://localhost:3000/superuser/selftest/quantitative-questions",
+          {
+            withCredentials: true,
+          }
+        ),
+        axiosInstance.get(
+          "http://localhost:3000/superuser/selftest/qualitative-questions",
+          {
+            withCredentials: true,
+          }
+        ),
       ]);
 
       console.log("🔍 [DEBUG] 정량 문항 응답 데이터:", quantitativeRes.data);
@@ -117,8 +123,8 @@ function SuperManageQuestions() {
     try {
       const endpoint =
         newQuestion.type === "quantitative"
-          ? "http://localhost:3000/super/selftest/quantitative/add"
-          : "http://localhost:3000/super/selftest/qualitative/add";
+          ? "http://localhost:3000/superuser/selftest/quantitative"
+          : "http://localhost:3000/superuser/selftest/quantitative";
 
       const questionData =
         newQuestion.type === "quantitative"
@@ -190,8 +196,8 @@ function SuperManageQuestions() {
   const handleEditSave = async (id, type) => {
     const endpoint =
       type === "quantitative"
-        ? `http://localhost:3000/super/selftest/quantitative/put/${id}`
-        : `http://localhost:3000/super/selftest/qualitative/put/${id}`;
+        ? `http://localhost:3000/superuser/selftest/qualitative/${id}`
+        : `http://localhost:3000/superuser/selftest/quantitative/${id}`;
 
     try {
       await axiosInstance.put(endpoint, editedData, {
@@ -225,8 +231,8 @@ function SuperManageQuestions() {
     try {
       const endpoint =
         type === "quantitative"
-          ? `http://localhost:3000/super/selftest/quantitative/del/${id}`
-          : `http://localhost:3000/super/selftest/qualitative/del/${id}`;
+          ? `http://localhost:3000/superuser/selftest/qualitative/del/${id}`
+          : `http://localhost:3000/superuser/selftest/quantitative/${id}`;
 
       await axiosInstance.delete(endpoint, {
         withCredentials: true,

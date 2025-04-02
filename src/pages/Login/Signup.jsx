@@ -9,6 +9,8 @@ import SignupStep2 from "../../components/Login/SignupStep2";
 import SignupStep3 from "../../components/Login/SignupStep3";
 import { toast } from "react-toastify";
 import StepProgressBar from "./StepProgressBar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 function Signup() {
   const [step, setStep] = useState(0); // 현재 단계
@@ -61,7 +63,7 @@ function Signup() {
     const endpoint =
       formData.member_type === "user"
         ? "http://localhost:3000/auth/register"
-        : "http://localhost:3000/register/expert";
+        : "http://localhost:3000/expert/register";
 
     const payload = {
       ...formData[formData.member_type], // 선택된 회원 유형의 데이터만 포함
@@ -96,7 +98,7 @@ function Signup() {
       case 0:
         return <SignupStep0 nextStep={nextStep} />;
       case 1:
-        return <SignupStep1 nextStep={nextStep} />;
+        return <SignupStep1 prevStep={prevStep} nextStep={nextStep} />;
       case 2:
         return <SignupStep2 nextStep={nextStep} prevStep={prevStep} />;
       case 3:
@@ -110,7 +112,17 @@ function Signup() {
 
   return (
     <div className="h-full flex flex-col justify-center items-center bg-white p-6">
-      {/* 2) 상단에 단일 진행 바 UI */}
+      {/* 메인으로 돌아가기 버튼 추가 */}
+      <div className="w-full  mb-4 flex justify-start">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center text-slate-600 hover:text-slate-900 transition-colors py-2 px-3 rounded-md hover:bg-slate-100"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="mr-2 h-4 w-4" />
+          메인으로 돌아가기
+        </button>
+      </div>
+      {/* 진행 바 UI */}
       <StepProgressBar steps={steps} currentStep={step} />
       {renderStep()}
     </div>

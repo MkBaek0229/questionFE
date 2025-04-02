@@ -11,7 +11,13 @@ function SignupStep3({ prevStep, handleSubmit }) {
   const [errorMessage, setErrorMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isPostcodeOpen, setIsPostcodeOpen] = useState(false);
-
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    lowercase: false,
+    uppercase: false,
+    number: false,
+    special: false,
+  });
   useEffect(() => {
     console.log("formData updated:", formData);
   }, [formData]);
@@ -19,9 +25,9 @@ function SignupStep3({ prevStep, handleSubmit }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "password") {
-      const passwordError = validatePassword(value);
-      setPasswordError(passwordError);
+      validatePasswordRequirements(value);
     }
+
     setFormData((prev) => ({
       ...prev,
       [name]: name === "password" ? value : prev[name],
@@ -55,15 +61,31 @@ function SignupStep3({ prevStep, handleSubmit }) {
     }));
   };
 
+  // 비밀번호 요구사항 검증 함수
+  const validatePasswordRequirements = (password) => {
+    setPasswordRequirements({
+      length: password.length >= 8,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[@$!%*?&]/.test(password),
+    });
+  };
+
   const validatePassword = (password) => {
-    const passwordPolicy =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    if (!passwordPolicy.test(password)) {
-      return toast.error(
-        "비밀번호는 최소 8자 이상, 대문자, 소문자, 숫자, 특수문자를 포함해야 합니다."
-      );
+    const isValid =
+      password.length >= 8 &&
+      /[a-z]/.test(password) &&
+      /[A-Z]/.test(password) &&
+      /\d/.test(password) &&
+      /[@$!%*?&]/.test(password);
+
+    if (!isValid) {
+      setPasswordError("비밀번호가 요구사항을 충족하지 않습니다.");
+      return false;
     }
-    return "";
+    setPasswordError("");
+    return true;
   };
 
   const validateInputs = () => {
@@ -201,6 +223,71 @@ function SignupStep3({ prevStep, handleSubmit }) {
             value={formData.password}
             onChange={handleChange}
           />
+          <div className="mt-2 text-sm">
+            <p className="font-medium mb-1">비밀번호 요구사항:</p>
+            <ul className="pl-2 space-y-1">
+              <li
+                className={`flex items-center ${
+                  passwordRequirements.length
+                    ? "text-green-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <span className="mr-1">
+                  {passwordRequirements.length ? "✓" : "○"}
+                </span>
+                최소 8자 이상
+              </li>
+              <li
+                className={`flex items-center ${
+                  passwordRequirements.lowercase
+                    ? "text-green-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <span className="mr-1">
+                  {passwordRequirements.lowercase ? "✓" : "○"}
+                </span>
+                소문자 포함
+              </li>
+              <li
+                className={`flex items-center ${
+                  passwordRequirements.uppercase
+                    ? "text-green-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <span className="mr-1">
+                  {passwordRequirements.uppercase ? "✓" : "○"}
+                </span>
+                대문자 포함
+              </li>
+              <li
+                className={`flex items-center ${
+                  passwordRequirements.number
+                    ? "text-green-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <span className="mr-1">
+                  {passwordRequirements.number ? "✓" : "○"}
+                </span>
+                숫자 포함
+              </li>
+              <li
+                className={`flex items-center ${
+                  passwordRequirements.special
+                    ? "text-green-600"
+                    : "text-gray-500"
+                }`}
+              >
+                <span className="mr-1">
+                  {passwordRequirements.special ? "✓" : "○"}
+                </span>
+                특수문자 포함 (@, $, !, %, *, ?, &)
+              </li>
+            </ul>
+          </div>
           <InputField
             label="비밀번호 확인"
             type="password"

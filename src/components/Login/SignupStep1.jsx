@@ -4,7 +4,7 @@ import { formState } from "../../state/formState";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 
-function SignupStep1({ nextStep }) {
+function SignupStep1({ prevStep, nextStep }) {
   const [formData, setFormData] = useRecoilState(formState);
   const [isScrolled, setIsScrolled] = useState(false);
   const termsRef = useRef(null);
@@ -133,6 +133,13 @@ function SignupStep1({ nextStep }) {
             </p>
           )}
         </div>
+
+        <button
+          onClick={prevStep}
+          className="w-[100%] h-[50px] text-[22px] font-bold rounded-md"
+        >
+          이전
+        </button>
 
         {/* 다음 버튼 */}
         <button
